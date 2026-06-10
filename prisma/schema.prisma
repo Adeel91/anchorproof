@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+model Tenant {
+  id               String         @id @default(cuid())
+  name             String         @unique
+  slug             String         @unique
+  suiAddress       String
+  walrusNamespace  String
+  subscriptionTier String         @default("free")
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  apiKeys          ApiKey[]
+  verifications    Verification[]
+  users            User[]
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String?
+  tenantId   String
+  role       String   @default("viewer")
+  createdAt  DateTime @default(now())
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model ApiKey {
+  id         String   @id @default(cuid())
+  tenantId   String
+  keyHash    String   @unique
+  name       String
+  role       String   @default("viewer")
+  expiresAt  DateTime
+  lastUsedAt DateTime?
+  createdAt  DateTime @default(now())
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model Verification {
+  id             String   @id @default(cuid())
+  tenantId       String
+  conversationId String
+  blobId         String
+  suiTxHash      String
+  customerId     String
+  agentId        String?
+  modelUsed      String?
+  messageCount   Int
+  verifiedAt     DateTime @default(now())
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+}

@@ -1,0 +1,99 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-poppins), sans-serif;
+
+  /* High-Gloss Premium Neon Grid Palette */
+  --color-slate-950: #02040a;
+  --color-slate-900: #070b14;
+  --color-indigo-500: #6366f1;
+  --color-cyan-400: #00f2ff;
+  --color-emerald-400: #10b981;
+
+  /* Native Hardware-Accelerated Animation Transforms */
+  --animate-laser-grid: space-scroll 28s linear infinite;
+  --animate-aurora-glow: vector-drift 14s ease-in-out infinite alternate;
+
+  @keyframes space-scroll {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 0 10rem;
+    }
+  }
+
+  @keyframes vector-drift {
+    0% {
+      transform: translate(-50%, -20%) scale(1) rotate(0deg);
+      opacity: 0.12;
+    }
+    50% {
+      transform: translate(-46%, -12%) scale(1.1) rotate(180deg);
+      opacity: 0.22;
+    }
+    100% {
+      transform: translate(-54%, -28%) scale(0.9) rotate(360deg);
+      opacity: 0.1;
+    }
+  }
+}
+
+@layer base {
+  html {
+    scroll-padding-top: 6rem;
+    background-color: #02040a;
+    color: #f1f5f9; /* Smoother white text tone to reduce optical glare */
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 💡 Upgraded from 6px sharp cutouts to smooth 12px canvas corners */
+  div,
+  button,
+  input,
+  textarea {
+    border-radius: 12px !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: -0.02em; /* Prevents text elements from feeling congested */
+    line-height: 1.2;
+  }
+
+  p {
+    line-height: 1.625; /* Balanced line spacing for increased enterprise readability */
+    letter-spacing: 0.01em;
+  }
+}
+
+@layer utilities {
+  .cyber-grid-matrix {
+    background-image:
+      linear-gradient(to right, rgba(0, 242, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+    background-size: 6rem 6rem;
+    animation: var(--animate-laser-grid);
+  }
+
+  .neon-border-glow {
+    position: relative;
+    border: 1px solid rgba(0, 242, 255, 0.1);
+    box-shadow: 0 0 0px transparent;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .neon-border-glow:hover {
+    border-color: rgba(0, 242, 255, 0.3);
+    box-shadow: 0 4px 30px rgba(0, 242, 255, 0.08);
+    background-color: rgba(7, 11, 20, 0.4);
+    transform: translateY(-2px);
+  }
+}
