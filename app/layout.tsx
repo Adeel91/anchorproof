@@ -4,6 +4,7 @@ import './globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import EnokiWrapper from '@/components/auth/EnokiWrapper';
+import '@mysten/dapp-kit/dist/index.css';
 
 const inter = Inter({
   variable: '--font-inter',

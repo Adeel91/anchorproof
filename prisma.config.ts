@@ -1,4 +1,4 @@
-import 'dotenv/config'; // 👈 This MUST be the first line to load your .env file
+import 'dotenv/config';
 import { defineConfig, env } from 'prisma/config';
 
 export default defineConfig({

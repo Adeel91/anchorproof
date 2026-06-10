@@ -8,7 +8,6 @@ const globalForPrisma = globalThis as unknown as {
   pool: pg.Pool | undefined;
 };
 
-// 💡 Force an explicit PostgreSQL configuration block to bypass Turbopack URL stripping
 export const pool =
   globalForPrisma.pool ??
   new pg.Pool({
@@ -17,7 +16,7 @@ export const pool =
     host: process.env.DATABASE_HOST,
     port: Number(process.env.DATABASE_PORT),
     database: process.env.DATABASE_TYPE,
-    ssl: { rejectUnauthorized: false }, // Required to enforce SSL over Supabase connections
+    ssl: { rejectUnauthorized: false },
   });
 
 const adapter = new PrismaPg(pool);

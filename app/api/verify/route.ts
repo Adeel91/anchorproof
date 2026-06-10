@@ -6,7 +6,6 @@ export async function POST(req: Request) {
   try {
     const { apiKey, metadata } = await req.json();
 
-    // 1. Validate API key
     const key = await prisma.apiKey.findFirst({
       where: {
         keyHash: crypto.createHash('sha256').update(apiKey).digest('hex'),
@@ -21,11 +20,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Generate blob ID (will integrate Walrus here)
     const blobId = crypto.randomUUID();
-    const suiTxHash = crypto.randomUUID(); // Placeholder for Sui transaction
+    const suiTxHash = crypto.randomUUID();
 
-    // 3. Store verification record
     const verification = await prisma.verification.create({
       data: {
         tenantId: key.tenantId,

@@ -1,6 +1,6 @@
 import Hero from '@/components/sections/Hero';
 import Liability from '@/components/sections/Liability';
-import Primitives from '@/components/sections/Primitives'; // 💡 Newly injected core primitives matrix
+import Primitives from '@/components/sections/Primitives';
 import Features from '@/components/sections/Features';
 
 export default function Home() {

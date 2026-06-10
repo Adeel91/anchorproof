@@ -1,41 +1,31 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { enokiFlow } from '@/lib/enoki/auth';
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { useCurrentAccount, useDisconnectWallet } from '@mysten/dapp-kit';
 import Container from '@/components/ui/Container';
 import Button from '@/components/ui/Button';
 
 export default function Header() {
+  const currentAccount = useCurrentAccount();
+  const { mutate: disconnectWallet } = useDisconnectWallet();
   const [address, setAddress] = useState<string | null>(null);
   const pathname = usePathname();
+  const isMounted = useRef(true);
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const session = await enokiFlow.getSession();
-        if (session?.ephemeralKeyPair) {
-          const privateKeyBytes = Uint8Array.from(
-            Buffer.from(session.ephemeralKeyPair, 'base64')
-          );
-          const keypair = Ed25519Keypair.fromSecretKey(privateKeyBytes);
-          const suiAddress = keypair.getPublicKey().toSuiAddress();
-
-          document.cookie = `anchorproof-session=${suiAddress}; path=/; max-age=604800; SameSite=Lax`;
-          setAddress(suiAddress);
-        }
-      } catch (error) {
-        console.error('Session check failed:', error);
-      }
-    };
-
-    checkSession();
-  }, []);
+    if (currentAccount?.address && isMounted.current) {
+      const suiAddress = currentAccount.address;
+      document.cookie = `anchorproof-session=${suiAddress}; path=/; max-age=604800; SameSite=Lax`;
+      setAddress(suiAddress);
+    } else if (!currentAccount?.address && isMounted.current) {
+      setAddress(null);
+    }
+  }, [currentAccount?.address]);
 
   const handleLogout = async () => {
-    await enokiFlow.logout();
+    disconnectWallet();
     document.cookie =
       'anchorproof-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     window.location.href = '/login';
@@ -58,7 +48,6 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* Show nav only on landing page */}
         {pathname === '/' && (
           <nav className="hidden lg:flex items-center gap-12 text-xs font-mono font-bold uppercase tracking-widest text-slate-400">
             <Link
@@ -101,7 +90,6 @@ export default function Header() {
               </Button>
             </>
           ) : (
-            // Show login button on all pages except login page itself
             pathname !== '/login' && (
               <Link href="/login">
                 <Button

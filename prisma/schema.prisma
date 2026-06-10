@@ -3,14 +3,15 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 model Tenant {
   id               String         @id @default(cuid())
   name             String         @unique
   slug             String         @unique
-  suiAddress       String
+  emailDomain      String         @unique
+  suiAddress       String         @unique
   walrusNamespace  String
   subscriptionTier String         @default("free")
   createdAt        DateTime       @default(now())
@@ -28,6 +29,8 @@ model User {
   role       String   @default("viewer")
   createdAt  DateTime @default(now())
   tenant     Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, email])
 }
 
 model ApiKey {
