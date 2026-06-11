@@ -17,7 +17,13 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      // Clear invalid cookie
+      const response = NextResponse.json(
+        { error: 'Session expired' },
+        { status: 401 }
+      );
+      response.cookies.delete('anchorproof-session');
+      return response;
     }
 
     return NextResponse.json({ tenant: user.tenant, user });
