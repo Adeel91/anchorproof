@@ -755,6 +755,14 @@
   dependencies:
     "@lit/reactive-element" "^1.0.0 || ^2.0.0"
 
+"@mysten-incubation/memwal@^0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@mysten-incubation/memwal/-/memwal-0.0.7.tgz#5e208b0679699cbc8e7885092e5d6c9924ea7014"
+  integrity sha512-jZycnsstVX/aP33OyJM3bTciwFiiOEcZV4XfhHGbqh8e9pMV/pbOAfD5m9gxrD3V8en29QGAISBsiMIdP3CIyg==
+  dependencies:
+    "@noble/ed25519" "^2.3.0"
+    "@noble/hashes" "^2.0.0"
+
 "@mysten/bcs@^2.0.5":
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/@mysten/bcs/-/bcs-2.0.5.tgz#ccfd56738ce02da3e0d6bd3b25266a1df9ce96e3"
@@ -821,6 +829,15 @@
     idb-keyval "^6.2.2"
     nanostores "^1.1.0"
 
+"@mysten/seal@^1.1.3":
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/@mysten/seal/-/seal-1.1.3.tgz#e83e287e2fe8244cf5e209f974047bffda182853"
+  integrity sha512-HS54mkWEkd6ENl4U94jorwYzahTSSxWiFiDKbYFw+SFEIc4HoqSg2dULKI1WUi6nw8eWYcw/XobeNOlm3Ss5CQ==
+  dependencies:
+    "@mysten/bcs" "^2.0.5"
+    "@noble/curves" "^2.0.1"
+    "@noble/hashes" "^2.0.1"
+
 "@mysten/slush-wallet@^1.0.5":
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/@mysten/slush-wallet/-/slush-wallet-1.0.5.tgz#ea4b0f8f41442da5b0b65a354b2f6c26ffe761af"
@@ -865,6 +882,21 @@
   integrity sha512-Kp1EpWaQAwANuMoTCJKVdZnEOaE9aJ5PPvIC7qg+J3u6Uf20VsVsQngZllyaS2OQHm+iLlJzcLXHff7ttvQJYw==
   dependencies:
     "@wallet-standard/core" "1.1.1"
+
+"@mysten/walrus-wasm@^0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@mysten/walrus-wasm/-/walrus-wasm-0.2.2.tgz#013d46de424c6fde56ab00dca3d29675516509c1"
+  integrity sha512-MbI1OAYvnlcdYo3hhSPgMra4Loiox32gI13aP+EpC1pjVxkIRnINzM2FcUgu1PIrl/L49O6f+latQm0vcCGXiQ==
+
+"@mysten/walrus@^1.1.7":
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/@mysten/walrus/-/walrus-1.1.7.tgz#5fe902b1942c02470d244e7c830666c038e2a717"
+  integrity sha512-9hymg7JJmvAvUFFbsOAGcKD47Td/lfdyBgxmI6um65n0M8qnJIll44mvnNX/QKIyN3wRfFb2wE/odRLLy3HKMw==
+  dependencies:
+    "@mysten/bcs" "^2.0.5"
+    "@mysten/utils" "^0.3.3"
+    "@mysten/walrus-wasm" "^0.2.2"
+    dataloader "^2.2.3"
 
 "@mysten/webcrypto-signer@^0.1.2":
   version "0.1.2"
@@ -958,7 +990,12 @@
   dependencies:
     "@noble/hashes" "2.2.0"
 
-"@noble/hashes@2.2.0", "@noble/hashes@^2.0.1":
+"@noble/ed25519@^2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@noble/ed25519/-/ed25519-2.3.0.tgz#df0dbe424cfd7da4968b956b819c15db5fbe7f21"
+  integrity sha512-M7dvXL2B92/M7dw9+gzuydL8qn/jiqNHaoR3Q+cb1q1GHV7uwE17WCyFMG+Y+TZb5izcaXk5TdJRrDUxHXL78A==
+
+"@noble/hashes@2.2.0", "@noble/hashes@^2.0.0", "@noble/hashes@^2.0.1":
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-2.2.0.tgz#22da1d16a469954fce877055d559900a6c73b63b"
   integrity sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg==
@@ -2565,6 +2602,11 @@ data-view-byte-offset@^1.0.1:
     call-bound "^1.0.2"
     es-errors "^1.3.0"
     is-data-view "^1.0.1"
+
+dataloader@^2.2.3:
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/dataloader/-/dataloader-2.2.3.tgz#42d10b4913515f5b37c6acedcb4960d6ae1b1517"
+  integrity sha512-y2krtASINtPFS1rSDjacrFgn1dcUuoREVabwlOGOe4SdxenREqwjwjElAdwvbGM7kgZz9a3KVicWR7vcz8rnzA==
 
 debug@^3.2.7:
   version "3.2.7"
