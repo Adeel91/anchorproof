@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { storeOnWalrus } from '@/lib/walrus/store';
+import { SEAL_SYSTEM_PACKAGE_ID, sealClient } from '@/lib/seal/client';
 import crypto from 'crypto';
 
 const MASTER_KEY_HEX =
@@ -25,7 +26,7 @@ function decrypt(encryptedJson: string): string {
 
 const maskEmail = (email: string) => {
   const [localPart, domain] = email.split('@');
-  if (localPart.length <= 2) return `${localPart[0]}***@${domain}`;
+  if (localPart.length <= 2) return `${localPart}***@${domain}`;
   return `${localPart.slice(0, 2)}***${localPart.slice(-1)}@${domain}`;
 };
 
@@ -116,34 +117,34 @@ export async function POST(request: NextRequest) {
     };
 
     const plaintext = JSON.stringify(conversationData);
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv('aes-256-gcm', MASTER_KEY, iv);
-    const encrypted = Buffer.concat([
-      cipher.update(plaintext, 'utf8'),
-      cipher.final(),
-    ]);
-    const authTag = cipher.getAuthTag();
 
-    const encryptedBlob = JSON.stringify({
-      iv: iv.toString('hex'),
-      encrypted: encrypted.toString('hex'),
-      authTag: authTag.toString('hex'),
+    const { encryptedObject, key } = await sealClient.encrypt({
+      data: Buffer.from(plaintext, 'utf8'),
+      threshold: 2,
+      packageId: SEAL_SYSTEM_PACKAGE_ID,
+      id: conversationId,
+      demType: 0,
+      kemType: 0,
     });
 
-    const { blobId, walrusExplorerUrl } = await storeOnWalrus(
-      encryptedBlob,
-      decryptedPrivateKeyBase64
-    );
+    const encryptedBlob = JSON.stringify({
+      encryptedObjectHex: encryptedObject.toHex(),
+      sessionKeyHex: Buffer.from(key).toString('hex'),
+    });
+
+    const { blobId, walrusExplorerUrl, suiTxHash, suiExplorerUrl } =
+      await storeOnWalrus(encryptedBlob, decryptedPrivateKeyBase64);
 
     await prisma.verification.create({
       data: {
         tenantId: user.tenant.id,
         conversationId,
         blobId: blobId,
-        suiTxHash: 'walrus-stored',
+        suiTxHash: suiTxHash || 'walrus-stored',
+        suiExplorerUrl: suiExplorerUrl || '',
         customerId: customerId || 'unknown',
         agentId: agentId || 'unknown',
-        modelUsed: 'aes-256-gcm',
+        modelUsed: 'seal-encrypted',
         messageCount: messages.length,
         metadata: conversationData.metadata,
       },

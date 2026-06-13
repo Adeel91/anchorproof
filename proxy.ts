@@ -8,7 +8,6 @@ export async function proxy(request: NextRequest) {
   const isAuthPage = url.pathname === '/login';
   const isDashboardRoute = url.pathname.startsWith('/dashboard');
 
-  // API routes that require session cookie (dashboard/internal)
   const protectedApiRoutes = [
     '/api/keys',
     '/api/tenant',
@@ -21,28 +20,23 @@ export async function proxy(request: NextRequest) {
     url.pathname.startsWith(route)
   );
 
-  // API routes that use API key (public facing) - no session required
   const isVerifyEndpoint = url.pathname === '/api/verify';
   const isChatSendEndpoint = url.pathname === '/api/chat/send';
   const isChatMessagesEndpoint = url.pathname === '/api/chat/messages';
 
-  // Allow public API endpoints
   if (isVerifyEndpoint || isChatSendEndpoint || isChatMessagesEndpoint) {
     return NextResponse.next();
   }
 
-  // Protect internal API routes
   if (needsSession && !sessionCookie) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Protect dashboard routes
   if (!sessionCookie && isDashboardRoute) {
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
-  // Redirect to dashboard if already logged in
   if (sessionCookie && isAuthPage) {
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);

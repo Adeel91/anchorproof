@@ -6,4 +6,5 @@ const suiClient = new SuiJsonRpcClient({
   url: getJsonRpcFullnodeUrl('testnet'),
 });
 
+export { suiClient };
 export const walrusClient = suiClient.$extend(walrus());
