@@ -5,42 +5,100 @@ import { useState } from 'react';
 interface ApiKeyModalProps {
   isOpen: boolean;
   apiKey: string | null;
+  publicKey: string | null;
+  privateKey: string | null;
   onClose: () => void;
 }
 
-export function ApiKeyModal({ isOpen, apiKey, onClose }: ApiKeyModalProps) {
-  const [copied, setCopied] = useState(false);
+export function ApiKeyModal({
+  isOpen,
+  apiKey,
+  publicKey,
+  privateKey,
+  onClose,
+}: ApiKeyModalProps) {
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   if (!isOpen || !apiKey) return null;
 
-  const copyToClipboard = async () => {
-    await navigator.clipboard.writeText(apiKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyToClipboard = async (text: string, field: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 max-w-md w-full mx-4">
+      <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <h3 className="text-lg font-bold text-white mb-2">API Key Created</h3>
-        <p className="text-gray-400 text-sm mb-4">
-          <span className="text-amber-400 font-medium">Important:</span> This is
-          your secret key. Copy it now - it will not be shown again.
+        <p className="text-amber-400 text-sm mb-4">
+          ⚠️ Save these keys now. The private key will not be shown again.
         </p>
-        <div className="bg-gray-950 border border-gray-700 rounded-lg p-3 mb-4">
-          <code className="text-cyan-400 text-sm break-all font-mono">
-            {apiKey}
-          </code>
+
+        {/* API Key */}
+        <div className="mb-4">
+          <label className="block text-gray-400 text-xs mb-1">
+            API Key (for authentication)
+          </label>
+          <div className="flex gap-2">
+            <code className="flex-1 bg-gray-950 border border-gray-700 rounded-lg p-2 text-cyan-400 text-xs break-all font-mono">
+              {apiKey}
+            </code>
+            <button
+              onClick={() => copyToClipboard(apiKey, 'apiKey')}
+              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs transition-colors"
+            >
+              {copiedField === 'apiKey' ? '✓ Copied!' : 'Copy'}
+            </button>
+          </div>
         </div>
-        <button
-          onClick={copyToClipboard}
-          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg mb-3 transition-colors"
-        >
-          {copied ? '✓ Copied!' : 'Copy to Clipboard'}
-        </button>
+
+        {/* Public Key */}
+        {publicKey && (
+          <div className="mb-4">
+            <label className="block text-gray-400 text-xs mb-1">
+              Public Key (for verification)
+            </label>
+            <div className="flex gap-2">
+              <code className="flex-1 bg-gray-950 border border-gray-700 rounded-lg p-2 text-green-400 text-xs break-all font-mono">
+                {publicKey}
+              </code>
+              <button
+                onClick={() => copyToClipboard(publicKey, 'publicKey')}
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs transition-colors"
+              >
+                {copiedField === 'publicKey' ? '✓ Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Private Key (Critical - shown once) */}
+        {privateKey && (
+          <div className="mb-4">
+            <label className="block text-amber-400 text-xs mb-1">
+              ⚠️ Private Key (for signing - SAVE NOW)
+            </label>
+            <div className="flex gap-2">
+              <code className="flex-1 bg-gray-950 border border-amber-700 rounded-lg p-2 text-amber-400 text-xs break-all font-mono">
+                {privateKey}
+              </code>
+              <button
+                onClick={() => copyToClipboard(privateKey, 'privateKey')}
+                className="px-3 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-white text-xs transition-colors"
+              >
+                {copiedField === 'privateKey' ? '✓ Copied!' : 'Copy'}
+              </button>
+            </div>
+            <p className="text-amber-500 text-xs mt-1">
+              This private key will never be shown again. Store it securely.
+            </p>
+          </div>
+        )}
+
         <button
           onClick={onClose}
-          className="w-full text-gray-400 hover:text-white text-sm transition-colors"
+          className="w-full text-gray-400 hover:text-white text-sm transition-colors mt-2"
         >
           Close
         </button>

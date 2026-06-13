@@ -33,6 +33,7 @@ interface ApiKey {
   createdAt: string;
   expiresAt: string;
   lastUsedAt: string | null;
+  publicKey?: string;
 }
 
 export default function DashboardClient() {
@@ -41,9 +42,6 @@ export default function DashboardClient() {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [newlyGeneratedKey, setNewlyGeneratedKey] = useState<string | null>(
-    null
-  );
   const router = useRouter();
 
   const clearSessionAndRedirect = useCallback(() => {
@@ -118,7 +116,13 @@ export default function DashboardClient() {
     }
   };
 
-  const generateApiKey = async (name: string) => {
+  const generateApiKey = async (
+    name: string
+  ): Promise<{
+    apiKey: string;
+    publicKey: string;
+    privateKey: string;
+  } | void> => {
     setGenerating(true);
     try {
       const response = await fetch('/api/keys/generate', {
@@ -131,24 +135,28 @@ export default function DashboardClient() {
       console.log('API response:', data);
 
       if (data.success) {
-        setNewlyGeneratedKey(data.apiKey);
         await refreshApiKeys();
+        return {
+          apiKey: data.apiKey,
+          publicKey: data.publicKey,
+          privateKey: data.privateKey,
+        };
       } else {
         console.error('Generation failed:', data.error);
+        return;
       }
     } catch (error) {
       console.error('Failed to generate key:', error);
+      return;
     } finally {
       setGenerating(false);
     }
   };
 
-  // Show loading shell while loading
   if (loading) {
     return <DashboardShell loading={true} />;
   }
 
-  // If no tenant/user after loading, don't render dashboard content
   if (!tenant || !user) {
     return null;
   }
@@ -166,8 +174,6 @@ export default function DashboardClient() {
         onGenerate={generateApiKey}
         onRevoke={revokeApiKey}
         generating={generating}
-        newKey={newlyGeneratedKey}
-        onClearNewKey={() => setNewlyGeneratedKey(null)}
       />
       <RecentVerifications />
     </DashboardShell>

@@ -17,7 +17,6 @@ export async function GET() {
     });
 
     if (!user) {
-      // Clear invalid cookie
       const response = NextResponse.json(
         { error: 'Session expired' },
         { status: 401 }

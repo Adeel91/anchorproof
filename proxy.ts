@@ -7,22 +7,33 @@ export async function proxy(request: NextRequest) {
 
   const isAuthPage = url.pathname === '/login';
   const isDashboardRoute = url.pathname.startsWith('/dashboard');
-  
+
   // API routes that require session cookie (dashboard/internal)
-  const protectedApiRoutes = ['/api/keys', '/api/tenant', '/api/memwal', '/api/test'];
-  const needsSession = protectedApiRoutes.some(route => url.pathname.startsWith(route));
-  
+  const protectedApiRoutes = [
+    '/api/keys',
+    '/api/tenant',
+    '/api/chat',
+    '/api/walrus/list',
+    '/api/walrus/blob',
+    '/api/walrus/verify',
+  ];
+  const needsSession = protectedApiRoutes.some((route) =>
+    url.pathname.startsWith(route)
+  );
+
   // API routes that use API key (public facing) - no session required
   const isVerifyEndpoint = url.pathname === '/api/verify';
+  const isChatSendEndpoint = url.pathname === '/api/chat/send';
+  const isChatMessagesEndpoint = url.pathname === '/api/chat/messages';
+
+  // Allow public API endpoints
+  if (isVerifyEndpoint || isChatSendEndpoint || isChatMessagesEndpoint) {
+    return NextResponse.next();
+  }
 
   // Protect internal API routes
   if (needsSession && !sessionCookie) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // Verify endpoint - no session check (uses API key inside the request)
-  if (isVerifyEndpoint) {
-    return NextResponse.next();
   }
 
   // Protect dashboard routes

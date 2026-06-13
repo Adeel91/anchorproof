@@ -10,7 +10,6 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@mysten-incubation/memwal": "^0.0.7",
     "@mysten/bcs": "^2.0.5",
     "@mysten/dapp-kit": "^1.0.6",
     "@mysten/dapp-kit-react": "^2.0.3",

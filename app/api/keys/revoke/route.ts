@@ -13,35 +13,17 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // First find the user
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      include: { tenant: true },
     });
 
     if (!user) {
-      // Clear invalid cookie
-      const response = NextResponse.json(
-        { error: 'User not found' },
-        { status: 401 }
-      );
-      response.cookies.delete('anchorproof-session');
-      return response;
-    }
-
-    // Verify the key belongs to this user's tenant
-    const apiKey = await prisma.apiKey.findFirst({
-      where: {
-        id: keyId,
-        tenantId: user.tenantId,
-      },
-    });
-
-    if (!apiKey) {
-      return NextResponse.json({ error: 'API key not found' }, { status: 404 });
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     await prisma.apiKey.delete({
-      where: { id: keyId },
+      where: { id: keyId, tenantId: user.tenantId },
     });
 
     return NextResponse.json({ success: true });

@@ -17,12 +17,7 @@ export async function GET() {
     });
 
     if (!user) {
-      const response = NextResponse.json(
-        { error: 'User not found' },
-        { status: 401 }
-      );
-      response.cookies.delete('anchorproof-session');
-      return response;
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const apiKeys = await prisma.apiKey.findMany({
@@ -35,23 +30,16 @@ export async function GET() {
         createdAt: true,
         expiresAt: true,
         lastUsedAt: true,
+        publicKey: true,
       },
     });
 
-    // Add cache control headers
-    return NextResponse.json(
-      { keys: apiKeys || [] },
-      {
-        headers: {
-          'Cache-Control':
-            'no-store, no-cache, must-revalidate, proxy-revalidate',
-          Pragma: 'no-cache',
-          Expires: '0',
-        },
-      }
-    );
+    return NextResponse.json({ keys: apiKeys });
   } catch (error) {
     console.error('API keys fetch error:', error);
-    return NextResponse.json({ keys: [] }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch API keys' },
+      { status: 500 }
+    );
   }
 }

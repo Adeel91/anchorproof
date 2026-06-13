@@ -17,32 +17,35 @@ model Tenant {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   apiKeys          ApiKey[]
-  verifications    Verification[]
+  tempMessages     TempMessage[]
   users            User[]
+  verifications    Verification[]
 }
 
 model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  name       String?
-  tenantId   String
-  role       String   @default("viewer")
-  createdAt  DateTime @default(now())
-  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  tenantId  String
+  role      String   @default("viewer")
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
 
   @@unique([tenantId, email])
 }
 
 model ApiKey {
-  id         String   @id @default(cuid())
-  tenantId   String
-  keyHash    String   @unique
-  name       String
-  role       String   @default("viewer")
-  expiresAt  DateTime
-  lastUsedAt DateTime?
-  createdAt  DateTime @default(now())
-  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  id                  String    @id @default(cuid())
+  tenantId            String
+  keyHash             String    @unique
+  name                String
+  role                String    @default("viewer")
+  expiresAt           DateTime
+  lastUsedAt          DateTime?
+  createdAt           DateTime  @default(now())
+  publicKey           String
+  encryptedPrivateKey String
+  tenant              Tenant    @relation(fields: [tenantId], references: [id])
 }
 
 model Verification {
@@ -59,4 +62,19 @@ model Verification {
   metadata       Json?
   createdAt      DateTime @default(now())
   tenant         Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model TempMessage {
+  id             String   @id @default(cuid())
+  tenantId       String
+  conversationId String
+  role           String
+  content        String
+  signature      String
+  publicKey      String
+  timestamp      DateTime @default(now())
+  createdAt      DateTime @default(now())
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, conversationId])
 }
