@@ -35,7 +35,6 @@ export function ApiKeyModal({
           ⚠️ Save these keys now. The private key will not be shown again.
         </p>
 
-        {/* API Key */}
         <div className="mb-4">
           <label className="block text-gray-400 text-xs mb-1">
             API Key (for authentication)
@@ -53,7 +52,6 @@ export function ApiKeyModal({
           </div>
         </div>
 
-        {/* Public Key */}
         {publicKey && (
           <div className="mb-4">
             <label className="block text-gray-400 text-xs mb-1">
@@ -73,7 +71,6 @@ export function ApiKeyModal({
           </div>
         )}
 
-        {/* Private Key (Critical - shown once) */}
         {privateKey && (
           <div className="mb-4">
             <label className="block text-amber-400 text-xs mb-1">

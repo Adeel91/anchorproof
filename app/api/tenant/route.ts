@@ -7,7 +7,10 @@ export async function POST(request: NextRequest) {
 
     if (!emailDomain || !suiAddress || !email) {
       return NextResponse.json(
-        { error: 'Required fields missing' },
+        {
+          error:
+            'Required fields missing: emailDomain, suiAddress, and email are required',
+        },
         { status: 400 }
       );
     }
@@ -18,17 +21,31 @@ export async function POST(request: NextRequest) {
       domainPrefix.charAt(0).toUpperCase() + domainPrefix.slice(1);
 
     let tenant = await prisma.tenant.findFirst({
-      where: { emailDomain: emailDomain },
+      where: {
+        OR: [
+          { emailDomain: emailDomain },
+          { slug: generatedSlug },
+          { suiAddress: suiAddress },
+        ],
+      },
     });
 
     if (!tenant) {
+      let uniqueSlug = generatedSlug;
+      let counter = 1;
+
+      while (await prisma.tenant.findUnique({ where: { slug: uniqueSlug } })) {
+        uniqueSlug = `${generatedSlug}-${counter}`;
+        counter++;
+      }
+
       tenant = await prisma.tenant.create({
         data: {
           name: `${capitalizedName} Corp`,
-          slug: generatedSlug,
+          slug: uniqueSlug,
           emailDomain: emailDomain,
           suiAddress: suiAddress,
-          walrusNamespace: `ns-${domainPrefix.toLowerCase()}`,
+          walrusNamespace: `ns-${domainPrefix.toLowerCase()}-${Date.now()}`,
           subscriptionTier: 'free',
         },
       });
@@ -36,7 +53,11 @@ export async function POST(request: NextRequest) {
 
     const corporateUser = await prisma.user.upsert({
       where: { email: email },
-      update: { name: name },
+      update: {
+        name: name || email.split('@')[0],
+        tenantId: tenant.id,
+        role: 'admin',
+      },
       create: {
         email: email,
         name: name || email.split('@')[0],
@@ -45,13 +66,33 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ tenant, user: corporateUser });
+    return NextResponse.json({
+      success: true,
+      tenant,
+      user: corporateUser,
+    });
   } catch (error) {
-    const err = error as Error;
+    console.error('Tenant registration error:', error);
 
-    console.error('Tenant registration error:', err);
+    if (error instanceof Error) {
+      if (error.message.includes('Unique constraint')) {
+        return NextResponse.json(
+          {
+            error:
+              'Tenant already exists with this email domain or Sui address',
+          },
+          { status: 409 }
+        );
+      }
+
+      return NextResponse.json(
+        { error: error.message || 'Internal database sync error' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { error: err.message || 'Internal database sync error' },
+      { error: 'Internal database sync error' },
       { status: 500 }
     );
   }

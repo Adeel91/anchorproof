@@ -4,14 +4,12 @@
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-heading: var(--font-poppins), sans-serif;
 
-  /* High-Gloss Premium Neon Grid Palette */
   --color-slate-950: #02040a;
   --color-slate-900: #070b14;
   --color-indigo-500: #6366f1;
   --color-cyan-400: #00f2ff;
   --color-emerald-400: #10b981;
 
-  /* Native Hardware-Accelerated Animation Transforms */
   --animate-laser-grid: space-scroll 28s linear infinite;
   --animate-aurora-glow: vector-drift 14s ease-in-out infinite alternate;
 
@@ -44,11 +42,10 @@
   html {
     scroll-padding-top: 6rem;
     background-color: #02040a;
-    color: #f1f5f9; /* Smoother white text tone to reduce optical glare */
+    color: #f1f5f9;
     -webkit-font-smoothing: antialiased;
   }
 
-  /* 💡 Upgraded from 6px sharp cutouts to smooth 12px canvas corners */
   div,
   button,
   input,
@@ -64,12 +61,12 @@
   h6 {
     font-family: var(--font-heading);
     font-weight: 600;
-    letter-spacing: -0.02em; /* Prevents text elements from feeling congested */
+    letter-spacing: -0.02em;
     line-height: 1.2;
   }
 
   p {
-    line-height: 1.625; /* Balanced line spacing for increased enterprise readability */
+    line-height: 1.625;
     letter-spacing: 0.01em;
   }
 }

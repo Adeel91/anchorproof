@@ -10,5 +10,5 @@ export default defineConfig({
   splitting: false,
   sourcemap: true,
   clean: true,
-  external: ['react', '@mysten/sui', '@mysten/bcs'],
+  external: ['react'],
 });

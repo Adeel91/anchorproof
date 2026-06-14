@@ -67,6 +67,8 @@ export function useAnchorProof(config: {
         }
 
         const { crypto, ...rest } = params;
+        void crypto;
+
         const result = await client.sendMessage({
           ...rest,
           signature,
