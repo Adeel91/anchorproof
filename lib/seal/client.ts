@@ -19,7 +19,6 @@ const SEAL_KEY_SERVERS = [
   },
 ];
 
-// ✅ Use 'new' keyword, not .create()
 export const sealClient = new SealClient({
   suiClient,
   serverConfigs: SEAL_KEY_SERVERS,

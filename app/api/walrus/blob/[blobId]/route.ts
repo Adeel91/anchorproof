@@ -1,12 +1,32 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { walrusClient } from '@/lib/walrus/client';
+import { walrusClient, suiClient } from '@/lib/walrus/client';
 import { SEAL_SYSTEM_PACKAGE_ID, sealClient } from '@/lib/seal/client';
-import { suiClient } from '@/lib/walrus/client';
-import { SessionKey, EncryptedObject } from '@mysten/seal';
+import { SessionKey } from '@mysten/seal';
 import { Transaction } from '@mysten/sui/transactions';
-import { fromHex } from '@mysten/bcs';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { fromBase64 } from '@mysten/bcs';
+import crypto from 'crypto';
+
+const MASTER_KEY_HEX =
+  process.env.MASTER_KEY || crypto.randomBytes(32).toString('hex');
+const MASTER_KEY = Buffer.from(MASTER_KEY_HEX, 'hex');
+
+function decrypt(encryptedJson: string): string {
+  const { iv, encrypted, authTag } = JSON.parse(encryptedJson);
+  const decipher = crypto.createDecipheriv(
+    'aes-256-gcm',
+    MASTER_KEY,
+    Buffer.from(iv, 'hex')
+  );
+  decipher.setAuthTag(Buffer.from(authTag, 'hex'));
+  const decrypted = Buffer.concat([
+    decipher.update(Buffer.from(encrypted, 'hex')),
+    decipher.final(),
+  ]);
+  return decrypted.toString('utf8');
+}
 
 export async function GET(
   request: Request,
@@ -45,56 +65,60 @@ export async function GET(
       );
     }
 
+    const apiKeyRecord = await prisma.apiKey.findFirst({
+      where: { tenantId: user.tenantId },
+    });
+
+    if (!apiKeyRecord || !apiKeyRecord.encryptedPrivateKey) {
+      return NextResponse.json(
+        { error: 'Signing key not found' },
+        { status: 500 }
+      );
+    }
+
+    const decryptedPrivateKeyBase64 = decrypt(apiKeyRecord.encryptedPrivateKey);
+    const privateKeyBytes = fromBase64(decryptedPrivateKeyBase64);
+    const tenantKeypair = Ed25519Keypair.fromSecretKey(privateKeyBytes);
+
     const encryptedBlob = await walrusClient.walrus.readBlob({
       blobId: blobid,
     });
-
     const rawJsonText = new TextDecoder().decode(encryptedBlob);
     const storageContainer = JSON.parse(rawJsonText);
 
-    const encryptedObjectData = fromHex(storageContainer.encryptedObjectHex);
-    const sessionKeyBase64 = Buffer.from(
-      storageContainer.sessionKeyHex,
-      'hex'
-    ).toString('base64');
-
-    const parsedEncryptedObj = EncryptedObject.parse(encryptedObjectData);
-
-    const rehydratedSessionKey = await SessionKey.import(
-      {
-        sessionKey: sessionKeyBase64,
-        packageId: SEAL_SYSTEM_PACKAGE_ID,
-        address: user.tenant.id,
-        creationTimeMs: Date.now(),
-        ttlMin: 60,
-      },
-      suiClient
+    const encryptedObjectData = Uint8Array.from(
+      storageContainer.encryptedObject
     );
 
-    const validationTx = new Transaction();
-
-    validationTx.moveCall({
-      target: `${SEAL_SYSTEM_PACKAGE_ID}::core::seal_approve`,
-      arguments: [
-        validationTx.pure.vector('u8', fromHex(parsedEncryptedObj.id)),
-      ],
+    const sessionKey = await SessionKey.create({
+      address: user.tenant.suiAddress,
+      packageId: SEAL_SYSTEM_PACKAGE_ID,
+      ttlMin: 10,
+      signer: tenantKeypair,
+      suiClient,
     });
 
-    validationTx.setSender(user.tenant.id);
+    const tx = new Transaction();
 
-    const validationTxBytes = await validationTx.build({
+    const objectId = crypto.randomBytes(32).toString('hex');
+
+    tx.moveCall({
+      target: `${SEAL_SYSTEM_PACKAGE_ID}::core::seal_approve`,
+      arguments: [tx.pure.vector('u8', Buffer.from(objectId, 'hex'))],
+    });
+
+    const txBytes = await tx.build({
       client: suiClient,
       onlyTransactionKind: true,
     });
 
-    const decryptedBuffer = await sealClient.decrypt({
+    const decryptedData = await sealClient.decrypt({
       data: encryptedObjectData,
-      sessionKey: rehydratedSessionKey,
-      txBytes: validationTxBytes,
+      sessionKey: sessionKey,
+      txBytes: txBytes,
     });
 
-    const plaintext = new TextDecoder().decode(decryptedBuffer);
-    const conversation = JSON.parse(plaintext);
+    const conversation = JSON.parse(new TextDecoder().decode(decryptedData));
 
     return NextResponse.json({
       success: true,
@@ -104,7 +128,7 @@ export async function GET(
       metadata: conversation.metadata,
       verifiedAt: verification.verifiedAt,
       createdAt: verification.createdAt,
-      walrusExplorerUrl: `https://walruscan.com/testnet/blob/${blobid}`,
+      walrusExplorerUrl: `https://explorer.walrus.site/blob/${blobid}`,
     });
   } catch (error) {
     console.error('Get blob error:', error);
