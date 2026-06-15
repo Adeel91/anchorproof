@@ -1,0 +1,11 @@
+import { AnchorProofClient } from '@/packages/sdk/src/client';
+
+AnchorProofClient.configure({
+  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+});
+
+export const anchorProofClient = new AnchorProofClient({
+  apiKey: process.env.DEMO_API_KEY!,
+  publicKey: process.env.DEMO_PUBLIC_KEY!,
+  privateKey: process.env.DEMO_PRIVATE_KEY!,
+});

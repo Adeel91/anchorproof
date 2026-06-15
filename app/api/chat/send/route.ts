@@ -1,37 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { verifySignature } from '@mysten/sui/verify';
+import crypto from 'crypto';
+import { Ed25519PublicKey } from '@mysten/sui/keypairs/ed25519';
+import { fromBase64 } from '@mysten/bcs';
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('anchorproof-session')?.value;
+    const apiKey = request.headers.get('X-API-Key');
+    const publicKey = request.headers.get('X-Public-Key');
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!apiKey || !publicKey) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Missing API key' },
+        { status: 401 }
+      );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+    const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
+    const apiKeyRecord = await prisma.apiKey.findFirst({
+      where: {
+        keyHash: keyHash,
+        publicKey: publicKey,
+      },
       include: { tenant: true },
     });
 
-    if (!user || !user.tenant) {
-      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    if (!apiKeyRecord) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Invalid API key' },
+        { status: 401 }
+      );
     }
 
-    const {
-      content,
-      signature,
-      publicKey,
-      role,
-      conversationId,
-      customerId,
-      agentId,
-    } = await request.json();
+    const { content, signature, role, conversationId, customerId, agentId } =
+      await request.json();
 
-    if (!content || !signature || !publicKey || !role) {
+    if (!content || !signature || !role) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -39,25 +43,23 @@ export async function POST(request: NextRequest) {
     }
 
     const messageBytes = new TextEncoder().encode(content);
+    const signatureBytes = fromBase64(signature);
+    const publicKeyBytes = fromBase64(publicKey);
 
-    const isValid = await verifySignature(messageBytes, signature, {
-      address: user.tenant.suiAddress,
-    });
+    try {
+      const publicKeyObj = new Ed25519PublicKey(publicKeyBytes);
+      const isValid = await publicKeyObj.verify(messageBytes, signatureBytes);
 
-    if (!isValid) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-    }
-
-    const apiKeyRecord = await prisma.apiKey.findFirst({
-      where: {
-        tenantId: user.tenantId,
-        publicKey: publicKey,
-      },
-    });
-
-    if (!apiKeyRecord) {
+      if (!isValid) {
+        return NextResponse.json(
+          { error: 'Invalid signature' },
+          { status: 401 }
+        );
+      }
+    } catch (verifyError) {
+      console.error('Signature verification error:', verifyError);
       return NextResponse.json(
-        { error: 'API key not found for this public key' },
+        { error: 'Signature verification failed' },
         { status: 401 }
       );
     }
@@ -73,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     const savedMessage = await prisma.tempMessage.create({
       data: {
-        tenantId: user.tenantId,
+        tenantId: apiKeyRecord.tenantId,
         conversationId: convId,
         role: role,
         content: content,
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
     });
 
     const messageCount = await prisma.tempMessage.count({
-      where: { tenantId: user.tenantId, conversationId: convId },
+      where: { tenantId: apiKeyRecord.tenantId, conversationId: convId },
     });
 
     const isFull = messageCount >= 600;

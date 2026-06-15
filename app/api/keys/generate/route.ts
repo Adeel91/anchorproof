@@ -3,25 +3,7 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-
-const MASTER_KEY_HEX =
-  process.env.MASTER_KEY || crypto.randomBytes(32).toString('hex');
-const MASTER_KEY = Buffer.from(MASTER_KEY_HEX, 'hex');
-
-function encrypt(text: string): string {
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-gcm', MASTER_KEY, iv);
-  const encrypted = Buffer.concat([
-    cipher.update(text, 'utf8'),
-    cipher.final(),
-  ]);
-  const authTag = cipher.getAuthTag();
-  return JSON.stringify({
-    iv: iv.toString('hex'),
-    encrypted: encrypted.toString('hex'),
-    authTag: authTag.toString('hex'),
-  });
-}
+import { encryptPrivateKey } from '@/lib/anchorproof/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,15 +30,15 @@ export async function POST(request: NextRequest) {
 
     const { name, expiresInDays = 90 } = await request.json();
 
-    const keypair = Ed25519Keypair.generate();
+    const rawPrivateKey = crypto.randomBytes(32);
+    const keypair = Ed25519Keypair.fromSecretKey(rawPrivateKey);
 
-    const privateKeyBytes = keypair.getSecretKey();
-    const privateKeyBase64 = Buffer.from(privateKeyBytes).toString('base64');
+    const privateKeyBase64 = rawPrivateKey.toString('base64');
 
     const publicKeyBytes = keypair.getPublicKey().toRawBytes();
     const publicKeyBase64 = Buffer.from(publicKeyBytes).toString('base64');
 
-    const encryptedPrivateKey = encrypt(privateKeyBase64);
+    const encryptedPrivateKey = encryptPrivateKey(privateKeyBase64);
 
     const apiKey = `anchor_${crypto.randomBytes(32).toString('hex')}`;
     const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');

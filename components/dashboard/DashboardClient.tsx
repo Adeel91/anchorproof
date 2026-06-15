@@ -132,7 +132,6 @@ export default function DashboardClient() {
       });
 
       const data = await response.json();
-      console.log('API response:', data);
 
       if (data.success) {
         await refreshApiKeys();

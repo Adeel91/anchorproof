@@ -1,4 +1,3 @@
-// app/api/llm/healthcare/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 
@@ -47,7 +46,6 @@ export async function POST(request: NextRequest) {
       .pop();
     const question = lastUserMessage?.content?.toLowerCase() || '';
 
-    // Help response without API call
     if (question.includes('help') || question.includes('what can you')) {
       const helpReply = `I CAN HELP YOU WITH:
 
@@ -100,7 +98,6 @@ What healthcare compliance question can I answer for you?`;
       completion.choices[0]?.message?.content ||
       "I'm here to help with healthcare compliance questions. Could you please rephrase?";
 
-    // Remove any markdown
     reply = reply.replace(/\*\*/g, '');
     reply = reply.replace(/\*/g, '-');
     reply = reply.replace(/_/g, '');

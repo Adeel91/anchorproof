@@ -23,8 +23,6 @@ export async function getEnokiProfile(
     const payloadBase64 = payloadSegment.replace(/-/g, '+').replace(/_/g, '/');
     const decodedClaims = JSON.parse(atob(payloadBase64));
 
-    console.log('🎯 SUCCESS! Unpacked JWT Claims Matrix:', decodedClaims);
-
     return {
       email: decodedClaims.email || null,
       name: decodedClaims.name || null,

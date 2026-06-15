@@ -2,11 +2,16 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Button from '@/components/ui/Button';
+import { sendMessageAction } from '@/app/actions/chat';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
+
+const generateConversationId = () => {
+  return `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
 
 export default function BankingChat() {
   const [messages, setMessages] = useState<Message[]>([
@@ -18,6 +23,8 @@ export default function BankingChat() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationId] = useState(generateConversationId);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -41,6 +48,14 @@ export default function BankingChat() {
     setIsLoading(true);
 
     try {
+      await sendMessageAction(
+        userMessage,
+        'user',
+        conversationId,
+        'banking-demo',
+        'anchorproof-banking'
+      );
+
       const response = await fetch('/api/llm/banking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -56,6 +71,14 @@ export default function BankingChat() {
           ...prev,
           { role: 'assistant', content: data.message },
         ]);
+
+        await sendMessageAction(
+          data.message,
+          'assistant',
+          conversationId,
+          'banking-demo',
+          'anchorproof-banking'
+        );
       }
     } catch (error) {
       console.error('Chat error:', error);
@@ -80,6 +103,7 @@ export default function BankingChat() {
 
   return (
     <div className="relative">
+      {/* Rest of your JSX remains the same */}
       <div className="bg-gradient-to-r from-cyan-500/10 via-indigo-500/10 to-purple-500/10 rounded-2xl border border-cyan-400/20 overflow-hidden">
         <div className="bg-slate-900/80 px-6 py-4 border-b border-cyan-400/20">
           <div className="flex items-center gap-3">
