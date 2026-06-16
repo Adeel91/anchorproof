@@ -11,10 +11,14 @@ export interface StoreOnWalrusResult {
   suiObjectId: string;
 }
 
-export async function storeOnWalrus(encryptedBlob: string): Promise<StoreOnWalrusResult> {
+export async function storeOnWalrus(
+  encryptedBlob: string
+): Promise<StoreOnWalrusResult> {
   const serverKeyBase64 = process.env.DEDICATED_WALLET_PRIVATE_KEY;
   if (!serverKeyBase64) {
-    throw new Error('Walrus Upload Engine Error: Missing DEDICATED_WALLET_PRIVATE_KEY');
+    throw new Error(
+      'Walrus Upload Engine Error: Missing DEDICATED_WALLET_PRIVATE_KEY'
+    );
   }
 
   let privateKeyBytes: Uint8Array;
@@ -26,7 +30,9 @@ export async function storeOnWalrus(encryptedBlob: string): Promise<StoreOnWalru
   }
 
   const serverKeypair = Ed25519Keypair.fromSecretKey(privateKeyBytes);
-  console.log(`📡 Sending payload to Walrus via dedicated server identity: ${serverKeypair.getPublicKey().toSuiAddress()}`);
+  console.log(
+    `📡 Sending payload to Walrus via dedicated server identity: ${serverKeypair.getPublicKey().toSuiAddress()}`
+  );
 
   const result = await walrusClient.walrus.writeBlob({
     blob: new TextEncoder().encode(encryptedBlob),
@@ -43,7 +49,10 @@ export async function storeOnWalrus(encryptedBlob: string): Promise<StoreOnWalru
     blobId: blobId,
     suiTxHash: 'walrus-stored',
     walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
-    suiExplorerUrl: suiObjectId !== 'unknown' ? `https://suiscan.xyz/${activeNetwork}/object/${suiObjectId}` : '',
+    suiExplorerUrl:
+      suiObjectId !== 'unknown'
+        ? `https://suiscan.xyz/${activeNetwork}/object/${suiObjectId}`
+        : '',
     suiObjectId: suiObjectId,
   };
 }

@@ -97,33 +97,36 @@ export class AnchorProofClient {
   }
 
   async saveConversation(
-  params: SaveConversationParams
-): Promise<SaveConversationResponse> {
-  const crypto = this.getCrypto();
-  
-  // NO timestamp - matches backend verification
-  const messageToSign = JSON.stringify({
-    conversationId: params.conversationId,
-    customerId: params.customerId || 'unknown',
-    agentId: params.agentId || 'unknown',
-  });
-  
-  const rawSignature = await crypto.signMessage(messageToSign);
-  const signatureBytes = fromBase64(rawSignature);
-  const signatureBase64 = toBase64(signatureBytes);
-  const publicKey = crypto.getPublicKey();
-  
-  const response = await fetch(`${AnchorProofClient.globalConfig!.apiBaseUrl}/api/chat/save`, {
-    method: 'POST',
-    headers: this.getHeaders(),
-    credentials: 'include',
-    body: JSON.stringify({
-      ...params,
-      signature: signatureBase64,
-      publicKey,
-    }),
-  });
+    params: SaveConversationParams
+  ): Promise<SaveConversationResponse> {
+    const crypto = this.getCrypto();
 
-  return this.handleResponse<SaveConversationResponse>(response);
-}
+    // NO timestamp - matches backend verification
+    const messageToSign = JSON.stringify({
+      conversationId: params.conversationId,
+      customerId: params.customerId || 'unknown',
+      agentId: params.agentId || 'unknown',
+    });
+
+    const rawSignature = await crypto.signMessage(messageToSign);
+    const signatureBytes = fromBase64(rawSignature);
+    const signatureBase64 = toBase64(signatureBytes);
+    const publicKey = crypto.getPublicKey();
+
+    const response = await fetch(
+      `${AnchorProofClient.globalConfig!.apiBaseUrl}/api/chat/save`,
+      {
+        method: 'POST',
+        headers: this.getHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          ...params,
+          signature: signatureBase64,
+          publicKey,
+        }),
+      }
+    );
+
+    return this.handleResponse<SaveConversationResponse>(response);
+  }
 }

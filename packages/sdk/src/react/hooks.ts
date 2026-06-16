@@ -1,6 +1,10 @@
 import { useCallback, useState } from 'react';
 import { AnchorProofClient } from '../client';
-import type { SendMessageResponse, SaveConversationResponse, SaveConversationParams } from '../types';
+import type {
+  SendMessageResponse,
+  SaveConversationResponse,
+  SaveConversationParams,
+} from '../types';
 
 interface AnchorProofCredentials {
   apiKey: string;
@@ -48,7 +52,9 @@ export function useAnchorProof(options: UseAnchorProofOptions) {
   );
 
   const saveConversation = useCallback(
-    async (params: SaveConversationParams): Promise<SaveConversationResponse> => {
+    async (
+      params: SaveConversationParams
+    ): Promise<SaveConversationResponse> => {
       setLoading(true);
       setError(null);
       try {
