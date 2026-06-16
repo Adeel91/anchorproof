@@ -20,6 +20,12 @@ export interface SendMessageParams {
   agentId?: string;
 }
 
+export interface SaveConversationParams {
+  conversationId: string;
+  customerId?: string;
+  agentId?: string;
+}
+
 export interface Message {
   id: string;
   role: string;
@@ -40,28 +46,12 @@ export interface SendMessageResponse {
   agentId: string;
 }
 
-export interface GetMessagesResponse {
-  success: boolean;
-  conversationId: string;
-  messages: Message[];
-  count: number;
-}
-
 export interface SaveConversationResponse {
   success: boolean;
   blobId: string;
   conversationId: string;
   messageCount: number;
   walrusExplorerUrl: string;
-}
-
-export interface VerifyMessageResponse {
-  valid: boolean;
-  message: string;
-  messageId: string;
-  role: string;
-  content: string;
-  timestamp: string;
 }
 
 export interface StoredKeyPair {

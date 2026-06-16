@@ -1,11 +1,6 @@
 import { useCallback, useState } from 'react';
 import { AnchorProofClient } from '../client';
-import type {
-  SendMessageResponse,
-  GetMessagesResponse,
-  SaveConversationResponse,
-  VerifyMessageResponse,
-} from '../types';
+import type { SendMessageResponse, SaveConversationResponse, SaveConversationParams } from '../types';
 
 interface AnchorProofCredentials {
   apiKey: string;
@@ -52,52 +47,12 @@ export function useAnchorProof(options: UseAnchorProofOptions) {
     [client]
   );
 
-  const getMessages = useCallback(
-    async (conversationId: string): Promise<GetMessagesResponse> => {
-      setLoading(true);
-      setError(null);
-      try {
-        return await client.getMessages(conversationId);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [client]
-  );
-
   const saveConversation = useCallback(
-    async (
-      conversationId: string,
-      customerId?: string,
-      agentId?: string
-    ): Promise<SaveConversationResponse> => {
+    async (params: SaveConversationParams): Promise<SaveConversationResponse> => {
       setLoading(true);
       setError(null);
       try {
-        return await client.saveConversation(
-          conversationId,
-          customerId,
-          agentId
-        );
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [client]
-  );
-
-  const verifyMessage = useCallback(
-    async (messageId: string): Promise<VerifyMessageResponse> => {
-      setLoading(true);
-      setError(null);
-      try {
-        return await client.verifyMessage(messageId);
+        return await client.saveConversation(params);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
         throw err;
@@ -113,8 +68,6 @@ export function useAnchorProof(options: UseAnchorProofOptions) {
     loading,
     error,
     sendMessage,
-    getMessages,
     saveConversation,
-    verifyMessage,
   };
 }

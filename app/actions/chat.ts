@@ -17,3 +17,17 @@ export async function sendMessageAction(
     agentId,
   });
 }
+
+export async function saveConversationAction(
+  conversationId: string,
+  customerId?: string,
+  agentId?: string
+) {
+  const result = await anchorProofClient.saveConversation({
+    conversationId,
+    customerId,
+    agentId,
+  });
+  
+  return result;
+}

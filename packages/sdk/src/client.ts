@@ -1,9 +1,8 @@
 import type {
   SendMessageParams,
   SendMessageResponse,
-  GetMessagesResponse,
   SaveConversationResponse,
-  VerifyMessageResponse,
+  SaveConversationParams,
 } from './types';
 import { AnchorProofCrypto } from './crypto';
 import { fromBase64, toBase64 } from '@mysten/bcs';
@@ -97,49 +96,34 @@ export class AnchorProofClient {
     return this.handleResponse<SendMessageResponse>(response);
   }
 
-  async getMessages(conversationId: string): Promise<GetMessagesResponse> {
-    const response = await fetch(
-      `${AnchorProofClient.globalConfig!.apiBaseUrl}/api/chat/messages?conversationId=${encodeURIComponent(conversationId)}`,
-      {
-        method: 'GET',
-        headers: this.getHeaders(),
-        credentials: 'include',
-      }
-    );
-    return this.handleResponse<GetMessagesResponse>(response);
-  }
-
   async saveConversation(
-    conversationId: string,
-    customerId?: string,
-    agentId?: string
-  ): Promise<SaveConversationResponse> {
-    const response = await fetch(
-      `${AnchorProofClient.globalConfig!.apiBaseUrl}/api/chat/save`,
-      {
-        method: 'POST',
-        headers: this.getHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({
-          conversationId,
-          customerId: customerId || 'unknown',
-          agentId: agentId || 'unknown',
-        }),
-      }
-    );
-    return this.handleResponse<SaveConversationResponse>(response);
-  }
+  params: SaveConversationParams
+): Promise<SaveConversationResponse> {
+  const crypto = this.getCrypto();
+  
+  // NO timestamp - matches backend verification
+  const messageToSign = JSON.stringify({
+    conversationId: params.conversationId,
+    customerId: params.customerId || 'unknown',
+    agentId: params.agentId || 'unknown',
+  });
+  
+  const rawSignature = await crypto.signMessage(messageToSign);
+  const signatureBytes = fromBase64(rawSignature);
+  const signatureBase64 = toBase64(signatureBytes);
+  const publicKey = crypto.getPublicKey();
+  
+  const response = await fetch(`${AnchorProofClient.globalConfig!.apiBaseUrl}/api/chat/save`, {
+    method: 'POST',
+    headers: this.getHeaders(),
+    credentials: 'include',
+    body: JSON.stringify({
+      ...params,
+      signature: signatureBase64,
+      publicKey,
+    }),
+  });
 
-  async verifyMessage(messageId: string): Promise<VerifyMessageResponse> {
-    const response = await fetch(
-      `${AnchorProofClient.globalConfig!.apiBaseUrl}/api/chat/verify`,
-      {
-        method: 'POST',
-        headers: this.getHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({ messageId }),
-      }
-    );
-    return this.handleResponse<VerifyMessageResponse>(response);
-  }
+  return this.handleResponse<SaveConversationResponse>(response);
+}
 }

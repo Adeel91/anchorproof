@@ -5,10 +5,9 @@ export { MessageRole } from './types';
 export type {
   AnchorProofConfig,
   SendMessageParams,
+  SaveConversationParams,
   SendMessageResponse,
-  GetMessagesResponse,
   SaveConversationResponse,
-  VerifyMessageResponse,
   Message,
   StoredKeyPair,
 } from './types';

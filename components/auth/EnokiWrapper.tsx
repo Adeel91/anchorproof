@@ -15,6 +15,10 @@ interface WrapperProps {
   children: React.ReactNode;
 }
 
+type SupportedNetworks = 'testnet' | 'mainnet';
+
+const activeNetwork = (process.env.NEXT_PUBLIC_SUI_NETWORK ?? 'testnet') as SupportedNetworks;
+
 const { networkConfig } = createNetworkConfig({
   testnet: {
     url: getJsonRpcFullnodeUrl('testnet'),
@@ -38,7 +42,7 @@ export default function EnokiWrapper({ children }: WrapperProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networkConfig} defaultNetwork="testnet">
+      <SuiClientProvider networks={networkConfig} defaultNetwork={activeNetwork}>
         <RegisterEnokiWalletsPlugin />
         <WalletProvider autoConnect>{children}</WalletProvider>
       </SuiClientProvider>

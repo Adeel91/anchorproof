@@ -8,10 +8,12 @@ export async function proxy(request: NextRequest) {
   const isAuthPage = url.pathname === '/login';
   const isDashboardRoute = url.pathname.startsWith('/dashboard');
 
+  const chatRoutes = ['/api/chat/send', '/api/chat/save'];
+  const isChatRoute = chatRoutes.some((route) => url.pathname === route);
+
   const protectedApiRoutes = [
     '/api/keys',
     '/api/tenant',
-    '/api/chat',
     '/api/walrus/list',
     '/api/walrus/blob',
     '/api/walrus/verify',
@@ -20,11 +22,7 @@ export async function proxy(request: NextRequest) {
     url.pathname.startsWith(route)
   );
 
-  const isVerifyEndpoint = url.pathname === '/api/verify';
-  const isChatSendEndpoint = url.pathname === '/api/chat/send';
-  const isChatMessagesEndpoint = url.pathname === '/api/chat/messages';
-
-  if (isVerifyEndpoint || isChatSendEndpoint || isChatMessagesEndpoint) {
+  if (isChatRoute) {
     return NextResponse.next();
   }
 
