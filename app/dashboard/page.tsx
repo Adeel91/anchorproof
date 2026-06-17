@@ -1,6 +1,10 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import DashboardClient from '@/components/dashboard/DashboardClient';
+import { StatsCards } from '@/components/dashboard/overview/StatsCards';
+import { ComplianceHealth } from '@/components/dashboard/overview/ComplianceHealth';
+import { ActivityTimeline } from '@/components/dashboard/overview/ActivityTimeline';
+import { SystemStatus } from '@/components/dashboard/overview/SystemStatus';
+import { ApiKeyOverview } from '@/components/dashboard/overview/ApiKeyOverview';
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();
@@ -10,5 +14,13 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  return <DashboardClient />;
+  return (
+    <div className='mt-16 space-y-8'>
+      <SystemStatus />
+      <StatsCards />
+      <ComplianceHealth />
+      <ActivityTimeline />
+      <ApiKeyOverview />
+    </div>
+  );
 }

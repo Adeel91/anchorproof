@@ -29,31 +29,31 @@ export default function Primitives() {
   return (
     <section
       id="primitives"
-      className="py-28 bg-slate-950 relative z-10 border-t border-slate-900/60"
+      className="py-28 bg-slate-950 relative z-10 border-t border-slate-800/50"
     >
       <Container>
         <div className="max-w-3xl mb-16">
           <span className="text-xs font-mono font-bold uppercase tracking-widest text-indigo-400">
             System Core Parameters
           </span>
-          <h2 className="text-3xl sm:text-5xl font-bold text-white mt-4 tracking-tight">
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mt-4 tracking-tight">
             Structural Core Mechanics
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {blueprints.map((b, i) => (
             <div
               key={i}
-              className="neon-border-glow p-8 bg-slate-950 flex flex-col gap-3 transition-all duration-300 rounded-xl"
+              className="neon-border-glow p-8 bg-slate-950 flex flex-col gap-3 transition-all duration-300 rounded-xl border border-slate-800/50 hover:border-cyan-400/30"
             >
               <div className="text-xs font-mono text-cyan-400 font-semibold tracking-wider">
                 {`${moduleNumber(i)} // ${b.layer}`}
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight mt-1">
+              <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight mt-1">
                 {b.title}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-sans font-light mt-2">
+              <p className="text-sm sm:text-base text-slate-400 leading-relaxed font-light mt-2">
                 {b.text}
               </p>
             </div>

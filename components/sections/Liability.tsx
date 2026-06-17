@@ -4,22 +4,24 @@ export default function Liability() {
   return (
     <section
       id="liability"
-      className="py-32 border-y border-slate-900 bg-slate-950 relative z-10"
+      className="py-32 border-y border-slate-800/50 bg-slate-950 relative z-10"
     >
       <Container>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
           <div className="lg:col-span-6">
-            <span className="text-[10px] font-mono font-black uppercase tracking-widest text-cyan-400 bg-cyan-400/5 px-2.5 py-1 rounded border border-cyan-400/20">
+            <span className="text-xs font-mono font-black uppercase tracking-widest text-cyan-400 bg-cyan-400/5 px-3 py-1.5 rounded-lg border border-cyan-400/20 inline-block mb-6">
               The Regulatory Hazard Matrix
             </span>
-            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-mono font-black text-white mt-6 uppercase tracking-tight leading-[1.05]">
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.1]">
               AI Agent declarations carry absolute{' '}
-              <span className="text-cyan-400">corporate liability.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-400">
+                corporate liability.
+              </span>
             </h2>
           </div>
 
-          <div className="lg:col-span-6 space-y-6 text-slate-400 text-sm sm:text-lg leading-relaxed font-sans font-light">
-            <p className="font-mono font-bold text-slate-200 uppercase tracking-wider text-xs bg-slate-900/40 p-3 border-l-2 border-cyan-400">
+          <div className="lg:col-span-6 space-y-6 text-slate-400 text-base sm:text-lg lg:text-xl leading-relaxed">
+            <p className="font-mono font-bold text-slate-200 uppercase tracking-wider text-xs bg-slate-900/40 p-4 border-l-2 border-cyan-400 rounded-r-lg">
               CASE REFERENCE OVERVIEW // THE AIR CANADA LITIGATION PRECEDENT
             </p>
             <p>
@@ -36,8 +38,8 @@ export default function Liability() {
                 EU AI Act enforcement timeline (effective August 2026)
               </span>{' '}
               carrying catastrophic fines up to{' '}
-              <span className="text-amber-500 font-bold font-mono">
-                Nordic Scale: €35 Million or 7% of total global turnover
+              <span className="text-amber-400 font-bold font-mono text-lg">
+                €35 Million or 7% of total global turnover
               </span>
               , unverified, modifiable databases are a massive corporate
               liability.
