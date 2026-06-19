@@ -21,6 +21,7 @@ model Tenant {
   users            User[]
   verifications    Verification[]
   auditLogs        AuditLog[]
+  reports          Report[]
 }
 
 model User {
@@ -97,4 +98,23 @@ model AuditLog {
   createdAt      DateTime @default(now())
   
   tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id               String    @id @default(cuid())
+  tenantId         String
+  name             String
+  type             String    // 'full' | 'single'
+  generatedBy      String
+  generatedAt      DateTime  @default(now())
+  conversationId   String?   // For single conversation reports
+  summary          Json?     // { total, verified, tampered, integrityRate, totalMessages }
+  hash             String?   // SHA-256 hash of the report content
+  size             Int?      // Size in KB
+  status           String    // 'ready' | 'generating' | 'failed'
+  expiresAt        DateTime? // Optional: auto-delete after 30 days
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  tenant           Tenant    @relation(fields: [tenantId], references: [id])
 }

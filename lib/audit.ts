@@ -13,7 +13,8 @@ export type AuditAction =
   | 'USER_LOGOUT'
   | 'TAMPER_DETECTED'
   | 'VERIFICATION_FAILED'
-  | 'CONVERSATION_DELETED';
+  | 'REPORT_GENERATED'
+  | 'REPORT_DELETED';
 
 export interface AuditLogData {
   action: AuditAction;

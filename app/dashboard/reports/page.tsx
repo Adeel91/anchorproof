@@ -1,8 +1,9 @@
+// app/dashboard/reports/page.tsx
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { Reports } from '@/components/dashboard/compliance/Reports';
+import { Reports } from '@/components/dashboard/reports/Reports';
 
-export default async function CompliancePage() {
+export default async function ReportsPage() {
   const cookieStore = await cookies();
   const session = cookieStore.get('anchorproof-session');
 

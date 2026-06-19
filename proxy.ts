@@ -24,6 +24,7 @@ export async function proxy(request: NextRequest) {
     '/api/walrus/verify',
     '/api/users/list',
     '/api/tenant/update',
+    '/api/reports',
   ];
   const needsSession = protectedApiRoutes.some((route) =>
     url.pathname.startsWith(route)
