@@ -1,7 +1,8 @@
+// app/api/tenant/update/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { createAuditLog } from '@/lib/audit';
+import { createAuditLogAsync } from '@/lib/audit';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -56,10 +57,13 @@ export async function PUT(request: NextRequest) {
       data: { name: name.trim() },
     });
 
-    // ✅ AUDIT LOG: Tenant updated
-    await createAuditLog({
+    createAuditLogAsync({
       action: 'TENANT_UPDATED',
+      tenantId: user.tenantId,
       details: {
+        actorId: user.id,
+        actorName: user.name || 'Unknown',
+        actorEmail: user.email || 'Unknown',
         oldName: oldName,
         newName: name.trim(),
       },

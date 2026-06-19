@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { createAuditLog } from '@/lib/audit';
+import { createAuditLogAsync } from '@/lib/audit';
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -56,12 +56,16 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // ✅ AUDIT LOG: API Key revoked
-    await createAuditLog({
+    createAuditLogAsync({
       action: 'API_KEY_REVOKED',
+      tenantId: user.tenantId,
       details: {
+        actorId: user.id,
+        actorName: user.name || 'Unknown',
+        actorEmail: user.email || 'Unknown',
         keyId: key.id,
         keyName: key.name,
+        keyRole: key.role,
       },
     });
 

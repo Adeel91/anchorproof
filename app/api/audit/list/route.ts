@@ -1,9 +1,9 @@
 // app/api/audit/list/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
     const userId = cookieStore.get('anchorproof-session')?.value;
@@ -21,20 +21,26 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const url = new URL(request.url);
+    const limit = parseInt(url.searchParams.get('limit') || '50');
+    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const action = url.searchParams.get('action') || undefined;
+    const conversationId = url.searchParams.get('conversationId') || undefined;
+    const blobId = url.searchParams.get('blobId') || undefined;
 
-    const where: any = { tenantId: user.tenant.id };
-    if (action && action !== 'all') {
-      where.action = action;
-    }
+    const where: any = {
+      tenantId: user.tenant.id,
+    };
 
+    if (action) where.action = action;
+    if (conversationId) where.conversationId = conversationId;
+    if (blobId) where.blobId = blobId;
+
+    // ✅ FIXED: Use 'createdAt' instead of 'timestamp'
     const [logs, total] = await Promise.all([
       prisma.auditLog.findMany({
         where,
-        orderBy: { timestamp: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: limit,
         skip: offset,
       }),

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { createAuditLog } from '@/lib/audit';
+import { createAuditLogAsync } from '@/lib/audit';
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -50,11 +50,17 @@ export async function DELETE(request: NextRequest) {
       where: { id: reportId },
     });
 
-    await createAuditLog({
+    createAuditLogAsync({
       action: 'REPORT_DELETED',
+      tenantId: user.tenant.id,
       details: {
+        actorId: user.id,
+        actorName: user.name || 'Unknown',
+        actorEmail: user.email || 'Unknown',
         reportId: report.id,
         reportName: report.name,
+        reportType: report.type,
+        reportSize: report.size,
       },
     });
 

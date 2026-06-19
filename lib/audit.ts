@@ -1,6 +1,5 @@
 // lib/audit.ts
 import { prisma } from '@/lib/prisma';
-import { cookies } from 'next/headers';
 
 export type AuditAction = 
   | 'CONVERSATION_SAVED'
@@ -20,6 +19,7 @@ export interface AuditLogData {
   action: AuditAction;
   blobId?: string;
   conversationId?: string;
+  tenantId: string;
   details?: Record<string, any>;
   ipAddress?: string;
   userAgent?: string;
@@ -27,86 +27,87 @@ export interface AuditLogData {
 
 export async function createAuditLog(data: AuditLogData) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get('anchorproof-session')?.value;
-
-    if (!userId) {
-      console.warn('No user session found, skipping audit log');
-      return;
+    if (!data.tenantId) {
+      console.warn('⚠️ No tenantId provided, cannot create audit log');
+      return null;
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { 
-        tenantId: true, 
-        name: true, 
-        email: true 
-      },
-    });
-
-    if (!user) {
-      console.warn('User not found, skipping audit log');
-      return;
-    }
-
-    await prisma.auditLog.create({
+    const auditLog = await prisma.auditLog.create({
       data: {
-        tenantId: user.tenantId,
+        tenantId: data.tenantId,
         action: data.action,
-        actorId: userId,
-        actorName: user.name || undefined,
-        actorEmail: user.email || undefined,
         blobId: data.blobId,
         conversationId: data.conversationId,
-        details: data.details || undefined,
+        details: data.details || {},
         ipAddress: data.ipAddress,
         userAgent: data.userAgent,
       },
     });
 
     console.log(`✅ Audit log created: ${data.action}`);
+    return auditLog;
   } catch (error) {
-    console.error('Failed to create audit log:', error);
+    console.error('❌ Failed to create audit log:', error);
+    return null;
   }
 }
 
-// For server-side usage without cookies (e.g., from webhooks)
-export async function createAuditLogWithUser(
-  userId: string,
-  data: AuditLogData
-) {
+export function createAuditLogAsync(data: AuditLogData): void {
+  createAuditLog(data).catch((error) => {
+    console.error('❌ Background audit log failed:', error);
+  });
+}
+
+export async function getAuditLogs(params: {
+  tenantId: string;
+  conversationId?: string;
+  blobId?: string;
+  action?: AuditAction;
+  limit?: number;
+  offset?: number;
+  startDate?: Date;
+  endDate?: Date;
+}) {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { 
-        tenantId: true, 
-        name: true, 
-        email: true 
-      },
-    });
-
-    if (!user) {
-      console.warn('User not found, skipping audit log');
-      return;
+    const { 
+      tenantId, 
+      conversationId, 
+      blobId, 
+      action, 
+      limit = 50, 
+      offset = 0,
+      startDate,
+      endDate 
+    } = params;
+    
+    const where: any = { tenantId };
+    if (conversationId) where.conversationId = conversationId;
+    if (blobId) where.blobId = blobId;
+    if (action) where.action = action;
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = startDate;
+      if (endDate) where.createdAt.lte = endDate;
     }
-
-    await prisma.auditLog.create({
-      data: {
-        tenantId: user.tenantId,
-        action: data.action,
-        actorId: userId,
-        actorName: user.name || undefined,
-        actorEmail: user.email || undefined,
-        blobId: data.blobId,
-        conversationId: data.conversationId,
-        details: data.details || undefined,
-        ipAddress: data.ipAddress,
-        userAgent: data.userAgent,
-      },
-    });
-
-    console.log(`✅ Audit log created: ${data.action}`);
+    
+    const [logs, total] = await Promise.all([
+      prisma.auditLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.auditLog.count({ where }),
+    ]);
+    
+    return {
+      logs,
+      total,
+      limit,
+      offset,
+    };
   } catch (error) {
-    console.error('Failed to create audit log:', error);
+    console.error('❌ Failed to get audit logs:', error);
+    return { logs: [], total: 0, limit: 50, offset: 0 };
   }
 }

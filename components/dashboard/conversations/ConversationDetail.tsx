@@ -2,7 +2,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Loader2, CheckCircle, AlertCircle, Database, ExternalLink } from 'lucide-react';
+import { 
+  X, 
+  Loader2, 
+  CheckCircle, 
+  AlertCircle, 
+  Database, 
+  ExternalLink,
+  Shield,
+  FileCheck,
+  Link as LinkIcon,
+  Copy,
+  Calendar,
+  Lock
+} from 'lucide-react';
+import { activeNetwork } from '@/lib/walrus/client';
 
 interface ConversationDetailProps {
   blobId: string;
@@ -13,8 +27,10 @@ export function ConversationDetail({ blobId, onClose }: ConversationDetailProps)
   const [conversation, setConversation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [verifying, setVerifying] = useState(false);
   const [isFallback, setIsFallback] = useState(false);
+  const [isEncrypted, setIsEncrypted] = useState(false);
+  const [isPlaintext, setIsPlaintext] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
     if (blobId) {
@@ -29,24 +45,20 @@ export function ConversationDetail({ blobId, onClose }: ConversationDetailProps)
     setLoading(true);
     setError(null);
     setIsFallback(false);
+    setIsEncrypted(false);
+    setIsPlaintext(false);
     
     try {
-      console.log('Fetching conversation for blobId:', blobId);
       const res = await fetch(`/api/walrus/blob/${blobId}`);
       const data = await res.json();
       
-      console.log('API Response:', data);
-      
       if (!res.ok) {
-        // If we have fallback data, use it
         if (data.fallbackData) {
-          console.log('Using fallback data for conversation');
           setConversation({
             ...data.fallbackData,
             blobId: data.blobId || blobId,
           });
           setIsFallback(true);
-          setError('Blob data temporarily unavailable. Showing stored metadata.');
           setLoading(false);
           return;
         }
@@ -55,7 +67,9 @@ export function ConversationDetail({ blobId, onClose }: ConversationDetailProps)
       
       if (data.success) {
         setConversation(data);
-        setIsFallback(false);
+        setIsFallback(data.isFallback || false);
+        setIsEncrypted(data.isEncrypted || false);
+        setIsPlaintext(data.isPlaintext || false);
         setError(null);
       } else {
         throw new Error(data.error || 'Failed to fetch conversation');
@@ -68,29 +82,20 @@ export function ConversationDetail({ blobId, onClose }: ConversationDetailProps)
     }
   };
 
-  const handleVerify = async () => {
-    setVerifying(true);
-    try {
-      const res = await fetch('/api/walrus/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ blobId }),
-      });
-      const data = await res.json();
-      
-      if (res.ok) {
-        alert(data.message || 'Verification successful');
-        // Refresh conversation data
-        await fetchConversation();
-      } else {
-        alert(data.error || 'Verification failed');
-      }
-    } catch (error) {
-      console.error('Verification failed:', error);
-      alert('Verification failed');
-    } finally {
-      setVerifying(false);
-    }
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(type);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   // Loading state
@@ -159,6 +164,10 @@ export function ConversationDetail({ blobId, onClose }: ConversationDetailProps)
     );
   }
 
+  const suiTxHash = conversation.suiTxHash || conversation.blobId;
+  const messages = conversation.messages || [];
+  const messageCount = messages.length;
+
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
@@ -166,9 +175,9 @@ export function ConversationDetail({ blobId, onClose }: ConversationDetailProps)
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
           <div>
             <h3 className="text-lg font-semibold text-white">Conversation Details</h3>
-            <div className="flex items-center gap-3 mt-1">
+            <div className="flex items-center gap-3 mt-1 flex-wrap">
               <span className="text-xs text-slate-500 font-mono">
-                {conversation.blobId?.slice(0, 16)}...
+                {conversation.conversationId || 'N/A'}
               </span>
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
                 conversation.verifiedAt
@@ -177,6 +186,24 @@ export function ConversationDetail({ blobId, onClose }: ConversationDetailProps)
               }`}>
                 {conversation.verifiedAt ? 'Verified' : 'Pending'}
               </span>
+              {conversation.verifiedAt && (
+                <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {formatDate(conversation.verifiedAt)}
+                </span>
+              )}
+              {isEncrypted && (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center gap-1">
+                  <Lock className="w-3 h-3" />
+                  Encrypted
+                </span>
+              )}
+              {isPlaintext && (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                  <Database className="w-3 h-3" />
+                  Plaintext
+                </span>
+              )}
               {isFallback && (
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
                   <Database className="w-3 h-3" />
@@ -218,16 +245,112 @@ export function ConversationDetail({ blobId, onClose }: ConversationDetailProps)
             <div className="p-3 rounded-lg bg-slate-800/30">
               <p className="text-[10px] text-slate-500 uppercase tracking-wider">Messages</p>
               <p className="text-sm text-white">
-                {conversation.messages?.length || 0}
+                {messageCount}
               </p>
+            </div>
+          </div>
+
+          {/* Proof Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/50">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <Database className="w-4 h-4 text-cyan-400" />
+                  <span className="text-xs text-slate-500 font-mono">Storage Reference</span>
+                </div>
+                <button
+                  onClick={() => copyToClipboard(conversation.blobId, 'blob')}
+                  className="text-slate-500 hover:text-white transition-colors"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <code className="text-cyan-400 text-xs break-all font-mono block mb-1">
+                {conversation.blobId}
+              </code>
+              {copied === 'blob' && (
+                <span className="text-[10px] text-emerald-400">Copied!</span>
+              )}
+              <a
+                href={`https://walruscan.com/${activeNetwork}/blob/${conversation.blobId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block flex items-center gap-1"
+              >
+                <ExternalLink className="w-3 h-3" />
+                View Storage Record
+              </a>
+            </div>
+
+            <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/50">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-purple-400" />
+                  <span className="text-xs text-slate-500 font-mono">Verification Proof</span>
+                </div>
+                <button
+                  onClick={() => copyToClipboard(suiTxHash, 'sui')}
+                  className="text-slate-500 hover:text-white transition-colors"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <code className="text-purple-400 text-xs break-all font-mono block mb-1">
+                {suiTxHash}
+              </code>
+              {copied === 'sui' && (
+                <span className="text-[10px] text-emerald-400">Copied!</span>
+              )}
+              <a
+                href={`https://suiscan.xyz/${activeNetwork}/object/${suiTxHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block flex items-center gap-1"
+              >
+                <LinkIcon className="w-3 h-3" />
+                View Verification Proof
+              </a>
             </div>
           </div>
 
           {/* Transcript */}
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-white mb-3">Transcript</h4>
-            {conversation.messages && conversation.messages.length > 0 ? (
-              conversation.messages.map((msg: any, idx: number) => (
+            <h4 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+              <FileCheck className="w-4 h-4 text-indigo-400" />
+              Transcript ({messageCount} messages)
+              {isEncrypted && messageCount === 0 && (
+                <span className="text-xs text-purple-400 font-normal ml-2">
+                  (Encrypted - verify on-chain to decrypt)
+                </span>
+              )}
+              {isPlaintext && (
+                <span className="text-xs text-blue-400 font-normal ml-2">
+                  (Unencrypted)
+                </span>
+              )}
+            </h4>
+            
+            {isEncrypted && messageCount === 0 && (
+              <div className="text-center py-8 bg-purple-500/5 rounded-xl border border-purple-500/20">
+                <Lock className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+                <p className="text-sm text-slate-400">This conversation is encrypted</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  The content is protected with SEAL encryption. 
+                  <br />Verify the blob on-chain to view the messages.
+                </p>
+                <a
+                  href={`https://suiscan.xyz/${activeNetwork}/object/${suiTxHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-block text-indigo-400 hover:text-indigo-300 text-sm"
+                >
+                  Verify on SuiScan →
+                </a>
+              </div>
+            )}
+
+            {messageCount > 0 && !isEncrypted ? (
+              messages.map((msg: any, idx: number) => (
                 <div
                   key={idx}
                   className={`p-4 rounded-xl ${
@@ -252,51 +375,45 @@ export function ConversationDetail({ blobId, onClose }: ConversationDetailProps)
                 </div>
               ))
             ) : (
-              <div className="text-center py-8">
-                {isFallback ? (
-                  <>
-                    <Database className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-                    <p className="text-sm text-slate-400">Conversation data is temporarily unavailable</p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      The blob exists on Walrus but couldn't be retrieved. Showing stored metadata instead.
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-slate-500 text-sm">No messages in this conversation</p>
-                )}
-              </div>
+              !isEncrypted && (
+                <div className="text-center py-8">
+                  {isFallback ? (
+                    <>
+                      <Database className="w-12 h-12 text-amber-400 mx-auto mb-4" />
+                      <p className="text-sm text-slate-400">Conversation data is temporarily unavailable</p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        The blob exists on Walrus but couldn't be retrieved. Showing stored metadata instead.
+                      </p>
+                    </>
+                  ) : messageCount === 0 && !isEncrypted ? (
+                    <p className="text-slate-500 text-sm">No messages in this conversation</p>
+                  ) : null}
+                </div>
+              )
             )}
           </div>
         </div>
 
         {/* Footer Actions */}
         <div className="px-6 py-4 border-t border-slate-800 flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={handleVerify}
-            disabled={verifying || isFallback}
-            className="flex-1 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {verifying ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Verifying...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-4 h-4" />
-                Verify Conversation
-              </>
-            )}
-          </button>
-          
           <a
-            href={`https://walruscan.com/testnet/blob/${conversation.blobId}`}
+            href={`https://walruscan.com/${activeNetwork}/blob/${conversation.blobId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 text-center bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            className="flex-1 text-center bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
           >
-            <ExternalLink className="w-4 h-4" />
-            View on Walrus
+            <Database className="w-4 h-4" />
+            View Storage
+          </a>
+          
+          <a
+            href={`https://suiscan.xyz/${activeNetwork}/object/${suiTxHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 text-center bg-purple-600 hover:bg-purple-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+          >
+            <Shield className="w-4 h-4" />
+            Verify On-Chain
           </a>
           
           <button
@@ -305,6 +422,13 @@ export function ConversationDetail({ blobId, onClose }: ConversationDetailProps)
           >
             Close
           </button>
+        </div>
+
+        {/* Footer note */}
+        <div className="px-6 py-2 border-t border-slate-800/50 bg-slate-900/30">
+          <p className="text-[10px] text-slate-500 text-center font-mono">
+            🔒 Court-admissible evidence • Immutable • Verifiable on-chain
+          </p>
         </div>
       </div>
     </div>

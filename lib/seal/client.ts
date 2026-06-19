@@ -1,5 +1,6 @@
 import { SealClient } from '@mysten/seal';
 import { suiClient } from '@/lib/walrus/client';
+import { SUI_PACKAGE_ID } from '../sui/contract';
 
 const SEAL_KEY_SERVERS = [
   {
@@ -18,4 +19,4 @@ export const sealClient = new SealClient({
   verifyKeyServers: false,
 });
 
-export const SEAL_SYSTEM_PACKAGE_ID = process.env.NEXT_PUBLIC_SUI_PACKAGE_ID!;
+export const SEAL_SYSTEM_PACKAGE_ID = SUI_PACKAGE_ID;

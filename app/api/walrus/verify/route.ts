@@ -1,9 +1,10 @@
+// app/api/walrus/verify/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { walrusClient, activeNetwork } from '@/lib/walrus/client';
 import crypto from 'crypto';
-import { createAuditLog } from '@/lib/audit';
+import { createAuditLogAsync } from '@/lib/audit';
 
 const MASTER_KEY_HEX =
   process.env.MASTER_KEY || crypto.randomBytes(32).toString('hex');
@@ -70,14 +71,18 @@ export async function POST(request: NextRequest) {
 
     const isTampered = claimedContent && claimedContent !== originalContent;
 
-    // ✅ AUDIT LOG: Verification result
-    await createAuditLog({
+    // ✅ AUDIT LOG: Verification result (fire and forget)
+    createAuditLogAsync({
       action: isTampered ? 'TAMPER_DETECTED' : 'CONVERSATION_VERIFIED',
+      tenantId: user.tenant.id,
       blobId: blobId,
       conversationId: verification.conversationId,
       details: {
         verified: !isTampered,
         tampered: isTampered,
+        messageCount: conversation.messages.length,
+        originalContentLength: originalContent.length,
+        claimedContentLength: claimedContent?.length || 0,
         originalContent: originalContent.slice(0, 100),
         claimedContent: claimedContent?.slice(0, 100) || null,
       },

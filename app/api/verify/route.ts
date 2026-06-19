@@ -1,7 +1,8 @@
+// app/api/verify/route.ts
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { createAuditLog } from '@/lib/audit';
+import { createAuditLogAsync } from '@/lib/audit';
 
 export async function POST(req: Request) {
   try {
@@ -24,7 +25,6 @@ export async function POST(req: Request) {
     const blobId = crypto.randomUUID();
     const suiTxHash = crypto.randomUUID();
 
-    // Calculate content hash from metadata if provided
     let contentHash = null;
     if (metadata?.messages) {
       contentHash = crypto
@@ -48,16 +48,18 @@ export async function POST(req: Request) {
       },
     });
 
-    // ✅ AUDIT LOG: Verification created
-    await createAuditLog({
+    createAuditLogAsync({
       action: 'CONVERSATION_VERIFIED',
+      tenantId: key.tenantId,
       blobId: blobId,
       conversationId: metadata.conversationId,
       details: {
+        verificationId: verification.id,
         messageCount: metadata.messageCount || 1,
         customerId: metadata.customerId,
         agentId: metadata.agentId,
         modelUsed: metadata.modelUsed,
+        suiTxHash: suiTxHash,
       },
     });
 
@@ -69,6 +71,7 @@ export async function POST(req: Request) {
       verificationId: verification.id,
     });
   } catch (error) {
+    console.error('Verification creation error:', error);
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

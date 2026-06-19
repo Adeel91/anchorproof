@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { encryptPrivateKey } from '@/lib/anchorproof/server';
-import { createAuditLog } from '@/lib/audit';
+import { createAuditLogAsync } from '@/lib/audit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,14 +19,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user by ID
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { tenant: true },
     });
 
     if (!user) {
-      // Try to find by email if userId looks like an email
       if (userId.includes('@')) {
         const userByEmail = await prisma.user.findUnique({
           where: { email: userId },
@@ -39,7 +37,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // User not found - return error without clearing session
       return NextResponse.json(
         { error: 'User not found. Please refresh and try again.' },
         { status: 401 }
@@ -55,7 +52,6 @@ export async function POST(request: NextRequest) {
 
     const { name, expiresInDays = 90 } = await request.json();
 
-    // Generate keypair
     const rawPrivateKey = crypto.randomBytes(32);
     const keypair = Ed25519Keypair.fromSecretKey(rawPrivateKey);
 
@@ -83,13 +79,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // ✅ AUDIT LOG: API Key created
-    await createAuditLog({
+    createAuditLogAsync({
       action: 'API_KEY_CREATED',
+      tenantId: user.tenantId,
       details: {
+        actorId: user.id,
+        actorName: user.name || 'Unknown',
+        actorEmail: user.email || 'Unknown',
         keyName: name || `API Key ${new Date().toLocaleDateString()}`,
         keyId: newKey.id,
         role: 'admin',
+        expiresAt: expiresAt.toISOString(),
       },
     });
 
@@ -142,6 +142,20 @@ async function createApiKey(user: any, body: any) {
       expiresAt: expiresAt,
       publicKey: publicKeyBase64,
       encryptedPrivateKey: encryptedPrivateKey,
+    },
+  });
+
+  createAuditLogAsync({
+    action: 'API_KEY_CREATED',
+    tenantId: user.tenantId,
+    details: {
+      actorId: user.id,
+      actorName: user.name || 'Unknown',
+      actorEmail: user.email || 'Unknown',
+      keyName: name || `API Key ${new Date().toLocaleDateString()}`,
+      keyId: newKey.id,
+      role: 'admin',
+      expiresAt: expiresAt.toISOString(),
     },
   });
 

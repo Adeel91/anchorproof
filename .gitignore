@@ -55,3 +55,10 @@ next-env.d.ts
 
 # logs
 *.log
+
+# Sui / Move contracts
+contracts/**/build/
+contracts/**/.move/
+contracts/**/*.tar.gz
+contracts/**/Published.toml
+contracts/**/Move.lock

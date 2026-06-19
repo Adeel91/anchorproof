@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { createAuditLog } from '@/lib/audit';
+import { createAuditLogAsync } from '@/lib/audit';
 import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
@@ -32,7 +32,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a hash of the report data for verification
     const hashData = JSON.stringify({
       name,
       type,
@@ -55,17 +54,22 @@ export async function POST(request: NextRequest) {
         hash,
         size: size || 0,
         status: 'ready',
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       },
     });
 
-    await createAuditLog({
+    createAuditLogAsync({
       action: 'REPORT_GENERATED',
+      tenantId: user.tenantId,
       details: {
+        actorId: user.id,
+        actorName: user.name || 'Unknown',
+        actorEmail: user.email || 'Unknown',
         reportId: report.id,
         reportName: name,
         type: type,
         conversationId: conversationId || null,
+        size: size || 0,
       },
     });
 

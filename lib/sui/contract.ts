@@ -5,9 +5,9 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromBase64 } from '@mysten/bcs';
 import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
 
-const PACKAGE_ID = process.env.NEXT_PUBLIC_SUI_PACKAGE_ID!;
-const LEGAL_REGISTRY_ID = process.env.NEXT_PUBLIC_SUI_LEGAL_REGISTRY_ID!;
-const CLOCK_ID = '0x6'; // Sui system clock (always 0x6)
+export const SUI_PACKAGE_ID = process.env.SUI_PACKAGE_ID!;
+export const SUI_LEGAL_REGISTRY_ID = process.env.SUI_LEGAL_REGISTRY_ID!;
+export const SUI_CLOCK_ID = process.env.SUI_CLOCK_OBJECT_ID!;
 
 interface RecordOnChainParams {
   blobId: string;
@@ -53,10 +53,10 @@ export async function recordOnChain(params: RecordOnChainParams) {
   const signer = getSigner();
 
   tx.moveCall({
-    target: `${PACKAGE_ID}::anchorproof::verify_conversation`,
+    target: `${SUI_PACKAGE_ID}::anchorproof::verify_conversation`,
     arguments: [
-      tx.object(LEGAL_REGISTRY_ID),
-      tx.object(CLOCK_ID),
+      tx.object(SUI_LEGAL_REGISTRY_ID),
+      tx.object(SUI_CLOCK_ID),
       tx.pure.string(blobId),
       tx.pure.string(conversationId),
       tx.pure.vector('u8', contentHashBytes),
@@ -86,11 +86,11 @@ export async function sealApproveOnChain(blobId: string, viewer: string): Promis
     const signer = getSigner();
 
     tx.moveCall({
-      target: `${PACKAGE_ID}::anchorproof::seal_approve`,
+      target: `${SUI_PACKAGE_ID}::anchorproof::seal_approve`,
       arguments: [
         tx.pure.vector('u8', Buffer.from(blobId)),
         tx.pure.address(viewer),
-        tx.object(LEGAL_REGISTRY_ID),
+        tx.object(SUI_LEGAL_REGISTRY_ID),
       ],
     });
 
@@ -118,9 +118,9 @@ export async function isVerifiedOnChain(blobId: string): Promise<boolean> {
     const signer = getSigner();
 
     tx.moveCall({
-      target: `${PACKAGE_ID}::anchorproof::is_verified`,
+      target: `${SUI_PACKAGE_ID}::anchorproof::is_verified`,
       arguments: [
-        tx.object(LEGAL_REGISTRY_ID),
+        tx.object(SUI_LEGAL_REGISTRY_ID),
         tx.pure.string(blobId),
       ],
     });
@@ -149,9 +149,9 @@ export async function getLegalRecord(blobId: string) {
     const signer = getSigner();
 
     tx.moveCall({
-      target: `${PACKAGE_ID}::anchorproof::get_record`,
+      target: `${SUI_PACKAGE_ID}::anchorproof::get_record`,
       arguments: [
-        tx.object(LEGAL_REGISTRY_ID),
+        tx.object(SUI_LEGAL_REGISTRY_ID),
         tx.pure.string(blobId),
       ],
     });
@@ -181,9 +181,9 @@ export async function getRecordsByVerifier(verifier: string) {
     const signer = getSigner();
 
     tx.moveCall({
-      target: `${PACKAGE_ID}::anchorproof::get_records_by_verifier`,
+      target: `${SUI_PACKAGE_ID}::anchorproof::get_records_by_verifier`,
       arguments: [
-        tx.object(LEGAL_REGISTRY_ID),
+        tx.object(SUI_LEGAL_REGISTRY_ID),
         tx.pure.address(verifier),
       ],
     });
@@ -213,9 +213,9 @@ export async function getRecordsByDate(fromTimestamp: number, toTimestamp: numbe
     const signer = getSigner();
 
     tx.moveCall({
-      target: `${PACKAGE_ID}::anchorproof::get_records_by_date`,
+      target: `${SUI_PACKAGE_ID}::anchorproof::get_records_by_date`,
       arguments: [
-        tx.object(LEGAL_REGISTRY_ID),
+        tx.object(SUI_LEGAL_REGISTRY_ID),
         tx.pure.u64(fromTimestamp),
         tx.pure.u64(toTimestamp),
       ],
@@ -246,9 +246,9 @@ export async function markTamperedOnChain(blobId: string) {
     const signer = getSigner();
 
     tx.moveCall({
-      target: `${PACKAGE_ID}::anchorproof::mark_tampered`,
+      target: `${SUI_PACKAGE_ID}::anchorproof::mark_tampered`,
       arguments: [
-        tx.object(LEGAL_REGISTRY_ID),
+        tx.object(SUI_LEGAL_REGISTRY_ID),
         tx.pure.string(blobId),
       ],
     });
@@ -278,9 +278,9 @@ export async function revokeVerificationOnChain(blobId: string) {
     const signer = getSigner();
 
     tx.moveCall({
-      target: `${PACKAGE_ID}::anchorproof::revoke_verification`,
+      target: `${SUI_PACKAGE_ID}::anchorproof::revoke_verification`,
       arguments: [
-        tx.object(LEGAL_REGISTRY_ID),
+        tx.object(SUI_LEGAL_REGISTRY_ID),
         tx.pure.string(blobId),
       ],
     });
@@ -310,9 +310,9 @@ export async function getRecordCount(): Promise<number> {
     const signer = getSigner();
 
     tx.moveCall({
-      target: `${PACKAGE_ID}::anchorproof::get_record_count`,
+      target: `${SUI_PACKAGE_ID}::anchorproof::get_record_count`,
       arguments: [
-        tx.object(LEGAL_REGISTRY_ID),
+        tx.object(SUI_LEGAL_REGISTRY_ID),
       ],
     });
 
@@ -362,10 +362,10 @@ export async function humanReviewOnChain(
     const signer = getSigner();
 
     tx.moveCall({
-      target: `${PACKAGE_ID}::anchorproof::human_review`,
+      target: `${SUI_PACKAGE_ID}::anchorproof::human_review`,
       arguments: [
-        tx.object(LEGAL_REGISTRY_ID),
-        tx.object(CLOCK_ID),
+        tx.object(SUI_LEGAL_REGISTRY_ID),
+        tx.object(SUI_CLOCK_ID),
         tx.pure.string(blobId),
         tx.pure.u8(decision),
         tx.pure.vector('u8', notesHashBytes),

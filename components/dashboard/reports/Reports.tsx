@@ -70,17 +70,20 @@ export function Reports() {
         return {
           ...conv,
           messages: data.messages || [],
+          isTampered: data.tampered || false,
         };
       }
       return {
         ...conv,
         messages: [],
+        isTampered: false,
       };
     } catch (error) {
       console.error(`Failed to fetch messages for ${conv.conversationId}:`, error);
       return {
         ...conv,
         messages: [],
+        isTampered: false,
       };
     }
   };
@@ -179,15 +182,17 @@ export function Reports() {
       }
 
       const total = conversationsWithMessages.length;
+      
+      // FIXED: Calculate verified and tampered correctly
       const verified = conversationsWithMessages.filter((c: any) => c.verifiedAt).length;
-      const tampered = conversationsWithMessages.filter((c: any) => c.integrity?.tampered).length;
+      const tampered = conversationsWithMessages.filter((c: any) => c.isTampered === true).length;
       const totalMessages = conversationsWithMessages.reduce((acc: number, c: any) => acc + (c.messageCount || 0), 0);
 
       const summary = {
         totalConversations: total,
         verifiedCount: verified,
         tamperedCount: tampered,
-        integrityRate: total > 0 ? Math.round((verified / total) * 100) : 100,
+        integrityRate: total > 0 ? Math.round(((total - tampered) / total) * 100) : 100,
         totalMessages: totalMessages,
       };
 
@@ -273,7 +278,6 @@ export function Reports() {
 
   return (
     <div className="space-y-6">
-      {/* Generate Report Section */}
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
@@ -379,7 +383,6 @@ export function Reports() {
         )}
       </div>
 
-      {/* Reports List */}
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-800/50 flex items-center justify-between">
           <div>
@@ -439,7 +442,7 @@ export function Reports() {
                   contentHash: c.contentHash || null,
                   messages: c.messages || [],
                   metadata: c.metadata || {},
-                  isTampered: c.integrity?.tampered || false,
+                  isTampered: c.isTampered || false,
                 })),
                 qrCodes: finalQrCodes,
                 isSingleReport: isSingle,
@@ -484,6 +487,14 @@ export function Reports() {
                               <span className="text-xs text-slate-500">
                                 {report.summary.verifiedCount}/{report.summary.totalConversations} verified
                               </span>
+                              {report.summary.tamperedCount > 0 && (
+                                <>
+                                  <span className="w-1 h-1 rounded-full bg-slate-600" />
+                                  <span className="text-xs text-red-400">
+                                    {report.summary.tamperedCount} tampered
+                                  </span>
+                                </>
+                              )}
                               {report.type === 'single' && report.conversationId && (
                                 <>
                                   <span className="w-1 h-1 rounded-full bg-slate-600" />

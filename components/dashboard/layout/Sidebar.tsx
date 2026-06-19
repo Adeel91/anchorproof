@@ -33,13 +33,6 @@ const navItems = [
     description: 'All conversations',
   },
   { 
-    id: 'verification', 
-    label: 'Verification', 
-    icon: CheckCircle, 
-    href: '/dashboard/verification',
-    description: 'Verification history',
-  },
-  { 
     id: 'audit', 
     label: 'Audit Log', 
     icon: FileText, 
