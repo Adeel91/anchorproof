@@ -5,14 +5,12 @@ import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { encryptPrivateKey } from '@/lib/anchorproof/server';
+import { createAuditLog } from '@/lib/audit';
 
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
     const userId = cookieStore.get('anchorproof-session')?.value;
-
-    console.log('=== API Key Generation ===');
-    console.log('userId from cookie:', userId);
 
     if (!userId) {
       return NextResponse.json(
@@ -28,8 +26,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      console.log('❌ User not found for ID:', userId);
-      
       // Try to find by email if userId looks like an email
       if (userId.includes('@')) {
         const userByEmail = await prisma.user.findUnique({
@@ -38,7 +34,6 @@ export async function POST(request: NextRequest) {
         });
 
         if (userByEmail) {
-          console.log('✅ Found user by email');
           const newKey = await createApiKey(userByEmail, await request.json());
           return NextResponse.json(newKey);
         }
@@ -88,7 +83,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log('✅ API Key created:', newKey.id);
+    // ✅ AUDIT LOG: API Key created
+    await createAuditLog({
+      action: 'API_KEY_CREATED',
+      details: {
+        keyName: name || `API Key ${new Date().toLocaleDateString()}`,
+        keyId: newKey.id,
+        role: 'admin',
+      },
+    });
 
     return NextResponse.json({
       success: true,
@@ -114,7 +117,7 @@ export async function POST(request: NextRequest) {
 
 async function createApiKey(user: any, body: any) {
   const { name, expiresInDays = 90 } = body;
-  
+
   const rawPrivateKey = crypto.randomBytes(32);
   const keypair = Ed25519Keypair.fromSecretKey(rawPrivateKey);
 

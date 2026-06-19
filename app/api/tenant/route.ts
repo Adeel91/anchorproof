@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createAuditLog } from '@/lib/audit';
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +31,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    let isNewTenant = false;
+
     if (!tenant) {
+      isNewTenant = true;
       let uniqueSlug = generatedSlug;
       let counter = 1;
 
@@ -63,6 +67,18 @@ export async function POST(request: NextRequest) {
         name: name || email.split('@')[0],
         tenantId: tenant.id,
         role: 'admin',
+      },
+    });
+
+    // ✅ AUDIT LOG: Tenant created or user login
+    await createAuditLog({
+      action: 'USER_LOGIN',
+      details: {
+        email: email,
+        name: name || email.split('@')[0],
+        tenantId: tenant.id,
+        tenantName: tenant.name,
+        isNewTenant: isNewTenant,
       },
     });
 

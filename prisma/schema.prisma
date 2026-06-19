@@ -20,6 +20,7 @@ model Tenant {
   tempMessages     TempMessage[]
   users            User[]
   verifications    Verification[]
+  auditLogs        AuditLog[]
 }
 
 model User {
@@ -78,4 +79,22 @@ model TempMessage {
   tenant         Tenant   @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId, conversationId])
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  tenantId       String
+  action         String
+  actorId        String
+  actorName      String?
+  actorEmail     String?
+  blobId         String?
+  conversationId String?
+  details        Json?
+  ipAddress      String?
+  userAgent      String?
+  timestamp      DateTime @default(now())
+  createdAt      DateTime @default(now())
+  
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }

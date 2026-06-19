@@ -16,6 +16,7 @@ export async function proxy(request: NextRequest) {
   const isTenantRoute = url.pathname === '/api/tenant/current';
 
   const protectedApiRoutes = [
+    '/api/audit',
     '/api/keys',
     '/api/chat/list',
     '/api/walrus/list',

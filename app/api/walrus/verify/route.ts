@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { walrusClient, activeNetwork } from '@/lib/walrus/client';
 import crypto from 'crypto';
+import { createAuditLog } from '@/lib/audit';
 
 const MASTER_KEY_HEX =
   process.env.MASTER_KEY || crypto.randomBytes(32).toString('hex');
@@ -68,6 +69,19 @@ export async function POST(request: NextRequest) {
       .join('\n');
 
     const isTampered = claimedContent && claimedContent !== originalContent;
+
+    // ✅ AUDIT LOG: Verification result
+    await createAuditLog({
+      action: isTampered ? 'TAMPER_DETECTED' : 'CONVERSATION_VERIFIED',
+      blobId: blobId,
+      conversationId: verification.conversationId,
+      details: {
+        verified: !isTampered,
+        tampered: isTampered,
+        originalContent: originalContent.slice(0, 100),
+        claimedContent: claimedContent?.slice(0, 100) || null,
+      },
+    });
 
     return NextResponse.json({
       verified: !isTampered,

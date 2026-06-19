@@ -1,4 +1,3 @@
-// app/api/walrus/blob/[blobId]/route.ts
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -9,6 +8,7 @@ import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromBase64 } from '@mysten/bcs';
 import crypto from 'crypto';
+import { createAuditLog } from '@/lib/audit';
 
 const MASTER_KEY_HEX =
   process.env.MASTER_KEY || crypto.randomBytes(32).toString('hex');
@@ -57,7 +57,6 @@ export async function GET(
     }
 
     if (!user.tenant) {
-      console.error('User has no tenant:', userId);
       return NextResponse.json(
         { error: 'Tenant not found for user' },
         { status: 404 }
@@ -65,8 +64,6 @@ export async function GET(
     }
 
     const { blobId } = await params;
-    console.log('Fetching blob:', blobId);
-    console.log('User:', user.id, 'Tenant:', user.tenant.id);
 
     if (!blobId) {
       return NextResponse.json(
@@ -84,37 +81,37 @@ export async function GET(
     });
 
     if (!verification) {
-      console.log('Verification not found for blob:', blobId);
       return NextResponse.json(
         { error: 'Conversation not found or unauthorized' },
         { status: 403 }
       );
     }
 
-    console.log('Verification found:', verification.id);
+    // ✅ AUDIT LOG: Blob retrieved
+    await createAuditLog({
+      action: 'BLOB_RETRIEVED',
+      blobId: blobId,
+      conversationId: verification.conversationId,
+      details: {
+        customerId: verification.customerId,
+        agentId: verification.agentId,
+      },
+    });
 
     // Try to get the blob from Walrus using direct HTTP fetch first
     let encryptedBlob: Uint8Array;
     let usingWalrusClient = false;
 
     try {
-      console.log('Attempting direct fetch from Walrus...');
       encryptedBlob = await fetchBlobDirectly(blobId);
-      console.log('Direct fetch successful, size:', encryptedBlob.length);
     } catch (directError) {
-      console.error('Direct fetch failed, trying walrusClient:', directError);
-      
       try {
-        console.log('Using walrusClient as fallback...');
         const blobData = await walrusClient.walrus.readBlob({
           blobId: blobId,
         });
         encryptedBlob = blobData;
         usingWalrusClient = true;
-        console.log('walrusClient successful, size:', encryptedBlob.length);
       } catch (walrusError: any) {
-        console.error('Both direct fetch and walrusClient failed:', walrusError);
-        
         // Return fallback data from database
         return NextResponse.json({
           error: 'Blob not found on Walrus storage',
@@ -142,9 +139,7 @@ export async function GET(
     try {
       const rawJsonText = new TextDecoder().decode(encryptedBlob);
       storageContainer = JSON.parse(rawJsonText);
-      console.log('Storage container parsed, keys:', Object.keys(storageContainer));
     } catch (parseError) {
-      console.error('Failed to parse blob data:', parseError);
       return NextResponse.json(
         { error: 'Invalid blob data format' },
         { status: 500 }
@@ -153,7 +148,6 @@ export async function GET(
 
     // Check if the blob is already decrypted (no encryptedObject field)
     if (storageContainer.messages && storageContainer.conversationId) {
-      console.log('Blob is already decrypted, returning data directly');
       return NextResponse.json({
         success: true,
         blobId: blobId,
@@ -173,7 +167,6 @@ export async function GET(
 
     // If we have encryptedObject, proceed with decryption
     if (!storageContainer.encryptedObject) {
-      console.error('No encryptedObject found in storage container');
       return NextResponse.json(
         { error: 'Invalid blob format: missing encrypted data' },
         { status: 500 }
@@ -227,7 +220,6 @@ export async function GET(
         txBytes: txBytes,
       });
     } catch (sealError: any) {
-      console.error('SEAL decryption error:', sealError);
       return NextResponse.json(
         { 
           error: 'Failed to decrypt conversation data',

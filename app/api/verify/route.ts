@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { createAuditLog } from '@/lib/audit';
 
 export async function POST(req: Request) {
   try {
@@ -44,6 +45,19 @@ export async function POST(req: Request) {
         messageCount: metadata.messageCount || 1,
         contentHash: contentHash,
         metadata: metadata,
+      },
+    });
+
+    // ✅ AUDIT LOG: Verification created
+    await createAuditLog({
+      action: 'CONVERSATION_VERIFIED',
+      blobId: blobId,
+      conversationId: metadata.conversationId,
+      details: {
+        messageCount: metadata.messageCount || 1,
+        customerId: metadata.customerId,
+        agentId: metadata.agentId,
+        modelUsed: metadata.modelUsed,
       },
     });
 

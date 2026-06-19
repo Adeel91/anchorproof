@@ -2,14 +2,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
+import { createAuditLog } from '@/lib/audit';
 
 export async function DELETE(request: NextRequest) {
   try {
     const cookieStore = await cookies();
     const userId = cookieStore.get('anchorproof-session')?.value;
-
-    console.log('=== API Key Revoke ===');
-    console.log('userId from cookie:', userId);
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized - No session' }, { status: 401 });
@@ -19,9 +17,6 @@ export async function DELETE(request: NextRequest) {
       where: { id: userId },
       include: { tenant: true },
     });
-
-    console.log('User found:', !!user);
-    console.log('User tenantId:', user?.tenantId);
 
     if (!user) {
       return NextResponse.json(
@@ -39,8 +34,6 @@ export async function DELETE(request: NextRequest) {
 
     const url = new URL(request.url);
     const keyId = url.searchParams.get('id');
-
-    console.log('Key ID to revoke:', keyId);
 
     if (!keyId) {
       return NextResponse.json(
@@ -63,11 +56,18 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // ✅ AUDIT LOG: API Key revoked
+    await createAuditLog({
+      action: 'API_KEY_REVOKED',
+      details: {
+        keyId: key.id,
+        keyName: key.name,
+      },
+    });
+
     await prisma.apiKey.delete({
       where: { id: keyId },
     });
-
-    console.log('✅ API Key revoked:', keyId);
 
     return NextResponse.json({
       success: true,

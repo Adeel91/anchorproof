@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
+import { createAuditLog } from '@/lib/audit';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -48,9 +49,20 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const oldName = user.tenant.name;
+
     const updatedTenant = await prisma.tenant.update({
       where: { id: user.tenantId },
       data: { name: name.trim() },
+    });
+
+    // ✅ AUDIT LOG: Tenant updated
+    await createAuditLog({
+      action: 'TENANT_UPDATED',
+      details: {
+        oldName: oldName,
+        newName: name.trim(),
+      },
     });
 
     return NextResponse.json({
