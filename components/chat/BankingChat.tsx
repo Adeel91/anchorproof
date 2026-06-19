@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Button from '@/components/ui/Button';
 import { sendMessageAction, saveConversationAction } from '@/app/actions/chat';
+import { activeNetwork } from '@/lib/walrus/client';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -246,7 +247,7 @@ export default function BankingChat() {
               onKeyPress={handleKeyPress}
               placeholder="Ask about loans, mortgages, accounts, or banking services..."
               rows={1}
-              className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white text-sm resize-none focus:outline-none focus:border-cyan-400 transition-colors"
+              className="flex-1 bg-slate-800 border border-slate-700 rounded-lg p-4 text-white text-sm resize-none focus:outline-none focus:border-cyan-400 transition-colors"
               style={{ minHeight: '44px', maxHeight: '100px' }}
               disabled={isLoading}
             />
@@ -398,10 +399,10 @@ export default function BankingChat() {
 
             <div className="flex gap-3">
               <a
-                href={`https://explorer.walrus.site/blob/${savedBlobId}`}
+                href={`https://walruscan.com/${activeNetwork}/blob/${savedBlobId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 text-center bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-sm transition-colors"
+                className="flex-1 text-center bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-sm transition-colors flex items-center justify-center"
               >
                 View Record
               </a>

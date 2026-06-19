@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { walrusClient } from '@/lib/walrus/client';
+import { walrusClient, activeNetwork } from '@/lib/walrus/client';
 import crypto from 'crypto';
 
 const MASTER_KEY_HEX =
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       message: isTampered
         ? '❌ TAMPERING DETECTED! Content does not match Walrus record.'
         : '✅ VERIFIED: Content matches Walrus record.',
-      walrusExplorerUrl: `https://explorer.walrus.site/blob/${blobId}`,
+      walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
     });
   } catch (error) {
     console.error('Verify error:', error);

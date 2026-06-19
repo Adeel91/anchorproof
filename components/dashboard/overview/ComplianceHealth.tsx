@@ -67,7 +67,7 @@ export function ComplianceHealth() {
   };
 
   return (
-    <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 mb-8">
+    <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-sm font-semibold text-white">Compliance & Security Health</h3>

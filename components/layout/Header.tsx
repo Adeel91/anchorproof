@@ -32,28 +32,13 @@ export default function Header() {
   const pathname = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const prevAddressRef = useRef<string | null>(null);
 
-  const updateSessionCookie = useCallback((suiAddress: string | null) => {
-    if (suiAddress) {
-      document.cookie = `anchorproof-session=${suiAddress}; path=/; max-age=604800; SameSite=Lax`;
-    } else {
-      document.cookie =
-        'anchorproof-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    }
-  }, []);
+  // ✅ REMOVED: No cookie management at all!
 
   useEffect(() => {
     const newAddress = currentAccount?.address || null;
-
-    if (prevAddressRef.current !== newAddress) {
-      prevAddressRef.current = newAddress;
-      updateSessionCookie(newAddress);
-      requestAnimationFrame(() => {
-        setAddress(newAddress);
-      });
-    }
-  }, [currentAccount?.address, updateSessionCookie]);
+    setAddress(newAddress);
+  }, [currentAccount?.address]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -77,6 +62,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     disconnectWallet();
+    // ✅ Only clear the cookie on logout
     document.cookie =
       'anchorproof-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     window.location.href = '/login';

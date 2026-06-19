@@ -23,6 +23,15 @@ export async function POST(req: Request) {
     const blobId = crypto.randomUUID();
     const suiTxHash = crypto.randomUUID();
 
+    // Calculate content hash from metadata if provided
+    let contentHash = null;
+    if (metadata?.messages) {
+      contentHash = crypto
+        .createHash('sha256')
+        .update(JSON.stringify(metadata.messages))
+        .digest('hex');
+    }
+
     const verification = await prisma.verification.create({
       data: {
         tenantId: key.tenantId,
@@ -33,6 +42,7 @@ export async function POST(req: Request) {
         agentId: metadata.agentId,
         modelUsed: metadata.modelUsed,
         messageCount: metadata.messageCount || 1,
+        contentHash: contentHash,
         metadata: metadata,
       },
     });
@@ -41,6 +51,7 @@ export async function POST(req: Request) {
       success: true,
       blobId,
       suiTxHash,
+      contentHash,
       verificationId: verification.id,
     });
   } catch (error) {

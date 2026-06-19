@@ -58,6 +58,7 @@ model Verification {
   agentId        String?
   modelUsed      String?
   messageCount   Int
+  contentHash    String?
   verifiedAt     DateTime @default(now())
   metadata       Json?
   createdAt      DateTime @default(now())

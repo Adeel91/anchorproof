@@ -167,8 +167,16 @@ export async function POST(request: NextRequest) {
       messages.length
     );
 
-    // 8. Encrypt with SEAL using the correct package ID
-    console.log('📌 Step 8: Encrypting with SEAL...');
+    // 8. Calculate content hash BEFORE encryption
+    console.log('📌 Step 8: Calculating content hash...');
+    const contentHash = crypto
+      .createHash('sha256')
+      .update(JSON.stringify(conversationData.messages))
+      .digest('hex');
+    console.log('   Content hash:', contentHash);
+
+    // 9. Encrypt with SEAL using the correct package ID
+    console.log('📌 Step 9: Encrypting with SEAL...');
     console.log('   SEAL_PACKAGE_ID:', SEAL_SYSTEM_PACKAGE_ID);
     const plaintext = JSON.stringify(conversationData);
     console.log('   Plaintext length:', plaintext.length);
@@ -189,21 +197,21 @@ export async function POST(request: NextRequest) {
     //   sessionKeyHex: Buffer.from(key).toString('hex'),
     // });
     console.log(
-      '✅ Step 8: SEAL encryption complete, blob size:',
+      '✅ Step 9: SEAL encryption complete, blob size:',
       encryptedBlob.length
     );
 
-    // 9. Store on Walrus
-    console.log('📌 Step 9: Storing on Walrus...');
+    // 10. Store on Walrus
+    console.log('📌 Step 10: Storing on Walrus...');
     const { blobId, walrusExplorerUrl, suiTxHash, suiObjectId } =
       await storeOnWalrus(encryptedBlob);
-    console.log('✅ Step 9: Walrus storage complete!');
+    console.log('✅ Step 10: Walrus storage complete!');
     console.log('   Blob ID:', blobId);
     console.log('   Sui Tx Hash:', suiTxHash);
     console.log('   Explorer URL:', walrusExplorerUrl);
 
-    // 10. Create verification record
-    console.log('📌 Step 10: Creating verification record in database...');
+    // 11. Create verification record with contentHash
+    console.log('📌 Step 11: Creating verification record in database...');
     await prisma.verification.create({
       data: {
         tenantId: apiKeyRecord.tenantId,
@@ -214,19 +222,20 @@ export async function POST(request: NextRequest) {
         agentId: agentId || 'unknown',
         modelUsed: 'seal-encrypted',
         messageCount: messages.length,
+        contentHash: contentHash, // ← Store the content hash!
         metadata: {
           savedAt: new Date().toISOString(),
         },
       },
     });
-    console.log('✅ Step 10: Verification record created');
+    console.log('✅ Step 11: Verification record created with contentHash');
 
-    // 11. Delete temp messages
-    console.log('📌 Step 11: Deleting temporary messages...');
+    // 12. Delete temp messages
+    console.log('📌 Step 12: Deleting temporary messages...');
     await prisma.tempMessage.deleteMany({
       where: { tenantId: apiKeyRecord.tenantId, conversationId },
     });
-    console.log('✅ Step 11: Temp messages deleted');
+    console.log('✅ Step 12: Temp messages deleted');
 
     console.log('🎉 === SAVE COMPLETED SUCCESSFULLY ===\n');
 
@@ -235,6 +244,7 @@ export async function POST(request: NextRequest) {
       blobId: blobId,
       conversationId,
       messageCount: messages.length,
+      contentHash: contentHash,
       walrusExplorerUrl: walrusExplorerUrl,
     });
   } catch (error) {

@@ -1,5 +1,4 @@
-'use client';
-
+// components/dashboard/layout/Sidebar.tsx (update navItems)
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -12,6 +11,7 @@ import {
   Shield,
   Key,
   Settings,
+  Users,
 } from 'lucide-react';
 
 const navItems = [
@@ -20,6 +20,7 @@ const navItems = [
   { id: 'verification', label: 'Verification', icon: CheckCircle, href: '/dashboard/verification' },
   { id: 'audit', label: 'Audit Log', icon: FileText, href: '/dashboard/audit' },
   { id: 'compliance', label: 'Compliance Reports', icon: Shield, href: '/dashboard/compliance' },
+  { id: 'users', label: 'Users', icon: Users, href: '/dashboard/users' },
   { id: 'keys', label: 'API Keys', icon: Key, href: '/dashboard/keys' },
   { id: 'settings', label: 'Settings', icon: Settings, href: '/dashboard/settings' },
 ];

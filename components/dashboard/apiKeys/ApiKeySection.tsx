@@ -10,63 +10,115 @@ import { Toast } from '@/components/ui/Toast';
 import { Copy, CheckCircle } from 'lucide-react';
 
 export function ApiKeySection() {
-  const { apiKeys, refetch } = useDashboardData();
+  const { apiKeys, refreshKeys, tenant } = useDashboardData();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newKeyData, setNewKeyData] = useState<any>(null);
   const [generating, setGenerating] = useState(false);
+  const [revoking, setRevoking] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const handleGenerate = async (name: string) => {
+    // Check if we have a valid tenant before proceeding
+    if (!tenant) {
+      setToast({
+        message: '❌ No tenant found. Please refresh the page.',
+        type: 'error'
+      });
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+
     setGenerating(true);
+    setNewKeyData(null);
+    
     try {
       const response = await fetch('/api/keys/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ name }),
       });
+      
       const data = await response.json();
+      
+      if (!response.ok) {
+        // If unauthorized, clear the modal and show error
+        if (response.status === 401) {
+          setNewKeyData(null);
+          setShowCreateModal(false);
+          setToast({
+            message: '❌ Session expired. Please refresh the page.',
+            type: 'error'
+          });
+          setTimeout(() => setToast(null), 3000);
+          return;
+        }
+        throw new Error(data.error || 'Failed to generate key');
+      }
+      
       if (data.success) {
-        setNewKeyData(data);
-        await refetch();
+        // Set the key data BEFORE closing the create modal
+        setNewKeyData({
+          apiKey: data.apiKey,
+          publicKey: data.publicKey,
+          privateKey: data.privateKey,
+        });
+        
+        // Close the create modal
+        setShowCreateModal(false);
+        
+        // Show success toast
         setToast({ 
           message: `✅ API key "${name}" generated successfully`, 
           type: 'success' 
         });
-        setTimeout(() => setToast(null), 3000);
+        
+        // Refresh ONLY the API keys (not the whole page)
+        await refreshKeys();
+      } else {
+        throw new Error(data.error || 'Failed to generate key');
       }
-      setShowCreateModal(false);
     } catch (error) {
       console.error('Failed to generate key:', error);
       setToast({ 
-        message: '❌ Failed to generate API key', 
+        message: `❌ ${error instanceof Error ? error.message : 'Failed to generate API key'}`, 
         type: 'error' 
       });
-      setTimeout(() => setToast(null), 3000);
+      setNewKeyData(null);
     } finally {
       setGenerating(false);
+      setTimeout(() => setToast(null), 3000);
     }
   };
 
   const handleRevoke = async (keyId: string, keyName: string) => {
     if (!confirm(`Revoke API key "${keyName}"? This action cannot be undone.`)) return;
+    
+    setRevoking(keyId);
     try {
       const response = await fetch(`/api/keys/revoke?id=${keyId}`, {
         method: 'DELETE',
       });
+      
       if (response.ok) {
-        await refetch();
+        await refreshKeys();
         setToast({ 
           message: `✅ API key "${keyName}" revoked successfully`, 
           type: 'success' 
         });
-        setTimeout(() => setToast(null), 3000);
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to revoke key');
       }
     } catch (error) {
       console.error('Failed to revoke key:', error);
       setToast({ 
-        message: '❌ Failed to revoke API key', 
+        message: `❌ ${error instanceof Error ? error.message : 'Failed to revoke API key'}`, 
         type: 'error' 
       });
+    } finally {
+      setRevoking(null);
       setTimeout(() => setToast(null), 3000);
     }
   };
@@ -88,16 +140,34 @@ export function ApiKeySection() {
     }
   };
 
+  const handleCloseKeyModal = () => {
+    setNewKeyData(null);
+  };
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString();
   };
+
+  // If no tenant, show a message
+  if (!tenant) {
+    return (
+      <div className="bg-gray-900/50 border border-gray-800/50 rounded-lg p-8 text-center">
+        <p className="text-yellow-400 text-sm">Loading tenant information...</p>
+        <p className="text-gray-500 text-xs mt-2">Please refresh the page if this persists.</p>
+      </div>
+    );
+  }
 
   return (
     <>
       <div className="bg-gray-900/50 border border-gray-800/50 rounded-lg overflow-hidden mb-12">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
           <h2 className="text-white font-semibold">API Keys</h2>
-          <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+          <Button 
+            variant="primary" 
+            onClick={() => setShowCreateModal(true)}
+            disabled={generating}
+          >
             + Generate Key
           </Button>
         </div>
@@ -168,9 +238,14 @@ export function ApiKeySection() {
                       <td className="py-3 text-right">
                         <button
                           onClick={() => handleRevoke(key.id, key.name)}
-                          className="text-red-400 hover:text-red-300 text-xs transition-colors"
+                          disabled={revoking === key.id}
+                          className={`text-xs transition-colors ${
+                            revoking === key.id
+                              ? 'text-gray-500 cursor-not-allowed'
+                              : 'text-red-400 hover:text-red-300'
+                          }`}
                         >
-                          Revoke
+                          {revoking === key.id ? 'Revoking...' : 'Revoke'}
                         </button>
                       </td>
                     </tr>
@@ -184,21 +259,23 @@ export function ApiKeySection() {
 
       <CreateKeyModal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={() => {
+          setShowCreateModal(false);
+          setNewKeyData(null);
+        }}
         onCreate={handleGenerate}
         isGenerating={generating}
         existingNames={apiKeys.map(k => k.name)}
       />
 
       <ApiKeyModal
-        isOpen={!!newKeyData}
+        isOpen={!!newKeyData && !!newKeyData.apiKey}
         apiKey={newKeyData?.apiKey || null}
         publicKey={newKeyData?.publicKey || null}
         privateKey={newKeyData?.privateKey || null}
-        onClose={() => setNewKeyData(null)}
+        onClose={handleCloseKeyModal}
       />
 
-      {/* Toast */}
       {toast && (
         <Toast
           message={toast.message}

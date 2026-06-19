@@ -1,7 +1,8 @@
+// app/api/walrus/blob/[blobId]/route.ts
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { walrusClient, suiClient } from '@/lib/walrus/client';
+import { walrusClient, suiClient, fetchBlobDirectly, activeNetwork } from '@/lib/walrus/client';
 import { SEAL_SYSTEM_PACKAGE_ID, sealClient } from '@/lib/seal/client';
 import { SessionKey } from '@mysten/seal';
 import { Transaction } from '@mysten/sui/transactions';
@@ -30,7 +31,7 @@ function decrypt(encryptedJson: string): string {
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ blobid: string }> }
+  { params }: { params: Promise<{ blobId: string }> }
 ) {
   try {
     const cookieStore = await cookies();
@@ -40,33 +41,150 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get the user first to get their tenant
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { tenant: true },
     });
 
-    if (!user || !user.tenant) {
-      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    if (!user) {
+      const response = NextResponse.json(
+        { error: 'User not found' },
+        { status: 401 }
+      );
+      response.cookies.delete('anchorproof-session');
+      return response;
     }
 
-    const { blobid } = await params;
+    if (!user.tenant) {
+      console.error('User has no tenant:', userId);
+      return NextResponse.json(
+        { error: 'Tenant not found for user' },
+        { status: 404 }
+      );
+    }
 
+    const { blobId } = await params;
+    console.log('Fetching blob:', blobId);
+    console.log('User:', user.id, 'Tenant:', user.tenant.id);
+
+    if (!blobId) {
+      return NextResponse.json(
+        { error: 'Blob ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Verify the blob exists in your database
     const verification = await prisma.verification.findFirst({
       where: {
-        blobId: blobid,
+        blobId: blobId,
         tenantId: user.tenant.id,
       },
     });
 
     if (!verification) {
+      console.log('Verification not found for blob:', blobId);
       return NextResponse.json(
         { error: 'Conversation not found or unauthorized' },
         { status: 403 }
       );
     }
 
+    console.log('Verification found:', verification.id);
+
+    // Try to get the blob from Walrus using direct HTTP fetch first
+    let encryptedBlob: Uint8Array;
+    let usingWalrusClient = false;
+
+    try {
+      console.log('Attempting direct fetch from Walrus...');
+      encryptedBlob = await fetchBlobDirectly(blobId);
+      console.log('Direct fetch successful, size:', encryptedBlob.length);
+    } catch (directError) {
+      console.error('Direct fetch failed, trying walrusClient:', directError);
+      
+      try {
+        console.log('Using walrusClient as fallback...');
+        const blobData = await walrusClient.walrus.readBlob({
+          blobId: blobId,
+        });
+        encryptedBlob = blobData;
+        usingWalrusClient = true;
+        console.log('walrusClient successful, size:', encryptedBlob.length);
+      } catch (walrusError: any) {
+        console.error('Both direct fetch and walrusClient failed:', walrusError);
+        
+        // Return fallback data from database
+        return NextResponse.json({
+          error: 'Blob not found on Walrus storage',
+          details: walrusError.message,
+          blobId: blobId,
+          fallbackData: {
+            blobId: blobId,
+            conversationId: verification.conversationId,
+            messages: [],
+            metadata: {
+              customerId: verification.customerId,
+              agentId: verification.agentId,
+              modelUsed: verification.modelUsed,
+            },
+            verifiedAt: verification.verifiedAt,
+            createdAt: verification.createdAt,
+            isFallback: true,
+          }
+        }, { status: 404 });
+      }
+    }
+
+    // Parse the blob data
+    let storageContainer;
+    try {
+      const rawJsonText = new TextDecoder().decode(encryptedBlob);
+      storageContainer = JSON.parse(rawJsonText);
+      console.log('Storage container parsed, keys:', Object.keys(storageContainer));
+    } catch (parseError) {
+      console.error('Failed to parse blob data:', parseError);
+      return NextResponse.json(
+        { error: 'Invalid blob data format' },
+        { status: 500 }
+      );
+    }
+
+    // Check if the blob is already decrypted (no encryptedObject field)
+    if (storageContainer.messages && storageContainer.conversationId) {
+      console.log('Blob is already decrypted, returning data directly');
+      return NextResponse.json({
+        success: true,
+        blobId: blobId,
+        conversationId: storageContainer.conversationId || verification.conversationId,
+        messages: storageContainer.messages || [],
+        metadata: storageContainer.metadata || {
+          customerId: verification.customerId,
+          agentId: verification.agentId,
+          modelUsed: verification.modelUsed,
+        },
+        verifiedAt: verification.verifiedAt,
+        createdAt: verification.createdAt,
+        walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
+        usingWalrusClient,
+      });
+    }
+
+    // If we have encryptedObject, proceed with decryption
+    if (!storageContainer.encryptedObject) {
+      console.error('No encryptedObject found in storage container');
+      return NextResponse.json(
+        { error: 'Invalid blob format: missing encrypted data' },
+        { status: 500 }
+      );
+    }
+
+    const encryptedObjectData = Uint8Array.from(storageContainer.encryptedObject);
+
+    // Get API key for decryption
     const apiKeyRecord = await prisma.apiKey.findFirst({
-      where: { tenantId: user.tenantId },
+      where: { tenantId: user.tenant.id },
     });
 
     if (!apiKeyRecord || !apiKeyRecord.encryptedPrivateKey) {
@@ -80,16 +198,6 @@ export async function GET(
     const privateKeyBytes = fromBase64(decryptedPrivateKeyBase64);
     const tenantKeypair = Ed25519Keypair.fromSecretKey(privateKeyBytes);
 
-    const encryptedBlob = await walrusClient.walrus.readBlob({
-      blobId: blobid,
-    });
-    const rawJsonText = new TextDecoder().decode(encryptedBlob);
-    const storageContainer = JSON.parse(rawJsonText);
-
-    const encryptedObjectData = Uint8Array.from(
-      storageContainer.encryptedObject
-    );
-
     const sessionKey = await SessionKey.create({
       address: user.tenant.suiAddress,
       packageId: SEAL_SYSTEM_PACKAGE_ID,
@@ -99,7 +207,6 @@ export async function GET(
     });
 
     const tx = new Transaction();
-
     const objectId = crypto.randomBytes(32).toString('hex');
 
     tx.moveCall({
@@ -112,26 +219,47 @@ export async function GET(
       onlyTransactionKind: true,
     });
 
-    const decryptedData = await sealClient.decrypt({
-      data: encryptedObjectData,
-      sessionKey: sessionKey,
-      txBytes: txBytes,
-    });
+    let decryptedData: Uint8Array;
+    try {
+      decryptedData = await sealClient.decrypt({
+        data: encryptedObjectData,
+        sessionKey: sessionKey,
+        txBytes: txBytes,
+      });
+    } catch (sealError: any) {
+      console.error('SEAL decryption error:', sealError);
+      return NextResponse.json(
+        { 
+          error: 'Failed to decrypt conversation data',
+          details: sealError.message,
+          blobId: blobId,
+        },
+        { status: 500 }
+      );
+    }
 
     const conversation = JSON.parse(new TextDecoder().decode(decryptedData));
 
     return NextResponse.json({
       success: true,
-      blobId: blobid,
-      conversationId: conversation.conversationId,
-      messages: conversation.messages,
-      metadata: conversation.metadata,
+      blobId: blobId,
+      conversationId: conversation.conversationId || verification.conversationId,
+      messages: conversation.messages || [],
+      metadata: conversation.metadata || {
+        customerId: verification.customerId,
+        agentId: verification.agentId,
+        modelUsed: verification.modelUsed,
+      },
       verifiedAt: verification.verifiedAt,
       createdAt: verification.createdAt,
-      walrusExplorerUrl: `https://explorer.walrus.site/blob/${blobid}`,
+      walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
+      usingWalrusClient,
     });
   } catch (error) {
     console.error('Get blob error:', error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json({ 
+      error: String(error),
+      message: 'Failed to retrieve conversation data'
+    }, { status: 500 });
   }
 }

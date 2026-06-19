@@ -1,28 +1,54 @@
+// components/dashboard/settings/Settings.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import { useDashboardData } from '@/providers/DashboardDataProvider';
 
 export function Settings() {
   const { tenant, user, refetch } = useDashboardData();
   const [isSaving, setIsSaving] = useState(false);
-  const [settings, setSettings] = useState({
-    autoVerify: true,
-    retentionDays: 365,
-    notifications: true,
-    twoFactorAuth: false,
-  });
+  const [tenantName, setTenantName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (tenant) {
+      setTenantName(tenant.name);
+    }
+  }, [tenant]);
 
   const handleSave = async () => {
+    if (!tenantName.trim()) {
+      setError('Tenant name is required');
+      return;
+    }
+
     setIsSaving(true);
+    setError(null);
+    setSuccess(null);
+
     try {
-      // Save settings to your API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/tenant/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: tenantName.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update tenant');
+      }
+
+      setSuccess('Tenant name updated successfully!');
       await refetch(); // Refresh data after save
-      alert('Settings saved successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      alert('Failed to save settings');
+      console.error('Failed to update tenant:', error);
+      setError(error instanceof Error ? error.message : 'Failed to save settings');
     } finally {
       setIsSaving(false);
     }
@@ -30,122 +56,94 @@ export function Settings() {
 
   if (!tenant || !user) {
     return (
-      <div className="bg-gray-900/50 border border-gray-800/50 rounded-xl p-8 text-center">
-        <p className="text-gray-400">Loading settings...</p>
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-8 text-center">
+        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-slate-400 text-sm">Loading settings...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="bg-gray-900/50 border border-gray-800/50 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-white mb-4">Profile</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-white mb-4">Tenant Settings</h3>
+        
+        <div className="grid grid-cols-1 gap-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Tenant Name</label>
+            <label className="block text-xs text-slate-500 mb-1.5">Tenant Name</label>
             <input
               type="text"
-              value={tenant.name}
-              className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
-              disabled
+              value={tenantName}
+              onChange={(e) => {
+                setTenantName(e.target.value);
+                setError(null);
+                setSuccess(null);
+              }}
+              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+              placeholder="Enter tenant name"
             />
+            <p className="text-[10px] text-slate-500 mt-1">This name will appear across your tenant dashboard</p>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-slate-800/50">
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Email Domain</label>
+            <label className="block text-xs text-slate-500 mb-1.5">Email Domain</label>
             <input
               type="text"
               value={tenant.emailDomain}
-              className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
+              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-400 focus:outline-none cursor-not-allowed"
               disabled
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Subscription Tier</label>
+            <label className="block text-xs text-slate-500 mb-1.5">Subscription Tier</label>
             <input
               type="text"
-              value={tenant.subscriptionTier}
-              className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
+              value={tenant.subscriptionTier.charAt(0).toUpperCase() + tenant.subscriptionTier.slice(1)}
+              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-400 focus:outline-none cursor-not-allowed"
               disabled
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Admin Email</label>
+            <label className="block text-xs text-slate-500 mb-1.5">Admin Email</label>
             <input
               type="text"
               value={user.email}
-              className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
+              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-400 focus:outline-none cursor-not-allowed"
               disabled
             />
           </div>
         </div>
-      </div>
 
-      <div className="bg-gray-900/50 border border-gray-800/50 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-white mb-4">Verification Settings</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-white">Auto-Verify on Save</p>
-              <p className="text-xs text-gray-500">Automatically verify conversations when saved</p>
-            </div>
-            <button
-              onClick={() => setSettings({ ...settings, autoVerify: !settings.autoVerify })}
-              className={`w-12 h-6 rounded-full transition-colors ${settings.autoVerify ? 'bg-indigo-600' : 'bg-gray-700'}`}
-            >
-              <div className={`w-4 h-4 rounded-full bg-white transition-transform ${settings.autoVerify ? 'translate-x-7' : 'translate-x-1'} mt-1`} />
-            </button>
+        {error && (
+          <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+            {error}
           </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1.5">Data Retention (Days)</label>
-            <input
-              type="number"
-              value={settings.retentionDays}
-              onChange={(e) => setSettings({ ...settings, retentionDays: parseInt(e.target.value) })}
-              className="w-32 px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500"
-            />
-            <p className="text-[10px] text-gray-500 mt-1">Conversations older than this will be automatically archived</p>
-          </div>
-        </div>
-      </div>
+        )}
 
-      <div className="bg-gray-900/50 border border-gray-800/50 rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-white mb-4">Security</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-white">Two-Factor Authentication</p>
-              <p className="text-xs text-gray-500">Add an extra layer of security to your account</p>
-            </div>
-            <button
-              onClick={() => setSettings({ ...settings, twoFactorAuth: !settings.twoFactorAuth })}
-              className={`w-12 h-6 rounded-full transition-colors ${settings.twoFactorAuth ? 'bg-indigo-600' : 'bg-gray-700'}`}
-            >
-              <div className={`w-4 h-4 rounded-full bg-white transition-transform ${settings.twoFactorAuth ? 'translate-x-7' : 'translate-x-1'} mt-1`} />
-            </button>
+        {success && (
+          <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-sm">
+            {success}
           </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-white">Notifications</p>
-              <p className="text-xs text-gray-500">Email notifications for verification events</p>
-            </div>
-            <button
-              onClick={() => setSettings({ ...settings, notifications: !settings.notifications })}
-              className={`w-12 h-6 rounded-full transition-colors ${settings.notifications ? 'bg-indigo-600' : 'bg-gray-700'}`}
-            >
-              <div className={`w-4 h-4 rounded-full bg-white transition-transform ${settings.notifications ? 'translate-x-7' : 'translate-x-1'} mt-1`} />
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="flex justify-end">
         <Button
-                      variant="primary"
-                      onClick={handleSave}
-                      disabled={isSaving}
-                      className="px-6 py-2.5 whitespace-nowrap"
-                    >
-          {isSaving ? 'Saving...' : 'Save Settings'}
+          variant="primary"
+          onClick={handleSave}
+          disabled={isSaving || tenantName === tenant.name}
+          className="px-6 py-2.5 whitespace-nowrap"
+        >
+          {isSaving ? (
+            <span className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Saving...
+            </span>
+          ) : (
+            'Save Settings'
+          )}
         </Button>
       </div>
     </div>

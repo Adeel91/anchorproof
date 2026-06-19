@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className='mt-16 space-y-8'>
+    <div className='space-y-16'>
       <SystemStatus />
       <StatsCards />
       <ComplianceHealth />

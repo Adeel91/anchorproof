@@ -29,7 +29,7 @@ export function SystemStatus() {
   const subscriptionTier = tenant?.subscriptionTier || 'Free';
 
   return (
-    <div className={`bg-gradient-to-r ${isHealthy ? 'from-emerald-500/10 via-cyan-500/10 to-indigo-500/10 border-emerald-500/20' : 'from-amber-500/10 via-red-500/10 to-orange-500/10 border-amber-500/20'} border rounded-xl p-4 mb-8 transition-all duration-500`}>
+    <div className={`bg-gradient-to-r ${isHealthy ? 'from-emerald-500/10 via-cyan-500/10 to-indigo-500/10 border-emerald-500/20' : 'from-amber-500/10 via-red-500/10 to-orange-500/10 border-amber-500/20'} border rounded-xl p-4 transition-all duration-500`}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         {/* Left Section - Status & Tenant */}
         <div className="flex items-center gap-4">

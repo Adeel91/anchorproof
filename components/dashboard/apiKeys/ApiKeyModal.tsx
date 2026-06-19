@@ -19,13 +19,33 @@ export function ApiKeyModal({
 }: ApiKeyModalProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  if (!isOpen || !apiKey) return null;
+  // Only check isOpen, not apiKey
+  if (!isOpen) return null;
 
   const copyToClipboard = async (text: string, field: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
   };
+
+  // Show loading state if keys are still being generated
+  if (!apiKey && !publicKey && !privateKey) {
+    return (
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+        <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 max-w-2xl w-full mx-4">
+          <div className="flex items-center justify-center gap-3 py-8">
+            <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-gray-400">Generating keys...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
@@ -41,14 +61,16 @@ export function ApiKeyModal({
           </label>
           <div className="flex gap-2">
             <code className="flex-1 bg-gray-950 border border-gray-700 rounded-lg p-2 text-cyan-400 text-xs break-all font-mono">
-              {apiKey}
+              {apiKey || 'Loading...'}
             </code>
-            <button
-              onClick={() => copyToClipboard(apiKey, 'apiKey')}
-              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs transition-colors"
-            >
-              {copiedField === 'apiKey' ? '✓ Copied!' : 'Copy'}
-            </button>
+            {apiKey && (
+              <button
+                onClick={() => copyToClipboard(apiKey, 'apiKey')}
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs transition-colors whitespace-nowrap"
+              >
+                {copiedField === 'apiKey' ? '✓ Copied!' : 'Copy'}
+              </button>
+            )}
           </div>
         </div>
 
@@ -63,7 +85,7 @@ export function ApiKeyModal({
               </code>
               <button
                 onClick={() => copyToClipboard(publicKey, 'publicKey')}
-                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs transition-colors"
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs transition-colors whitespace-nowrap"
               >
                 {copiedField === 'publicKey' ? '✓ Copied!' : 'Copy'}
               </button>
@@ -82,7 +104,7 @@ export function ApiKeyModal({
               </code>
               <button
                 onClick={() => copyToClipboard(privateKey, 'privateKey')}
-                className="px-3 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-white text-xs transition-colors"
+                className="px-3 py-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-white text-xs transition-colors whitespace-nowrap"
               >
                 {copiedField === 'privateKey' ? '✓ Copied!' : 'Copy'}
               </button>
