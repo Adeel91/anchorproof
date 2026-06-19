@@ -1,3 +1,5 @@
+// packages/sdk/src/types.ts
+
 export interface AnchorProofConfig {
   apiBaseUrl: string;
   apiKey: string;
@@ -49,9 +51,13 @@ export interface SendMessageResponse {
 export interface SaveConversationResponse {
   success: boolean;
   blobId: string;
+  suiTxHash: string;
   conversationId: string;
   messageCount: number;
+  contentHash: string;
   walrusExplorerUrl: string;
+  onChainRecorded: boolean;
+  verificationId: string;
 }
 
 export interface StoredKeyPair {

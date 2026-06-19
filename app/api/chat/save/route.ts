@@ -1,3 +1,4 @@
+// app/api/chat/save/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
@@ -6,6 +7,7 @@ import { sealClient, SEAL_SYSTEM_PACKAGE_ID } from '@/lib/seal/client';
 import { Ed25519PublicKey } from '@mysten/sui/keypairs/ed25519';
 import { fromBase64 } from '@mysten/bcs';
 import { createAuditLog } from '@/lib/audit';
+import { recordOnChain } from '@/lib/sui/contract';
 
 interface TempMessage {
   id: string;
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Get and verify the save request signature
+    // 3. Get request body
     const {
       conversationId,
       customerId,
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Verify signature matches the request data
+    // 4. Verify signature
     const messageToVerify = JSON.stringify({
       conversationId,
       customerId: customerId || 'unknown',
@@ -91,10 +93,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No messages found' }, { status: 400 });
     }
 
-    // 6. For demo - use env var for Walrus signing
-    const decryptedPrivateKey = process.env.DEMO_PRIVATE_KEY!;
-
-    // 7. Prepare conversation data
+    // 6. Prepare conversation data
     const conversationData = {
       conversationId,
       messages: messages.map((m: TempMessage) => ({
@@ -113,69 +112,176 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    // 8. Calculate content hash BEFORE encryption
+    // 7. Calculate content hash
     const contentHash = crypto
       .createHash('sha256')
       .update(JSON.stringify(conversationData.messages))
       .digest('hex');
 
-    // 9. Encrypt with SEAL using the correct package ID
+    // 8. SEAL ENCRYPT
+    console.log('🔐 Starting SEAL encryption...');
+    console.log('   SEAL_PACKAGE_ID:', SEAL_SYSTEM_PACKAGE_ID);
+    
     const plaintext = JSON.stringify(conversationData);
-    const encryptedBlob = plaintext;
+    console.log('   Plaintext length:', plaintext.length);
 
-    // const { encryptedObject, key } = await sealClient.encrypt({
-    //   data: Buffer.from(plaintext, 'utf8'),
-    //   threshold: 2,
-    //   packageId: SEAL_SYSTEM_PACKAGE_ID,
-    //   id: conversationId,
-    //   demType: 0,
-    //   kemType: 0,
-    // });
+    // Generate a random 32-byte hex string for SEAL ID
+    const sealId = crypto.randomBytes(32).toString('hex');
+    console.log('   SEAL ID:', sealId);
 
-    // const encryptedBlob = JSON.stringify({
-    //   encryptedObjectHex: encryptedObject.toHex(),
-    //   sessionKeyHex: Buffer.from(key).toString('hex'),
-    // });
+    let encryptedObjectHex: string;
+    let sessionKeyHex: string;
+    let encryptedBlob: string;
 
-    // 10. Store on Walrus
-    const { blobId, walrusExplorerUrl, suiTxHash, suiObjectId } =
-      await storeOnWalrus(encryptedBlob);
+    try {
+      console.log('   Calling sealClient.encrypt...');
+      
+      const { encryptedObject, key } = await sealClient.encrypt({
+        data: Buffer.from(plaintext, 'utf8'),
+        threshold: 2,
+        packageId: SEAL_SYSTEM_PACKAGE_ID,
+        id: sealId,
+        demType: 0,
+        kemType: 0,
+      });
 
-    // 11. Create verification record with contentHash
-    await prisma.verification.create({
-      data: {
-        tenantId: apiKeyRecord.tenantId,
-        conversationId,
-        blobId: blobId,
-        suiTxHash: suiTxHash || suiObjectId || 'walrus-stored',
-        customerId: customerId || 'unknown',
-        agentId: agentId || 'unknown',
-        modelUsed: 'seal-encrypted',
-        messageCount: messages.length,
-        contentHash: contentHash,
-        metadata: {
-          savedAt: new Date().toISOString(),
+      encryptedObjectHex = Buffer.from(encryptedObject).toString('hex');
+      sessionKeyHex = Buffer.from(key).toString('hex');
+
+      encryptedBlob = JSON.stringify({
+        encryptedObjectHex: encryptedObjectHex,
+        sessionKeyHex: sessionKeyHex,
+      });
+
+      console.log('✅ SEAL encryption successful');
+      console.log('   Encrypted blob size:', encryptedBlob.length);
+    } catch (sealError) {
+      console.error('❌ SEAL encryption failed:', sealError);
+      // Return detailed error response
+      return NextResponse.json(
+        { 
+          error: 'SEAL encryption failed', 
+          details: sealError instanceof Error ? sealError.message : String(sealError),
+          stack: sealError instanceof Error ? sealError.stack : undefined
         },
-      },
-    });
+        { status: 500 }
+      );
+    }
 
-    // ✅ AUDIT LOG: Conversation saved
-    await createAuditLog({
-      action: 'CONVERSATION_SAVED',
-      blobId: blobId,
-      conversationId: conversationId,
-      details: {
-        messageCount: messages.length,
-        customerId: customerId || 'unknown',
-        agentId: agentId || 'unknown',
-        suiTxHash: suiTxHash || 'walrus-stored',
-      },
-    });
+    // 9. WALRUS STORAGE
+    console.log('📤 Storing on Walrus...');
+    let blobId: string;
+    let walrusExplorerUrl: string;
+    let suiTxHash: string;
 
-    // 12. Delete temp messages
-    await prisma.tempMessage.deleteMany({
-      where: { tenantId: apiKeyRecord.tenantId, conversationId },
-    });
+    try {
+      const result = await storeOnWalrus(encryptedBlob);
+      blobId = result.blobId;
+      walrusExplorerUrl = result.walrusExplorerUrl;
+      suiTxHash = result.suiTxHash;
+      console.log('✅ Walrus storage successful');
+      console.log('   Blob ID:', blobId);
+      console.log('   Sui TX Hash:', suiTxHash);
+    } catch (walrusError) {
+      console.error('❌ Walrus storage failed:', walrusError);
+      return NextResponse.json(
+        { 
+          error: 'Walrus storage failed', 
+          details: walrusError instanceof Error ? walrusError.message : String(walrusError),
+          stack: walrusError instanceof Error ? walrusError.stack : undefined
+        },
+        { status: 500 }
+      );
+    }
+
+    // 10. Save to database
+    console.log('💾 Saving to database...');
+    let verification;
+
+    try {
+      verification = await prisma.verification.create({
+        data: {
+          tenantId: apiKeyRecord.tenantId,
+          conversationId,
+          blobId: blobId,
+          suiTxHash: suiTxHash,
+          customerId: customerId || 'unknown',
+          agentId: agentId || 'unknown',
+          modelUsed: 'seal-encrypted',
+          messageCount: messages.length,
+          contentHash: contentHash,
+          metadata: {
+            savedAt: new Date().toISOString(),
+            sealId: sealId,
+          },
+        },
+      });
+      console.log('✅ Database save successful');
+      console.log('   Verification ID:', verification.id);
+    } catch (dbError) {
+      console.error('❌ Database save failed:', dbError);
+      return NextResponse.json(
+        { 
+          error: 'Database save failed', 
+          details: dbError instanceof Error ? dbError.message : String(dbError),
+          stack: dbError instanceof Error ? dbError.stack : undefined
+        },
+        { status: 500 }
+      );
+    }
+
+    // 11. ON-CHAIN LEGAL RECORD
+    console.log('⛓️ Recording on-chain...');
+    let onChainSuccess = false;
+    
+    try {
+      await recordOnChain({
+        blobId,
+        conversationId,
+        contentHash,
+        suiTxHash: suiTxHash,
+        signature: signature,
+        tenantAddress: apiKeyRecord.tenant?.suiAddress,
+      });
+      onChainSuccess = true;
+      console.log('✅ On-chain record created for legal protection');
+    } catch (onChainError) {
+      console.error('⚠️ On-chain recording failed (non-critical):', onChainError);
+      // Don't fail the request - data is already on Walrus
+    }
+
+    // 12. Audit log
+    console.log('📝 Creating audit log...');
+    try {
+      await createAuditLog({
+        action: 'CONVERSATION_SAVED',
+        blobId: blobId,
+        conversationId: conversationId,
+        details: {
+          messageCount: messages.length,
+          customerId: customerId || 'unknown',
+          agentId: agentId || 'unknown',
+          suiTxHash: suiTxHash,
+          onChainRecorded: onChainSuccess,
+        },
+      });
+      console.log('✅ Audit log created');
+    } catch (auditError) {
+      console.error('⚠️ Audit log failed (non-critical):', auditError);
+    }
+
+    // 13. Delete temp messages
+    console.log('🗑️ Deleting temporary messages...');
+    try {
+      await prisma.tempMessage.deleteMany({
+        where: { tenantId: apiKeyRecord.tenantId, conversationId },
+      });
+      console.log('✅ Temp messages deleted');
+    } catch (deleteError) {
+      console.error('⚠️ Temp message deletion failed (non-critical):', deleteError);
+    }
+
+    console.log('🎉 === SAVE COMPLETED SUCCESSFULLY ===\n');
 
     return NextResponse.json({
       success: true,
@@ -183,10 +289,20 @@ export async function POST(request: NextRequest) {
       conversationId,
       messageCount: messages.length,
       contentHash: contentHash,
+      suiTxHash: suiTxHash,
       walrusExplorerUrl: walrusExplorerUrl,
+      onChainRecorded: onChainSuccess,
+      verificationId: verification.id,
+      sealId: sealId,
     });
   } catch (error) {
     console.error('💥 SAVE ROUTE ERROR:', error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { 
+        error: error instanceof Error ? error.message : 'Internal server error',
+        stack: error instanceof Error ? error.stack : undefined
+      },
+      { status: 500 }
+    );
   }
 }

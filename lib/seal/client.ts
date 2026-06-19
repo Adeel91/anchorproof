@@ -10,10 +10,6 @@ const SEAL_KEY_SERVERS = [
     objectId: process.env.SEAL_KEY_SERVER_2_ID!,
     weight: 1,
   },
-  {
-    objectId: process.env.SEAL_KEY_SERVER_3_ID!,
-    weight: 1,
-  },
 ];
 
 export const sealClient = new SealClient({
@@ -22,4 +18,4 @@ export const sealClient = new SealClient({
   verifyKeyServers: false,
 });
 
-export const SEAL_SYSTEM_PACKAGE_ID = process.env.SEAL_PACKAGE_ID!;
+export const SEAL_SYSTEM_PACKAGE_ID = process.env.NEXT_PUBLIC_SUI_PACKAGE_ID!;

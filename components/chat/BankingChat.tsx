@@ -10,6 +10,11 @@ interface Message {
   content: string;
 }
 
+interface SaveResult {
+  blobId: string;
+  suiTxHash: string;
+}
+
 const generateConversationId = () => {
   return `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };
@@ -26,7 +31,7 @@ export default function BankingChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [conversationId] = useState(generateConversationId);
-  const [savedBlobId, setSavedBlobId] = useState<string | null>(null);
+  const [saveResult, setSaveResult] = useState<SaveResult | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
 
@@ -55,7 +60,10 @@ export default function BankingChat() {
         'anchorproof-banking'
       );
 
-      setSavedBlobId(result.blobId);
+      setSaveResult({
+        blobId: result.blobId,
+        suiTxHash: result.suiTxHash || result.blobId,
+      });
       setHasSaved(true);
       setShowModal(true);
     } catch (error) {
@@ -153,6 +161,11 @@ export default function BankingChat() {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const truncateHash = (hash: string) => {
+    if (!hash) return '';
+    return `${hash.slice(0, 16)}...${hash.slice(-8)}`;
   };
 
   return (
@@ -281,9 +294,9 @@ export default function BankingChat() {
         </div>
       </div>
 
-      {/* Save Button - Clean, professional, integrated */}
+      {/* Save Button */}
       {!hasSaved && messages.length > 1 && (
-        <div className="mt-4 p-4 bg-gradient-to-r from-indigo-500/10 via-cyan-500/10 to-indigo-500/10 rounded-xl border border-indigo-500/20 animate-slide-up">
+        <div className="mt-4 p-4 bg-gradient-to-r from-indigo-500/10 via-cyan-500/10 to-indigo-500/10 rounded-xl border border-indigo-500/20">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
@@ -363,13 +376,13 @@ export default function BankingChat() {
       )}
 
       {/* Success Modal */}
-      {showModal && savedBlobId && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 max-w-md w-full mx-4 animate-slide-up">
+      {showModal && saveResult && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl animate-slide-up">
             <div className="text-center mb-4">
-              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
-                  className="w-8 h-8 text-green-500"
+                  className="w-8 h-8 text-emerald-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -383,36 +396,76 @@ export default function BankingChat() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-white mb-2">
-                Conversation Saved
+                Conversation Secured
               </h3>
-              <p className="text-slate-300 text-sm">
-                Your conversation has been securely stored and verified.
+              <p className="text-slate-400 text-sm">
+                Your conversation is now immutable and legally verifiable on-chain.
               </p>
             </div>
 
-            <div className="bg-slate-800 p-3 rounded-lg mb-4">
-              <p className="text-xs text-slate-400 mb-1">Verification ID:</p>
-              <code className="text-cyan-400 text-xs break-all">
-                {savedBlobId}
+            {/* Storage Reference */}
+            <div className="bg-slate-800/50 rounded-lg p-3 mb-3 border border-slate-700/50">
+              <div className="flex items-center gap-2 mb-1">
+                <svg className="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                </svg>
+                <span className="text-xs text-slate-500 font-mono">Storage Reference</span>
+              </div>
+              <code className="text-cyan-400 text-xs break-all font-mono">
+                {truncateHash(saveResult.blobId)}
               </code>
+              <a
+                href={`https://walruscan.com/${activeNetwork}/blob/${saveResult.blobId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block"
+              >
+                View Storage Record →
+              </a>
+            </div>
+
+            {/* Verification Proof */}
+            <div className="bg-slate-800/50 rounded-lg p-3 mb-4 border border-slate-700/50">
+              <div className="flex items-center gap-2 mb-1">
+                <svg className="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span className="text-xs text-slate-500 font-mono">Verification Proof</span>
+              </div>
+              <code className="text-purple-400 text-xs break-all font-mono">
+                {truncateHash(saveResult.suiTxHash)}
+              </code>
+              <a
+                href={`https://suiscan.xyz/${activeNetwork}/object/${saveResult.suiTxHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block"
+              >
+                View Verification Proof →
+              </a>
             </div>
 
             <div className="flex gap-3">
               <a
-                href={`https://walruscan.com/${activeNetwork}/blob/${savedBlobId}`}
+                href={`https://walruscan.com/${activeNetwork}/blob/${saveResult.blobId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 text-center bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-sm transition-colors flex items-center justify-center"
+                className="flex-1 text-center bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
               >
-                View Record
+                Verify Storage
               </a>
-              <Button
+              <button
                 onClick={() => setShowModal(false)}
-                variant="outline"
-                className="flex-1"
+                className="flex-1 text-center bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
               >
                 Close
-              </Button>
+              </button>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-700/50">
+              <p className="text-[10px] text-slate-500 text-center font-mono">
+                🔒 Court-admissible evidence • Immutable • Verifiable on-chain
+              </p>
             </div>
           </div>
         </div>

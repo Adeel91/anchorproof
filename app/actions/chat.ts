@@ -29,5 +29,14 @@ export async function saveConversationAction(
     agentId,
   });
 
-  return result;
+  return {
+    blobId: result.blobId,
+    suiTxHash: result.suiTxHash,
+    conversationId: result.conversationId,
+    messageCount: result.messageCount,
+    contentHash: result.contentHash,
+    walrusExplorerUrl: result.walrusExplorerUrl,
+    onChainRecorded: result.onChainRecorded,
+    verificationId: result.verificationId,
+  };
 }
