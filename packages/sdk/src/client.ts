@@ -96,36 +96,51 @@ export class AnchorProofClient {
     return this.handleResponse<SendMessageResponse>(response);
   }
 
-  async saveConversation(
-    params: SaveConversationParams
-  ): Promise<SaveConversationResponse> {
-    const crypto = this.getCrypto();
+  // In the saveConversation method
+async saveConversation(
+  params: SaveConversationParams
+): Promise<SaveConversationResponse> {
+  const crypto = this.getCrypto();
 
-    const messageToSign = JSON.stringify({
-      conversationId: params.conversationId,
-      customerId: params.customerId || 'unknown',
-      agentId: params.agentId || 'unknown',
-    });
+  const messageToSign = JSON.stringify({
+    conversationId: params.conversationId,
+    customerId: params.customerId || 'unknown',
+    agentId: params.agentId || 'unknown',
+  });
 
-    const rawSignature = await crypto.signMessage(messageToSign);
-    const signatureBytes = fromBase64(rawSignature);
-    const signatureBase64 = toBase64(signatureBytes);
-    const publicKey = crypto.getPublicKey();
+  const rawSignature = await crypto.signMessage(messageToSign);
+  const signatureBytes = fromBase64(rawSignature);
+  const signatureBase64 = toBase64(signatureBytes);
+  const publicKey = crypto.getPublicKey();
 
-    const response = await fetch(
-      `${AnchorProofClient.globalConfig!.apiBaseUrl}/api/chat/save`,
-      {
-        method: 'POST',
-        headers: this.getHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({
-          ...params,
-          signature: signatureBase64,
-          publicKey,
-        }),
-      }
-    );
+  const response = await fetch(
+    `${AnchorProofClient.globalConfig!.apiBaseUrl}/api/chat/save`,
+    {
+      method: 'POST',
+      headers: this.getHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({
+        ...params,
+        signature: signatureBase64,
+        publicKey,
+      }),
+    }
+  );
 
-    return this.handleResponse<SaveConversationResponse>(response);
-  }
+  const result = await this.handleResponse<any>(response);
+  
+  return {
+    success: result.success,
+    blobId: result.blobId,
+    suiTxHash: result.suiTxHash || result.blobId,
+    conversationId: result.conversationId,
+    messageCount: result.messageCount || 0,
+    contentHash: result.contentHash,
+    walrusExplorerUrl: result.walrusExplorerUrl || '',
+    onChainRecorded: result.onChainRecorded || false,
+    verificationId: result.verificationId,
+    suiStatus: result.suiStatus || 'pending',
+    walrusStatus: result.walrusStatus || 'uploading',
+  };
+}
 }

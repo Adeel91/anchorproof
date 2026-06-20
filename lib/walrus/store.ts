@@ -31,12 +31,18 @@ export async function storeOnWalrus(
 
   const serverKeypair = Ed25519Keypair.fromSecretKey(privateKeyBytes);
 
+  console.log('⏱️ [WALRUS] 🚀 Starting upload...');
+  const uploadStart = Date.now();
+
   const result = await walrusClient.walrus.writeBlob({
     blob: new TextEncoder().encode(encryptedBlob),
     deletable: false,
-    epochs: 10,
+    epochs: 3,
     signer: serverKeypair,
   });
+
+  const elapsed = Date.now() - uploadStart;
+  console.log(`⏱️ [WALRUS] ✅ Upload complete in ${elapsed}ms`);
 
   const blobId = result.blobId;
   const suiObjectId = result.blobObject?.id || 'unknown';

@@ -56,6 +56,8 @@ export interface SaveConversationResponse {
   walrusExplorerUrl: string;
   onChainRecorded: boolean;
   verificationId: string;
+  suiStatus?: 'pending' | 'verified' | 'failed';
+  walrusStatus?: 'uploading' | 'completed' | 'failed';
 }
 
 export interface StoredKeyPair {

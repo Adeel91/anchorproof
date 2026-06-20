@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Fingerprint,
   Award,
+  Loader2,
 } from 'lucide-react';
 
 interface Message {
@@ -29,6 +30,11 @@ interface Message {
 interface SaveResult {
   blobId: string;
   suiTxHash: string;
+  contractTxHash?: string | null;
+  isVerified?: boolean;
+  suiStatus?: 'pending' | 'verified' | 'failed';
+  walrusStatus?: 'uploading' | 'completed' | 'failed';
+  walrusExplorerUrl?: string;
 }
 
 const generateConversationId = () => {
@@ -50,6 +56,10 @@ export default function BankingChat() {
   const [saveResult, setSaveResult] = useState<SaveResult | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
+  const [suiStatus, setSuiStatus] = useState<'idle' | 'pending' | 'verified' | 'failed'>('idle');
+  const [walrusStatus, setWalrusStatus] = useState<'uploading' | 'completed' | 'failed'>('uploading');
+  const [contractTxHash, setContractTxHash] = useState<string | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -65,10 +75,82 @@ export default function BankingChat() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) {
+        clearTimeout(pollingRef.current);
+      }
+    };
+  }, []);
+
+  const pollSuiStatus = useCallback(async (blobId: string) => {
+    let attempts = 0;
+    const maxAttempts = 30;
+    
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(`/api/chat/save/status?blobId=${blobId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
+
+        // Update walrus status
+        if (data.walrusStatus) {
+          setWalrusStatus(data.walrusStatus);
+        }
+
+        // Update saveResult with the real data when available
+        setSaveResult((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            // Update blobId if it's no longer pending
+            blobId: data.blobId && !data.blobId.startsWith('pending_') ? data.blobId : prev.blobId,
+            // Update suiTxHash with walrusTxHash if available
+            suiTxHash: data.walrusTxHash && data.walrusTxHash !== 'pending' ? data.walrusTxHash : prev.suiTxHash,
+            // Update contractTxHash when verified
+            contractTxHash: data.contractTxHash || prev.contractTxHash,
+            isVerified: data.isVerified || prev.isVerified,
+            suiStatus: data.isVerified ? 'verified' : prev.suiStatus,
+            walrusStatus: data.walrusStatus || prev.walrusStatus,
+            walrusExplorerUrl: data.walrusExplorerUrl || prev.walrusExplorerUrl,
+          };
+        });
+
+        if (data.isVerified) {
+          setSuiStatus('verified');
+          setContractTxHash(data.contractTxHash);
+          return;
+        }
+
+        attempts++;
+        if (attempts < maxAttempts) {
+          pollingRef.current = setTimeout(checkStatus, 2000);
+        } else {
+          setSuiStatus('failed');
+        }
+      } catch (error) {
+        console.error('Status check failed:', error);
+        attempts++;
+        if (attempts < maxAttempts) {
+          pollingRef.current = setTimeout(checkStatus, 3000);
+        } else {
+          setSuiStatus('failed');
+        }
+      }
+    };
+
+    pollingRef.current = setTimeout(checkStatus, 1000);
+  }, []);
+
   const saveToBlockchain = useCallback(async () => {
     if (isSaving || messages.length <= 1 || hasSaved) return;
 
     setIsSaving(true);
+    setSuiStatus('pending');
+    setWalrusStatus('uploading');
+    
     try {
       const result = await saveConversationAction(
         conversationId,
@@ -79,16 +161,24 @@ export default function BankingChat() {
       setSaveResult({
         blobId: result.blobId,
         suiTxHash: result.suiTxHash || result.blobId,
+        suiStatus: 'pending',
+        walrusStatus: result.walrusStatus || 'uploading',
       });
+      
       setHasSaved(true);
       setShowModal(true);
+      
+      if (result.blobId) {
+        pollSuiStatus(result.blobId);
+      }
     } catch (error) {
       console.error('Save error:', error);
-      alert('Failed to save conversation');
+      setSuiStatus('failed');
+      alert(error instanceof Error ? error.message : 'Failed to save conversation');
     } finally {
       setIsSaving(false);
     }
-  }, [isSaving, messages.length, hasSaved, conversationId]);
+  }, [isSaving, messages.length, hasSaved, conversationId, pollSuiStatus]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -218,17 +308,23 @@ export default function BankingChat() {
                   Active
                 </span>
               </div>
-              {hasSaved && (
+              {hasSaved && suiStatus === 'verified' && (
                 <span className="flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[10px] text-emerald-400">
                   <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   <span className="hidden sm:inline">Verified</span>
+                </span>
+              )}
+              {hasSaved && suiStatus === 'pending' && (
+                <span className="flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[10px] text-amber-400">
+                  <Loader2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin" />
+                  <span className="hidden sm:inline">Verifying...</span>
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Trust Badges - Hide on smallest screens */}
+        {/* Trust Badges */}
         <div className="hidden xs:flex bg-slate-800/30 px-3 sm:px-6 py-1.5 sm:py-2 border-b border-slate-700/30 flex-wrap items-center gap-2 sm:gap-4 text-[8px] sm:text-[10px] text-slate-500">
           <span className="flex items-center gap-1 sm:gap-1.5">
             <Award className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400" />
@@ -375,25 +471,7 @@ export default function BankingChat() {
             >
               {isSaving ? (
                 <>
-                  <svg
-                    className="animate-spin w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
+                  <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 animate-spin" />
                   Securing...
                 </>
               ) : (
@@ -408,76 +486,205 @@ export default function BankingChat() {
         </div>
       )}
 
-      {/* Success Modal - Fully Responsive */}
+      {/* Success Modal */}
       {showModal && saveResult && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-xl sm:rounded-2xl p-4 sm:p-7 max-w-md w-full shadow-2xl shadow-cyan-500/10 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300 mx-2 sm:mx-0">
             <div className="text-center mb-4 sm:mb-5">
-              <div className="w-12 h-12 sm:w-20 sm:h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 border border-emerald-500/30">
-                <CheckCircle className="w-6 h-6 sm:w-10 sm:h-10 text-emerald-500" />
+              <div className={`w-12 h-12 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 border ${
+                suiStatus === 'verified' 
+                  ? 'bg-emerald-500/20 border-emerald-500/30' 
+                  : suiStatus === 'pending'
+                  ? 'bg-amber-500/20 border-amber-500/30'
+                  : 'bg-red-500/20 border-red-500/30'
+              }`}>
+                {suiStatus === 'verified' && (
+                  <CheckCircle className="w-6 h-6 sm:w-10 sm:h-10 text-emerald-500" />
+                )}
+                {suiStatus === 'pending' && (
+                  <Loader2 className="w-6 h-6 sm:w-10 sm:h-10 text-amber-400 animate-spin" />
+                )}
+                {suiStatus === 'failed' && (
+                  <span className="text-3xl sm:text-5xl text-red-500">❌</span>
+                )}
               </div>
               <h3 className="text-base sm:text-2xl font-bold text-white mb-0.5 sm:mb-1">
-                Conversation Secured
+                {suiStatus === 'verified' && 'Conversation Secured ✅'}
+                {suiStatus === 'pending' && 'Verifying on SUI...'}
+                {suiStatus === 'failed' && 'Verification Failed'}
               </h3>
               <p className="text-[10px] sm:text-sm text-slate-400">
-                Immutable and cryptographically verified on-chain.
+                {suiStatus === 'verified' && 'Immutable and cryptographically verified on-chain.'}
+                {suiStatus === 'pending' && 'Your conversation is being verified on the Sui blockchain. This may take up to 30 seconds.'}
+                {suiStatus === 'failed' && 'There was an issue verifying on SUI. Please try again.'}
               </p>
             </div>
 
             <div className="space-y-2.5 sm:space-y-3">
+              {/* ===== BOX 1: Walrus Blob ID ===== */}
               <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-slate-700/50 hover:border-cyan-400/20 transition-all">
                 <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-1.5">
                   <Database className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400" />
                   <span className="text-[8px] sm:text-xs text-slate-500 font-mono font-semibold uppercase tracking-wider">
-                    Storage Reference
+                    Walrus Blob ID
+                  </span>
+                  <span className="ml-auto text-[8px]">
+                    {walrusStatus === 'completed' ? (
+                      <span className="text-emerald-400">✅ Stored</span>
+                    ) : walrusStatus === 'uploading' ? (
+                      <span className="text-amber-400 flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Uploading...
+                      </span>
+                    ) : (
+                      <span className="text-red-400">❌ Failed</span>
+                    )}
                   </span>
                 </div>
                 <code className="text-cyan-400 text-[8px] sm:text-xs break-all font-mono bg-slate-900/50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded block">
-                  {truncateHash(saveResult.blobId)}
+                  {walrusStatus === 'completed' && saveResult.blobId && !saveResult.blobId.startsWith('pending_')
+                    ? truncateHash(saveResult.blobId)
+                    : walrusStatus === 'uploading'
+                    ? 'Waiting for upload...'
+                    : 'Upload failed'}
                 </code>
-                <a
-                  href={`https://walruscan.com/${activeNetwork}/blob/${saveResult.blobId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[7px] sm:text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block transition-colors"
-                >
-                  View on Walrus →
-                </a>
+                {walrusStatus === 'completed' && saveResult.blobId && !saveResult.blobId.startsWith('pending_') && (
+                  <a
+                    href={`https://walruscan.com/${activeNetwork}/blob/${saveResult.blobId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[7px] sm:text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block transition-colors"
+                  >
+                    View on Walrus →
+                  </a>
+                )}
               </div>
 
-              <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-slate-700/50 hover:border-purple-400/20 transition-all">
+              {/* ===== BOX 2: Walrus Tx Hash ===== */}
+              <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-slate-700/50 hover:border-blue-400/20 transition-all">
                 <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-1.5">
-                  <LinkIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400" />
+                  <LinkIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-400" />
                   <span className="text-[8px] sm:text-xs text-slate-500 font-mono font-semibold uppercase tracking-wider">
-                    Verification Proof
+                    Walrus Tx Hash
+                  </span>
+                  <span className="ml-auto text-[8px]">
+                    {walrusStatus === 'completed' && saveResult.suiTxHash && saveResult.suiTxHash !== 'pending' ? (
+                      <span className="text-emerald-400">✅ Confirmed</span>
+                    ) : walrusStatus === 'uploading' ? (
+                      <span className="text-amber-400">⏳ Pending</span>
+                    ) : (
+                      <span className="text-red-400">❌ Failed</span>
+                    )}
                   </span>
                 </div>
-                <code className="text-purple-400 text-[8px] sm:text-xs break-all font-mono bg-slate-900/50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded block">
-                  {truncateHash(saveResult.suiTxHash)}
+                <code className="text-blue-400 text-[8px] sm:text-xs break-all font-mono bg-slate-900/50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded block">
+                  {walrusStatus === 'completed' && saveResult.suiTxHash && saveResult.suiTxHash !== 'pending'
+                    ? truncateHash(saveResult.suiTxHash)
+                    : walrusStatus === 'uploading'
+                    ? 'Waiting for confirmation...'
+                    : 'Upload failed'}
                 </code>
-                <a
-                  href={`https://suiscan.xyz/${activeNetwork}/object/${saveResult.suiTxHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[7px] sm:text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block transition-colors"
-                >
-                  View on Sui →
-                </a>
               </div>
+
+              {/* ===== BOX 3: Contract SUI Tx Hash ===== */}
+              <div className={`bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border ${
+                suiStatus === 'verified' 
+                  ? 'border-emerald-500/30 hover:border-emerald-500/50' 
+                  : suiStatus === 'pending'
+                  ? 'border-amber-500/30'
+                  : 'border-red-500/30'
+              } transition-all`}>
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-1.5">
+                  <Shield className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400" />
+                  <span className="text-[8px] sm:text-xs text-slate-500 font-mono font-semibold uppercase tracking-wider">
+                    Contract SUI Tx Hash
+                  </span>
+                  <span className="ml-auto text-[8px]">
+                    {suiStatus === 'verified' && (
+                      <span className="text-emerald-400">✅ Verified</span>
+                    )}
+                    {suiStatus === 'pending' && (
+                      <span className="text-amber-400 flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Processing...
+                      </span>
+                    )}
+                    {suiStatus === 'failed' && (
+                      <span className="text-red-400">❌ Failed</span>
+                    )}
+                  </span>
+                </div>
+                <code className={`text-[8px] sm:text-xs break-all font-mono bg-slate-900/50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded block ${
+                  suiStatus === 'verified' ? 'text-emerald-400' : 
+                  suiStatus === 'pending' ? 'text-amber-400' : 'text-red-400'
+                }`}>
+                  {contractTxHash ? truncateHash(contractTxHash) : 'Waiting for confirmation...'}
+                </code>
+                {contractTxHash && (
+                  <a
+                    href={`https://suiscan.xyz/${activeNetwork}/object/${contractTxHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[7px] sm:text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block transition-colors"
+                  >
+                    View on Sui →
+                  </a>
+                )}
+              </div>
+
+              {/* Progress Bar */}
+              {suiStatus === 'pending' && (
+                <div className="mt-2">
+                  <div className="flex justify-between text-[8px] sm:text-[10px] text-slate-500 mb-1">
+                    <span>Verifying on SUI blockchain...</span>
+                    <span>~30s</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full animate-progress" />
+                  </div>
+                </div>
+              )}
+
+              {/* All Verified */}
+              {suiStatus === 'verified' && (
+                <div className="mt-2 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-center">
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 mx-auto mb-1" />
+                  <p className="text-xs sm:text-sm text-emerald-400 font-semibold">
+                    Conversation Fully Verified ✅
+                  </p>
+                  <p className="text-[8px] sm:text-xs text-slate-500">
+                    Walrus stored • Contract verified on SUI
+                  </p>
+                </div>
+              )}
+
+              {/* Failed State */}
+              {suiStatus === 'failed' && (
+                <div className="mt-2 p-3 bg-red-500/10 rounded-xl border border-red-500/20 text-center">
+                  <p className="text-xs sm:text-sm text-red-400 font-semibold">
+                    Verification Failed ❌
+                  </p>
+                  <p className="text-[8px] sm:text-xs text-slate-500">
+                    Please try saving again or contact support.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-3 mt-4 sm:mt-5">
-              <a
-                href={`https://walruscan.com/${activeNetwork}/blob/${saveResult.blobId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-center bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20 px-3 sm:px-4"
-              >
-                Verify on Walrus
-              </a>
+              {suiStatus === 'verified' && (
+                <a
+                  href={`https://suiscan.xyz/${activeNetwork}/object/${contractTxHash || saveResult.suiTxHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-center bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20 px-3 sm:px-4"
+                >
+                  Verify on Sui
+                </a>
+              )}
               <button
                 onClick={() => setShowModal(false)}
-                className="text-center bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all px-3 sm:px-4"
+                className="text-center bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all px-3 sm:px-4 flex-1"
               >
                 Close
               </button>

@@ -3,6 +3,7 @@ import { suiClient } from '@/lib/walrus/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromBase64 } from '@mysten/bcs';
 import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
+import { prisma } from '@/lib/prisma';
 
 export const SUI_PACKAGE_ID = process.env.SUI_PACKAGE_ID!;
 export const SUI_LEGAL_REGISTRY_ID = process.env.SUI_LEGAL_REGISTRY_ID!;
@@ -41,42 +42,83 @@ function getSigner(): Ed25519Keypair {
   return Ed25519Keypair.fromSecretKey(privateKeyBytes);
 }
 
+// ⚡ OPTIMIZED: Async version that updates metadata
 export async function recordOnChain(params: RecordOnChainParams) {
   const { blobId, conversationId, contentHash, suiTxHash, signature } = params;
 
-  const contentHashBytes = Buffer.from(contentHash, 'hex');
-  const signatureBytes = Buffer.from(signature, 'base64');
-  const suiTxHashBytes = Buffer.from(
-    suiTxHash.startsWith('0x') ? suiTxHash.slice(2) : suiTxHash,
-    'hex'
-  );
+  try {
+    const contentHashBytes = Buffer.from(contentHash, 'hex');
+    const signatureBytes = Buffer.from(signature, 'base64');
+    const suiTxHashBytes = Buffer.from(
+      suiTxHash.startsWith('0x') ? suiTxHash.slice(2) : suiTxHash,
+      'hex'
+    );
 
-  const tx = new Transaction();
-  const signer = getSigner();
+    const tx = new Transaction();
+    const signer = getSigner();
 
-  tx.moveCall({
-    target: `${SUI_PACKAGE_ID}::anchorproof::verify_conversation`,
-    arguments: [
-      tx.object(SUI_LEGAL_REGISTRY_ID),
-      tx.object(SUI_CLOCK_ID),
-      tx.pure.string(blobId),
-      tx.pure.string(conversationId),
-      tx.pure.vector('u8', contentHashBytes),
-      tx.pure.vector('u8', suiTxHashBytes),
-      tx.pure.vector('u8', signatureBytes),
-    ],
-  });
+    tx.moveCall({
+      target: `${SUI_PACKAGE_ID}::anchorproof::verify_conversation`,
+      arguments: [
+        tx.object(SUI_LEGAL_REGISTRY_ID),
+        tx.object(SUI_CLOCK_ID),
+        tx.pure.string(blobId),
+        tx.pure.string(conversationId),
+        tx.pure.vector('u8', contentHashBytes),
+        tx.pure.vector('u8', suiTxHashBytes),
+        tx.pure.vector('u8', signatureBytes),
+      ],
+    });
 
-  const result = await suiClient.signAndExecuteTransaction({
-    transaction: tx,
-    signer: signer,
-    options: {
-      showEffects: true,
-      showEvents: true,
-    },
-  });
+    // ⚡ Use WaitForEffectsCert for faster execution
+    const result = await suiClient.signAndExecuteTransaction({
+      transaction: tx,
+      signer: signer,
+      options: {
+        showEffects: true,
+        showEvents: true,
+      },
+      requestType: 'WaitForEffectsCert',
+    });
 
-  return result;
+    const contractTxHash = result.digest || 'unknown';
+
+    // ⚡ Update verification with contractTxHash in metadata
+    await prisma.verification.updateMany({
+      where: { blobId },
+      data: {
+        metadata: {
+          contractTxHash: contractTxHash,
+          suiStatus: 'verified',
+          verifiedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    return {
+      ...result,
+      contractTxHash,
+    };
+  } catch (error) {
+    console.error('On-chain recording failed:', error);
+    
+    // ⚡ Mark as failed in metadata
+    try {
+      await prisma.verification.updateMany({
+        where: { blobId },
+        data: {
+          metadata: {
+            suiStatus: 'failed',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+        },
+      });
+    } catch (updateError) {
+      console.error('Failed to update verification status:', updateError);
+    }
+    
+    throw error;
+  }
 }
 
 export async function sealApproveOnChain(
@@ -102,6 +144,7 @@ export async function sealApproveOnChain(
       options: {
         showEffects: true,
       },
+      requestType: 'WaitForEffectsCert',
     });
 
     return result.effects?.status?.status === 'success';
@@ -116,9 +159,21 @@ export async function isVerifiedOnChain(blobId: string): Promise<boolean> {
     const tx = new Transaction();
     const signer = getSigner();
 
+    // ⚡ Get the latest object reference
+    const registry = await suiClient.getObject({
+      id: SUI_LEGAL_REGISTRY_ID,
+      options: { showContent: true },
+    });
+
+    // ⚡ Use the latest version
+    const version = registry.data?.version || '0';
+    
     tx.moveCall({
       target: `${SUI_PACKAGE_ID}::anchorproof::is_verified`,
-      arguments: [tx.object(SUI_LEGAL_REGISTRY_ID), tx.pure.string(blobId)],
+      arguments: [
+        tx.object(SUI_LEGAL_REGISTRY_ID),
+        tx.pure.string(blobId),
+      ],
     });
 
     const result = await suiClient.signAndExecuteTransaction({
@@ -127,6 +182,7 @@ export async function isVerifiedOnChain(blobId: string): Promise<boolean> {
       options: {
         showEffects: true,
       },
+      requestType: 'WaitForEffectsCert',
     });
 
     return result.effects?.status?.status === 'success';
@@ -153,6 +209,7 @@ export async function getLegalRecord(blobId: string) {
         showEffects: true,
         showEvents: true,
       },
+      requestType: 'WaitForEffectsCert',
     });
 
     return result;
@@ -179,6 +236,7 @@ export async function getRecordsByVerifier(verifier: string) {
         showEffects: true,
         showEvents: true,
       },
+      requestType: 'WaitForEffectsCert',
     });
 
     return result;
@@ -212,6 +270,7 @@ export async function getRecordsByDate(
         showEffects: true,
         showEvents: true,
       },
+      requestType: 'WaitForEffectsCert',
     });
 
     return result;
@@ -238,6 +297,7 @@ export async function markTamperedOnChain(blobId: string) {
         showEffects: true,
         showEvents: true,
       },
+      requestType: 'WaitForEffectsCert',
     });
 
     return result;
@@ -264,6 +324,7 @@ export async function revokeVerificationOnChain(blobId: string) {
         showEffects: true,
         showEvents: true,
       },
+      requestType: 'WaitForEffectsCert',
     });
 
     return result;
@@ -290,6 +351,7 @@ export async function getRecordCount(): Promise<number> {
         showEffects: true,
         showEvents: true,
       },
+      requestType: 'WaitForEffectsCert',
     });
 
     if (result.effects?.status?.status === 'success') {
@@ -340,6 +402,7 @@ export async function humanReviewOnChain(
         showEffects: true,
         showEvents: true,
       },
+      requestType: 'WaitForEffectsCert',
     });
 
     return result;

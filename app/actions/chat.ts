@@ -38,5 +38,7 @@ export async function saveConversationAction(
     walrusExplorerUrl: result.walrusExplorerUrl,
     onChainRecorded: result.onChainRecorded,
     verificationId: result.verificationId,
+    suiStatus: 'pending' as const,
+    walrusStatus: result.walrusStatus || 'uploading',
   };
 }

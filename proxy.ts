@@ -1,3 +1,4 @@
+// lib/proxy.ts or app/proxy.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -12,6 +13,9 @@ export async function proxy(request: NextRequest) {
   const isChatRoute = chatRoutes.some((route) => url.pathname === route);
 
   const isTenantRoute = url.pathname === '/api/tenant/current';
+  
+  // ⚡ Add status endpoint to bypass auth
+  const isStatusRoute = url.pathname === '/api/chat/save/status';
 
   const protectedApiRoutes = [
     '/api/audit',
@@ -28,7 +32,8 @@ export async function proxy(request: NextRequest) {
     url.pathname.startsWith(route)
   );
 
-  if (isChatRoute || isTenantRoute) {
+  // ⚡ Allow chat routes, tenant route, and status route without session check
+  if (isChatRoute || isTenantRoute || isStatusRoute) {
     return NextResponse.next();
   }
 
@@ -50,5 +55,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|logo.svg).*)'],
 };
