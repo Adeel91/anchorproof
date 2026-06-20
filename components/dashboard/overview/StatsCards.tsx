@@ -1,4 +1,3 @@
-// components/dashboard/overview/StatsCards.tsx (enhanced version)
 'use client';
 
 import { useDashboardData } from '@/providers/DashboardDataProvider';
@@ -44,11 +43,11 @@ export function StatsCards() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 animate-pulse">
-            <div className="h-4 bg-slate-800 rounded w-24 mb-3" />
-            <div className="h-8 bg-slate-800 rounded w-16" />
+          <div key={i} className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 sm:p-6 animate-pulse">
+            <div className="h-3 sm:h-4 bg-slate-800 rounded w-20 sm:w-24 mb-2 sm:mb-3" />
+            <div className="h-6 sm:h-8 bg-slate-800 rounded w-12 sm:w-16" />
           </div>
         ))}
       </div>
@@ -56,34 +55,39 @@ export function StatsCards() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {statCards.map((card, index) => {
         const Icon = card.icon;
         return (
           <div
             key={index}
-            className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 hover:border-slate-700/70 transition-all duration-300 hover:shadow-[0_0_30px_rgba(99,102,241,0.05)]"
+            className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 sm:p-6 hover:border-slate-700/70 transition-all duration-300 hover:shadow-[0_0_30px_rgba(99,102,241,0.05)]"
           >
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-slate-400 tracking-wide uppercase">
-                {card.label}
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
+              <span className="text-[10px] sm:text-sm font-medium text-slate-400 tracking-wide uppercase">
+                <span className="hidden xs:inline">{card.label}</span>
+                <span className="xs:hidden">
+                  {card.label === 'Total Conversations' ? 'Conversations' :
+                   card.label === 'Verified Records' ? 'Verified' :
+                   card.label === 'Pending Verification' ? 'Pending' : 'Messages'}
+                </span>
               </span>
-              <Icon className="w-5 h-5 text-slate-400" />
+              <Icon className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-slate-400" />
             </div>
             <div className="flex items-end justify-between">
-              <div className={`text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${card.color}`}>
+              <div className={`text-xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${card.color}`}>
                 {card.value}
               </div>
               {card.trend && (
-                <div className={`flex items-center gap-1 text-xs font-medium ${
+                <div className={`flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-xs font-medium ${
                   card.trendUp ? 'text-emerald-400' : 'text-red-400'
                 }`}>
-                  {card.trendUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {card.trend}
+                  {card.trendUp ? <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
+                  <span className="hidden xs:inline">{card.trend}</span>
                 </div>
               )}
             </div>
-            <div className="mt-3 h-1 w-full bg-slate-800/50 rounded-full overflow-hidden">
+            <div className="mt-2 sm:mt-3 h-0.5 sm:h-1 w-full bg-slate-800/50 rounded-full overflow-hidden">
               <div 
                 className={`h-full bg-gradient-to-r ${card.color} rounded-full transition-all duration-1000`}
                 style={{ 

@@ -3,12 +3,13 @@ import { HealthcareChat } from '@/components/chat';
 
 export default function HealthcarePage() {
   return IndustryPageWrapper({
+    design: 'clinic',
     hero: {
-      badge: 'HEALTHCARE & LIFE SCIENCES',
-      title: 'HIPAA compliant',
-      highlightedText: 'AI patient interactions',
-      description:
-        'FDA, HIPAA, and HITECH compliant AI conversation logging with tamper-proof patient records.',
+      badge: 'HIPAA COMPLIANT HEALTHCARE',
+      badgeIcon: 'HeartPulse',
+      title: 'Protecting patient trust through',
+      highlightedText: 'verifiable AI conversations.',
+      description: 'AnchorProof provides HIPAA, HITECH, and FDA compliant AI conversation logging with cryptographic verification. Every patient interaction becomes tamper-proof evidence that protects your healthcare organization and preserves patient trust.',
       gradientFrom: 'emerald',
       gradientTo: 'teal',
       badgeColor: 'emerald',
@@ -18,68 +19,78 @@ export default function HealthcarePage() {
         value: 'HIPAA',
         label: 'Full Compliance',
         desc: 'Privacy & Security Rules',
+        icon: 'Shield',
       },
-      { value: 'HITECH', label: 'Certified', desc: 'EHR meaningful use' },
+      {
+        value: 'HITECH',
+        label: 'Certified',
+        desc: 'EHR meaningful use',
+        icon: 'FileCheck',
+      },
       {
         value: '100%',
         label: 'Data Integrity',
         desc: 'Immutable patient records',
+        icon: 'Lock',
       },
     ],
     features: [
       {
+        icon: 'Shield',
         title: 'Compliance Frameworks',
         items: [
-          'HIPAA Privacy Rule',
-          'HIPAA Security Rule',
-          'HITECH Act',
-          'FDA Guidelines',
-          'GDPR for Health',
+          'HIPAA Privacy Rule for patient data protection',
+          'HIPAA Security Rule for electronic PHI',
+          'HITECH Act for EHR meaningful use',
+          'FDA guidelines for AI in healthcare'
         ],
       },
       {
+        icon: 'Lock',
         title: 'Security Controls',
         items: [
-          'PHI Encryption',
-          'Access Controls',
-          'Audit Trails',
-          'Business Associate Agreements',
+          'End-to-end PHI encryption in transit and at rest',
+          'Role-based access controls for patient data',
+          'Immutable audit trails for all healthcare interactions',
+          'Business Associate Agreement support'
         ],
       },
       {
-        title: 'Healthcare Features',
+        icon: 'FileCheck',
+        title: 'Clinical Capabilities',
         items: [
-          'Immutable Patient Records',
-          'Clinical Documentation',
-          'Telehealth Compliance',
-          'Breach Notification',
+          'Immutable patient record keeping',
+          'Cryptographically verified clinical documentation',
+          'HIPAA-compliant telehealth interactions',
+          'Automated breach notification preparation'
         ],
       },
     ],
     useCases: [
       {
+        icon: 'Shield',
         name: 'HIPAA Compliance',
-        desc: 'Patient data protection and privacy',
-        icon: '🔒',
+        desc: 'Cryptographically verified patient data protection and privacy compliance',
       },
       {
+        icon: 'FileCheck',
         name: 'Clinical Documentation',
-        desc: 'Immutable medical records',
-        icon: '📋',
+        desc: 'Immutable medical records with full audit trails',
       },
-      { name: 'Telehealth', desc: 'Compliant virtual care', icon: '💻' },
-      { name: 'FDA Guidelines', desc: 'Healthcare AI compliance', icon: '⚕️' },
+      {
+        icon: 'Database',
+        name: 'Telehealth Compliance',
+        desc: 'HIPAA-compliant virtual care with cryptographic verification',
+      },
+      {
+        icon: 'TrendingUp',
+        name: 'FDA AI Guidelines',
+        desc: 'Compliance tracking for healthcare AI applications',
+      },
     ],
-    cta: {
-      title: 'Ready to secure your healthcare AI?',
-      description:
-        'Join leading healthcare providers using AnchorProof for HIPAA-compliant AI logs',
-      buttonText: 'Request Healthcare Demo',
-      gradientColor: 'emerald',
-    },
     chat: {
-      title: 'Healthcare Compliance Assistant',
-      subtitle: 'Ask about HIPAA, HITECH & FDA',
+      title: 'Live Enterprise Demo',
+      subtitle: 'Experience HIPAA-compliant AI interactions',
       component: <HealthcareChat />,
       gradientColor: 'emerald',
     },

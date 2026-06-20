@@ -3,75 +3,96 @@ import { GovernmentChat } from '@/components/chat';
 
 export default function GovernmentPage() {
   return IndustryPageWrapper({
+    design: 'capitol',
     hero: {
-      badge: 'GOVERNMENT & PUBLIC SECTOR',
-      title: 'FOIA compliant',
-      highlightedText: 'citizen interactions',
-      description:
-        'FISMA, FedRAMP, and FOIA compliant AI conversation logging with immutable public records.',
-      gradientFrom: 'purple',
-      gradientTo: 'pink',
-      badgeColor: 'purple',
+      badge: 'FEDERAL COMPLIANCE READY',
+      badgeIcon: 'Landmark',
+      title: 'Ensuring government transparency through',
+      highlightedText: 'verifiable citizen interactions.',
+      description: 'AnchorProof provides FISMA, FedRAMP, and FOIA compliant AI conversation logging with cryptographic verification. Every citizen interaction becomes tamper-proof evidence that protects your agency from compliance failures and FOIA disputes.',
+      gradientFrom: 'indigo',
+      gradientTo: 'purple',
+      badgeColor: 'indigo',
     },
     stats: [
-      { value: 'FedRAMP', label: 'Ready', desc: 'Authorization in progress' },
-      { value: 'NIST', label: 'Compliant', desc: '800-53 controls' },
-      { value: '100%', label: 'Audit Integrity', desc: 'Immutable records' },
+      {
+        value: 'FedRAMP',
+        label: 'Ready',
+        desc: 'Authorization in progress',
+        icon: 'Shield',
+      },
+      {
+        value: 'NIST',
+        label: 'Compliant',
+        desc: '800-53 controls',
+        icon: 'FileCheck',
+      },
+      {
+        value: '100%',
+        label: 'Audit Integrity',
+        desc: 'Immutable public records',
+        icon: 'Lock',
+      },
     ],
     features: [
       {
+        icon: 'Shield',
         title: 'Compliance Frameworks',
-        items: ['FOIA', 'FISMA', 'FedRAMP', 'NIST 800-53', 'CMMC 2.0'],
-      },
-      {
-        title: 'Security Controls',
         items: [
-          'Access Control',
-          'Audit & Accountability',
-          'Contingency Planning',
-          'Incident Response',
+          'FOIA for public records management',
+          'FISMA for federal information security',
+          'FedRAMP for cloud service authorization',
+          'NIST 800-53 security controls'
         ],
       },
       {
-        title: 'Public Sector Features',
+        icon: 'Lock',
+        title: 'Security Controls',
         items: [
-          'Immutable Public Records',
-          'FOIA Request Management',
-          'Chain of Custody',
-          'Court-Admissible Proofs',
+          'Role-based access control for sensitive data',
+          'Audit and accountability logging',
+          'Contingency planning and disaster recovery',
+          'Incident response and breach notification'
+        ],
+      },
+      {
+        icon: 'FileCheck',
+        title: 'Public Sector Capabilities',
+        items: [
+          'Immutable public records preservation',
+          'FOIA request management and tracking',
+          'Complete chain of custody verification',
+          'Cryptographic proof for legal proceedings'
         ],
       },
     ],
     useCases: [
       {
+        icon: 'Shield',
         name: 'FOIA Compliance',
-        desc: 'Immutable public records management',
-        icon: '📋',
+        desc: 'Immutable public records with cryptographic verification for transparency',
       },
       {
+        icon: 'Building2',
         name: 'FedRAMP Authorization',
-        desc: 'Cloud security compliance',
-        icon: '☁️',
+        desc: 'Cloud security compliance with full audit trails',
       },
       {
+        icon: 'Lock',
         name: 'Cybersecurity',
-        desc: 'NIST framework implementation',
-        icon: '🛡️',
+        desc: 'NIST framework implementation with immutable security logs',
       },
-      { name: 'Audit Trails', desc: 'Cryptographic verification', icon: '📊' },
+      {
+        icon: 'TrendingUp',
+        name: 'Audit Trails',
+        desc: 'Cryptographic verification for government audits',
+      },
     ],
-    cta: {
-      title: 'Ready to ensure government compliance?',
-      description:
-        'Join public sector organizations using AnchorProof for FOIA-compliant immutable records',
-      buttonText: 'Request Government Demo',
-      gradientColor: 'purple',
-    },
     chat: {
-      title: 'Government Compliance Assistant',
-      subtitle: 'Ask about FOIA, FISMA & FedRAMP',
+      title: 'Live Enterprise Demo',
+      subtitle: 'Experience FOIA-compliant AI interactions',
       component: <GovernmentChat />,
-      gradientColor: 'purple',
+      gradientColor: 'indigo',
     },
   });
 }

@@ -1,7 +1,6 @@
-// components/dashboard/layout/Sidebar.tsx
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useDashboardData } from '@/providers/DashboardDataProvider';
@@ -15,6 +14,8 @@ import {
   Settings,
   Users,
   FileBarChart,
+  Menu,
+  X,
 } from 'lucide-react';
 
 const navItems = [
@@ -72,6 +73,24 @@ const navItems = [
 export function Sidebar({ tenantName }: { tenantName?: string }) {
   const pathname = usePathname();
   const { user } = useDashboardData();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileOpen]);
 
   const activeItems = useMemo(() => {
     return navItems.map((item) => ({
@@ -102,8 +121,34 @@ export function Sidebar({ tenantName }: { tenantName?: string }) {
     return user?.email || 'user@company.com';
   }, [user?.email]);
 
-  return (
-    <aside className="fixed left-0 top-20 bottom-0 w-64 bg-[#0f0f1a] border-r border-slate-800/50 z-40 overflow-y-auto">
+  // Mobile Toggle Button
+  const MobileToggle = () => (
+    <button
+      onClick={() => setIsMobileOpen(!isMobileOpen)}
+      className="lg:hidden fixed top-20 left-4 z-50 p-2 rounded-lg bg-[#0f0f1a] border border-slate-800/50 hover:bg-slate-800/50 transition-colors"
+      aria-label="Toggle sidebar"
+    >
+      {isMobileOpen ? (
+        <X className="w-5 h-5 text-slate-400" />
+      ) : (
+        <Menu className="w-5 h-5 text-slate-400" />
+      )}
+    </button>
+  );
+
+  // Overlay for mobile
+  const Overlay = () => (
+    <div
+      className={`lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 ${
+        isMobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+      onClick={() => setIsMobileOpen(false)}
+    />
+  );
+
+  // Sidebar Content
+  const SidebarContent = () => (
+    <>
       {/* Tenant Section */}
       {tenantName && (
         <div className="px-4 py-3 border-b border-slate-800/50">
@@ -121,6 +166,7 @@ export function Sidebar({ tenantName }: { tenantName?: string }) {
             <Link
               key={item.id}
               href={item.href}
+              onClick={() => setIsMobileOpen(false)}
               className={`group w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                 item.isActive
                   ? 'bg-indigo-500/10 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.05)]'
@@ -152,6 +198,30 @@ export function Sidebar({ tenantName }: { tenantName?: string }) {
           </div>
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile Toggle */}
+      <MobileToggle />
+
+      {/* Overlay */}
+      <Overlay />
+
+      {/* Desktop Sidebar */}
+      <aside className={`hidden lg:block fixed left-0 top-20 bottom-0 w-64 bg-[#0f0f1a] border-r border-slate-800/50 z-40 overflow-y-auto`}>
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile Sidebar */}
+      <aside
+        className={`lg:hidden fixed top-20 left-0 bottom-0 w-64 bg-[#0f0f1a] border-r border-slate-800/50 z-40 overflow-y-auto transition-transform duration-300 ${
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <SidebarContent />
+      </aside>
+    </>
   );
 }

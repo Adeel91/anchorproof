@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCurrentAccount, useDisconnectWallet } from '@mysten/dapp-kit';
@@ -15,30 +15,110 @@ const NavLink = ({
   href: string;
   children: React.ReactNode;
   onClick?: () => void;
-}) => (
-  <Link href={href} onClick={onClick} className="group relative px-3 py-2">
-    <span className="relative z-10 text-xs font-mono font-bold uppercase tracking-widest text-slate-300 group-hover:text-cyan-400 transition-colors">
+}) => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const targetId = href.replace('#', '');
+      const targetElement = document.getElementById(targetId);
+      if (targetElement) {
+        const headerOffset = 80;
+        const elementPosition = targetElement.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    }
+    if (onClick) onClick();
+  };
+
+  return (
+    <Link 
+      href={href} 
+      onClick={handleClick} 
+      className="group relative px-3 py-2"
+    >
+      <span className="relative z-10 text-xs font-mono font-bold uppercase tracking-widest text-slate-300 group-hover:text-cyan-400 transition-colors">
+        {children}
+      </span>
+      <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-indigo-400 group-hover:w-full group-hover:left-0 transition-all duration-500" />
+    </Link>
+  );
+};
+
+const MobileNavLink = ({
+  href,
+  children,
+  onClick,
+}: {
+  href: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const targetId = href.replace('#', '');
+      const targetElement = document.getElementById(targetId);
+      if (targetElement) {
+        const headerOffset = 80;
+        const elementPosition = targetElement.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    }
+    if (onClick) onClick();
+  };
+
+  return (
+    <Link
+      href={href}
+      onClick={handleClick}
+      className="block px-4 py-3 text-sm font-mono font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 transition-colors rounded-lg"
+    >
       {children}
-    </span>
-    <span className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-indigo-400 group-hover:w-full group-hover:left-0 transition-all duration-500" />
-  </Link>
-);
+    </Link>
+  );
+};
 
 export default function Header() {
   const currentAccount = useCurrentAccount();
   const { mutate: disconnectWallet } = useDisconnectWallet();
   const [address, setAddress] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileIndustriesOpen, setIsMobileIndustriesOpen] = useState(false);
   const pathname = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // ✅ REMOVED: No cookie management at all!
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const newAddress = currentAccount?.address || null;
     setAddress(newAddress);
   }, [currentAccount?.address]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const isMenuButton = menuButtonRef.current?.contains(target);
+      const isMobileMenu = mobileMenuRef.current?.contains(target);
+      
+      if (isMobileMenuOpen && !isMenuButton && !isMobileMenu) {
+        setIsMobileMenuOpen(false);
+        setIsMobileIndustriesOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMobileMenuOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -54,15 +134,24 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsDropdownOpen(false);
-    }, 0);
-    return () => clearTimeout(timer);
+    setIsMobileMenuOpen(false);
+    setIsMobileIndustriesOpen(false);
+    setIsDropdownOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
 
   const handleLogout = async () => {
     disconnectWallet();
-    // ✅ Only clear the cookie on logout
     document.cookie =
       'anchorproof-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     window.location.href = '/login';
@@ -86,7 +175,7 @@ export default function Header() {
       lightColor: 'cyan',
       icon: (
         <svg
-          className="w-6 h-6"
+          className="w-5 h-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -108,7 +197,7 @@ export default function Header() {
       lightColor: 'emerald',
       icon: (
         <svg
-          className="w-6 h-6"
+          className="w-5 h-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -130,7 +219,7 @@ export default function Header() {
       lightColor: 'blue',
       icon: (
         <svg
-          className="w-6 h-6"
+          className="w-5 h-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -152,7 +241,7 @@ export default function Header() {
       lightColor: 'purple',
       icon: (
         <svg
-          className="w-6 h-6"
+          className="w-5 h-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -169,9 +258,17 @@ export default function Header() {
   ];
 
   const navLinks = isHomePage
-    ? ['LIABILITY', 'ARCHITECTURE', 'SPECIFICATIONS']
+    ? [
+        { label: 'LIABILITY', href: '#liability' },
+        { label: 'PRIMITIVES', href: '#primitives' },
+        { label: 'FEATURES', href: '#features' },
+      ]
     : isIndustryPage
-      ? ['FEATURES', 'USE CASES', 'AI ASSISTANT']
+      ? [
+          { label: 'FEATURES', href: '#features' },
+          { label: 'USE CASES', href: '#use-cases' },
+          { label: 'AI ASSISTANT', href: '#ai-assistant' },
+        ]
       : [];
 
   const handleMouseEnter = () => {
@@ -183,80 +280,97 @@ export default function Header() {
     hoverTimeoutRef.current = setTimeout(() => setIsDropdownOpen(false), 200);
   };
 
-  const closeDropdown = () => setIsDropdownOpen(false);
+  const closeAll = () => {
+    setIsDropdownOpen(false);
+    setIsMobileMenuOpen(false);
+    setIsMobileIndustriesOpen(false);
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+    if (isMobileMenuOpen) {
+      setIsMobileIndustriesOpen(false);
+    }
+  };
+
+  const toggleMobileIndustries = () => {
+    setIsMobileIndustriesOpen(!isMobileIndustriesOpen);
+  };
 
   const showNavigation = !isLoginPage && !isDashboardPage;
   const hasNavLinks = navLinks.length > 0;
-
-  // Full-width layout for dashboard pages
   const isFullWidth = isDashboardPage;
 
   return (
-    <header className="fixed top-0 inset-x-0 h-20 border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-xl z-50">
+    <header className="fixed top-0 inset-x-0 h-16 md:h-20 border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-xl z-50">
       {isFullWidth ? (
-        // DASHBOARD - Full width, logo left, sign out right
         <div className="h-full flex items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
             href="/dashboard"
-            onClick={closeDropdown}
-            className="group flex items-center gap-3 flex-shrink-0"
+            onClick={closeAll}
+            className="group flex items-center gap-2 md:gap-3 flex-shrink-0"
           >
             <div className="relative">
               <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 blur-xl opacity-0 group-hover:opacity-50 transition-opacity" />
-              <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 group-hover:rotate-180 transition-all duration-500" />
+              <div className="relative w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 group-hover:rotate-180 transition-all duration-500" />
             </div>
             <div className="flex flex-col">
-              <span className="font-mono font-black tracking-[0.2em] text-sm text-white">
+              <span className="font-mono font-black tracking-[0.15em] md:tracking-[0.2em] text-xs md:text-sm text-white">
                 ANCHORPROOF
               </span>
-              <span className="text-[8px] font-mono tracking-[0.3em] text-slate-500">
+              <span className="text-[6px] md:text-[8px] font-mono tracking-[0.2em] md:tracking-[0.3em] text-slate-500 hidden sm:block">
                 VERIFIABLE MEMORY
               </span>
             </div>
           </Link>
 
-          <div className="flex items-center gap-4 flex-shrink-0">
-            {/* Sui Address - Always show when logged in */}
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
             {isLoggedIn && (
-              <div className="relative group/address">
+              <div className="relative group/address hidden sm:block">
                 <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500 to-indigo-500 blur-lg opacity-0 group-hover/address:opacity-30 transition-opacity" />
-                <div className="relative flex items-center gap-2 bg-slate-900/50 backdrop-blur border border-slate-700 rounded-lg px-3 py-1.5">
+                <div className="relative flex items-center gap-2 bg-slate-900/50 backdrop-blur border border-slate-700 rounded-lg px-2 md:px-3 py-1 md:py-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  <span className="text-[10px] font-mono font-bold tracking-widest text-cyan-400">
+                  <span className="text-[8px] md:text-[10px] font-mono font-bold tracking-widest text-cyan-400">
                     {displayAddress}
                   </span>
                 </div>
               </div>
             )}
-            <Button variant="outline" onClick={handleLogout} className="h-9 px-4">
-              SIGN OUT
+            <Button 
+              variant="outline" 
+              onClick={handleLogout} 
+              className="h-8 md:h-9 px-3 md:px-4 text-xs md:text-sm"
+            >
+              <span className="hidden sm:inline">SIGN OUT</span>
+              <span className="sm:hidden">✕</span>
             </Button>
           </div>
         </div>
       ) : (
-        // ALL OTHER PAGES - Centered layout with Container
-        <Container className="h-full flex items-center justify-between">
+        <Container className="h-full flex items-center justify-between px-3 sm:px-4">
+          {/* Logo - Left */}
           <Link
             href="/"
-            onClick={closeDropdown}
-            className="group flex items-center gap-3"
+            onClick={closeAll}
+            className="group flex items-center gap-2 md:gap-3 flex-shrink-0"
           >
             <div className="relative">
               <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 blur-xl opacity-0 group-hover:opacity-50 transition-opacity" />
-              <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 group-hover:rotate-180 transition-all duration-500" />
+              <div className="relative w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 group-hover:rotate-180 transition-all duration-500" />
             </div>
             <div className="flex flex-col">
-              <span className="font-mono font-black tracking-[0.2em] text-sm text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-cyan-400 transition-all">
+              <span className="font-mono font-black tracking-[0.15em] md:tracking-[0.2em] text-xs md:text-sm text-white">
                 ANCHORPROOF
               </span>
-              <span className="text-[8px] font-mono tracking-[0.3em] text-slate-500">
+              <span className="text-[6px] md:text-[8px] font-mono tracking-[0.2em] md:tracking-[0.3em] text-slate-500 hidden xs:block">
                 VERIFIABLE MEMORY
               </span>
             </div>
           </Link>
 
+          {/* Navigation - Center */}
           {showNavigation && (
-            <nav className="hidden lg:flex items-center gap-6">
+            <nav className="hidden lg:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
               <div
                 ref={dropdownRef}
                 onMouseEnter={handleMouseEnter}
@@ -286,7 +400,7 @@ export default function Header() {
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[500px] transition-all duration-500 transform origin-top opacity-100 visible translate-y-0">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[500px]">
                     <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-500 opacity-20 blur-xl" />
                     <div className="relative bg-slate-900/95 backdrop-blur-2xl border border-slate-700/50 rounded-2xl overflow-hidden shadow-2xl">
                       <div className="px-6 py-4 bg-gradient-to-r from-cyan-500/10 via-indigo-500/10 to-purple-500/10 border-b border-slate-700/50">
@@ -322,7 +436,7 @@ export default function Header() {
                           <Link
                             key={industry.name}
                             href={industry.href}
-                            onClick={closeDropdown}
+                            onClick={closeAll}
                             className="group/card relative overflow-hidden rounded-xl border border-slate-700/50 hover:border-transparent transition-all duration-300 hover:shadow-2xl"
                           >
                             <div
@@ -390,11 +504,11 @@ export default function Header() {
                   <div className="h-6 w-px bg-gradient-to-b from-transparent via-slate-700 to-transparent" />
                   {navLinks.map((item) => (
                     <NavLink
-                      key={item}
-                      href={`#${item.toLowerCase().replace(' ', '-')}`}
-                      onClick={closeDropdown}
+                      key={item.label}
+                      href={item.href}
+                      onClick={closeAll}
                     >
-                      {item}
+                      {item.label}
                     </NavLink>
                   ))}
                 </>
@@ -403,7 +517,7 @@ export default function Header() {
               {isLoggedIn && (
                 <>
                   <div className="h-6 w-px bg-gradient-to-b from-transparent via-slate-700 to-transparent" />
-                  <NavLink href="/dashboard" onClick={closeDropdown}>
+                  <NavLink href="/dashboard" onClick={closeAll}>
                     DASHBOARD
                   </NavLink>
                 </>
@@ -411,32 +525,162 @@ export default function Header() {
             </nav>
           )}
 
-          <div className="flex items-center gap-4">
+          {/* Right side - CTA/Login/Address */}
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0 ml-auto">
             {isLoggedIn ? (
               <>
-                {/* Sui Address - Always show when logged in */}
-                <div className="relative group/address">
+                <div className="relative group/address hidden sm:block">
                   <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500 to-indigo-500 blur-lg opacity-0 group-hover/address:opacity-30 transition-opacity" />
-                  <div className="relative flex items-center gap-2 bg-slate-900/50 backdrop-blur border border-slate-700 rounded-lg px-3 py-1.5">
+                  <div className="relative flex items-center gap-2 bg-slate-900/50 backdrop-blur border border-slate-700 rounded-lg px-2 md:px-3 py-1 md:py-1.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                    <span className="text-[10px] font-mono font-bold tracking-widest text-cyan-400">
+                    <span className="text-[8px] md:text-[10px] font-mono font-bold tracking-widest text-cyan-400">
                       {displayAddress}
                     </span>
                   </div>
                 </div>
-                <Button variant="outline" onClick={handleLogout}>
-                  SIGN OUT
+                
+                <div className="sm:hidden w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                
+                <Button 
+                  variant="outline" 
+                  onClick={handleLogout} 
+                  className="h-8 md:h-9 px-3 md:px-4 text-xs md:text-sm"
+                >
+                  <span className="hidden sm:inline">SIGN OUT</span>
+                  <span className="sm:hidden">✕</span>
                 </Button>
               </>
             ) : (
               !isLoginPage && (
-                <Link href="/login" onClick={closeDropdown}>
-                  <Button variant="primary">LAUNCH PORTAL</Button>
+                <Link href="/login" onClick={closeAll}>
+                  <Button variant="primary" className="h-8 md:h-9 px-3 md:px-4 text-xs md:text-sm whitespace-nowrap">
+                    <span className="hidden sm:inline">LAUNCH PORTAL</span>
+                    <span className="sm:hidden">PORTAL</span>
+                  </Button>
                 </Link>
               )
             )}
+            
+            {!isDashboardPage && !isLoginPage && (
+              <button
+                ref={menuButtonRef}
+                onClick={toggleMobileMenu}
+                className="lg:hidden flex items-center justify-end w-8 h-8 rounded-lg hover:bg-slate-800/50 transition-colors"
+                aria-label="Toggle menu"
+              >
+                <svg
+                  className="w-5 h-5 text-slate-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  {isMobileMenuOpen ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  )}
+                </svg>
+              </button>
+            )}
           </div>
         </Container>
+      )}
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && !isDashboardPage && !isLoginPage && (
+        <div 
+          ref={mobileMenuRef}
+          className="lg:hidden fixed top-16 md:top-20 left-0 right-0 bottom-0 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/50 overflow-y-auto z-40 min-h-screen"
+        >
+          <div className="p-4 space-y-1">
+            <button
+              onClick={toggleMobileIndustries}
+              className="w-full flex items-center justify-between px-4 py-3 text-sm font-mono font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 transition-colors rounded-lg"
+            >
+              <span>INDUSTRIES</span>
+              <svg
+                className={`w-4 h-4 transition-transform duration-300 ${isMobileIndustriesOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+            
+            {isMobileIndustriesOpen && (
+              <div className="ml-4 space-y-1 border-l border-slate-700/50 pl-3">
+                {industries.map((industry) => (
+                  <MobileNavLink
+                    key={industry.name}
+                    href={industry.href}
+                    onClick={closeAll}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`text-${industry.lightColor}-400`}>
+                        {industry.icon}
+                      </span>
+                      <div>
+                        <div className="text-sm font-bold">{industry.name}</div>
+                        <div className="text-[10px] text-slate-500">{industry.desc}</div>
+                      </div>
+                    </div>
+                  </MobileNavLink>
+                ))}
+              </div>
+            )}
+
+            {hasNavLinks && (
+              <>
+                <div className="h-px bg-slate-800/50 my-2" />
+                {navLinks.map((item) => (
+                  <MobileNavLink
+                    key={item.label}
+                    href={item.href}
+                    onClick={closeAll}
+                  >
+                    {item.label}
+                  </MobileNavLink>
+                ))}
+              </>
+            )}
+
+            {isLoggedIn && (
+              <>
+                <div className="h-px bg-slate-800/50 my-2" />
+                <MobileNavLink href="/dashboard" onClick={closeAll}>
+                  DASHBOARD
+                </MobileNavLink>
+              </>
+            )}
+
+            {isLoggedIn && (
+              <div className="mt-4 px-4 py-3 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  <span className="text-xs font-mono text-cyan-400">
+                    {displayAddress}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </header>
   );

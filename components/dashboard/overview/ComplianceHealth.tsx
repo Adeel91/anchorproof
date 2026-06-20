@@ -2,7 +2,7 @@
 'use client';
 
 import { useDashboardData } from '@/providers/DashboardDataProvider';
-import { CheckCircle, AlertTriangle, Shield, Clock } from 'lucide-react';
+import { CheckCircle, Shield, Clock } from 'lucide-react';
 
 type HealthStatus = 'good' | 'warning' | 'critical';
 

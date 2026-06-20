@@ -15,7 +15,10 @@ import {
   LogIn,
   LogOut,
   RefreshCw,
-  Database
+  Database,
+  ChevronRight,
+  Clock,
+  User
 } from 'lucide-react';
 
 interface AuditRecord {
@@ -115,7 +118,6 @@ const DEFAULT_CONFIG = {
 const getActionConfig = (action: string) => ACTION_CONFIG[action] || DEFAULT_CONFIG;
 
 const getUserDisplay = (record: AuditRecord): { name: string; email: string } => {
-  // Try to get from details first (where we store actor info)
   const details = record.details;
   if (details && typeof details === 'object') {
     if (details.actorName) {
@@ -132,7 +134,6 @@ const getUserDisplay = (record: AuditRecord): { name: string; email: string } =>
     }
   }
   
-  // Fallback to direct fields
   if (record.actorName) {
     return {
       name: record.actorName,
@@ -140,7 +141,6 @@ const getUserDisplay = (record: AuditRecord): { name: string; email: string } =>
     };
   }
   
-  // Default for system actions
   return {
     name: 'AnchorProof',
     email: 'system@anchorproof.io',
@@ -153,19 +153,19 @@ const getDetailSummary = (record: AuditRecord): string => {
 
   const summaries: Record<string, string> = {
     CONVERSATION_SAVED: `${details.messageCount || 0} messages • Customer: ${details.customerId || 'Unknown'} • Agent: ${details.agentId || 'Unknown'}`,
-    CONVERSATION_VERIFIED: `${details.messageCount || 0} messages verified successfully`,
-    TAMPER_DETECTED: `Original content didn't match claimed content`,
-    API_KEY_CREATED: `"${details.keyName || 'Unnamed'}" • Role: ${details.role || 'viewer'}`,
+    CONVERSATION_VERIFIED: `${details.messageCount || 0} messages verified`,
+    TAMPER_DETECTED: `⚠️ Tampering detected!`,
+    API_KEY_CREATED: `"${details.keyName || 'Unnamed'}" • ${details.role || 'viewer'}`,
     API_KEY_REVOKED: `"${details.keyName || 'Unnamed'}"`,
     TENANT_UPDATED: `"${details.oldName}" → "${details.newName}"`,
-    REPORT_GENERATED: `"${details.reportName || 'Unnamed'}" • ${details.type || 'full'} • ${details.size || 0}KB`,
+    REPORT_GENERATED: `"${details.reportName || 'Unnamed'}" • ${details.type || 'full'}`,
     REPORT_DELETED: `"${details.reportName || 'Unnamed'}"`,
     USER_LOGIN: `${details.email || details.name || 'Unknown'}`,
     USER_LOGOUT: `${details.email || details.name || 'Unknown'}`,
     BLOB_RETRIEVED: `${details.blobId || record.blobId || 'Unknown'}`,
   };
 
-  return summaries[record.action] || JSON.stringify(details).slice(0, 100);
+  return summaries[record.action] || JSON.stringify(details).slice(0, 60);
 };
 
 const formatDate = (timestamp: string) => {
@@ -185,8 +185,26 @@ const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
     });
+  } catch {
+    return timestamp;
+  }
+};
+
+const formatRelativeTime = (timestamp: string) => {
+  try {
+    const now = new Date();
+    const then = new Date(timestamp);
+    const diffMs = now.getTime() - then.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return formatDate(timestamp);
   } catch {
     return timestamp;
   }
@@ -250,7 +268,7 @@ export function AuditLog() {
 
   if (loading) {
     return (
-      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-12 text-center">
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-8 text-center">
         <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
         <p className="text-slate-500 text-sm">Loading audit log...</p>
       </div>
@@ -259,7 +277,7 @@ export function AuditLog() {
 
   if (error) {
     return (
-      <div className="bg-slate-900/50 border border-red-500/20 rounded-xl p-12 text-center">
+      <div className="bg-slate-900/50 border border-red-500/20 rounded-xl p-8 text-center">
         <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-3" />
         <p className="text-red-400 text-sm">{error}</p>
         <button 
@@ -274,61 +292,104 @@ export function AuditLog() {
 
   return (
     <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
-      <div className="px-6 py-3 border-b border-slate-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-          <Shield className="w-4 h-4 text-indigo-400" />
-          Audit Trail
-          <span className="text-xs text-slate-500 font-normal ml-2">({total} events)</span>
-        </h2>
-        
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search events..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-48 px-8 py-1.5 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
-            />
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
-          </div>
-          
-          <select
-            value={filterAction}
-            onChange={(e) => setFilterAction(e.target.value)}
-            className="px-3 py-1.5 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-indigo-500 transition-colors"
-          >
-            <option value="all">All Actions</option>
-            {Object.entries(ACTION_CONFIG)
-              .sort((a, b) => a[1].label.localeCompare(b[1].label))
-              .map(([key, config]) => (
-                <option key={key} value={key}>{config.label}</option>
-              ))}
-          </select>
-          
-          <ExportButton records={filteredRecords} disabled={filteredRecords.length === 0} />
-        </div>
-      </div>
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-800/50 flex flex-col md:flex-row md:items-center justify-between gap-3">
+  <div className="flex items-center gap-2">
+    <Shield className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+    <h2 className="text-sm font-semibold text-white">Audit Trail</h2>
+    <span className="text-xs text-slate-500">({total} events)</span>
+  </div>
+  
+  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+    <div className="relative flex-1 sm:flex-none">
+      <input
+        type="text"
+        placeholder="Search..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="w-full sm:w-48 md:w-44 lg:w-48 pl-8 pr-3 py-1.5 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+      />
+      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+    </div>
+    
+    <select
+      value={filterAction}
+      onChange={(e) => setFilterAction(e.target.value)}
+      className="px-3 py-1.5 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-indigo-500 transition-colors w-full sm:w-auto"
+    >
+      <option value="all">All Actions</option>
+      {Object.entries(ACTION_CONFIG)
+        .sort((a, b) => a[1].label.localeCompare(b[1].label))
+        .map(([key, config]) => (
+          <option key={key} value={key}>{config.label}</option>
+        ))}
+    </select>
+    
+    <ExportButton records={filteredRecords} disabled={filteredRecords.length === 0} />
+  </div>
+</div>
 
-      <div className="overflow-x-auto">
+      {/* Mobile Card View - Shows on small screens */}
+      <div className="sm:hidden divide-y divide-slate-800/30">
         {filteredRecords.length === 0 ? (
           <div className="py-12 text-center">
             <Shield className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-500 text-sm">
-              {records.length === 0 ? 'No audit events yet' : 'No matching records found'}
-            </p>
-            <p className="text-slate-600 text-xs mt-1">
-              {records.length === 0 ? 'Events will appear here as they happen' : 'Try adjusting your search or filters'}
-            </p>
+            <p className="text-slate-500 text-sm">No events found</p>
+          </div>
+        ) : (
+          filteredRecords.map((record) => {
+            const config = getActionConfig(record.action);
+            const user = getUserDisplay(record);
+            
+            return (
+              <div key={record.id} className="px-4 py-3 hover:bg-slate-800/20 transition-colors">
+                <div className="flex items-start gap-3">
+                  <span className={`p-1.5 rounded-lg ${config.color.replace('border', 'bg').replace('/20', '/10')} flex-shrink-0 mt-0.5`}>
+                    {config.icon}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-medium text-white">{config.label}</p>
+                        <p className="text-xs text-slate-400 truncate">{getDetailSummary(record)}</p>
+                      </div>
+                      <span className="text-[10px] text-slate-500 whitespace-nowrap flex-shrink-0">
+                        {formatRelativeTime(record.createdAt)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                        <User className="w-3 h-3" />
+                        <span className="truncate max-w-[100px]">{user.name}</span>
+                      </div>
+                      {record.blobId && (
+                        <span className="text-[8px] text-slate-600 font-mono truncate max-w-[80px]">
+                          #{record.blobId.slice(0, 8)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop Table View - Hidden on mobile */}
+      <div className="hidden sm:block overflow-x-auto">
+        {filteredRecords.length === 0 ? (
+          <div className="py-12 text-center">
+            <Shield className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+            <p className="text-slate-500 text-sm">No events found</p>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-800/50 bg-slate-800/20">
                 <th className="text-left py-3 px-4 text-slate-500 font-medium text-xs uppercase tracking-wider">Event</th>
-                <th className="text-left py-3 px-4 text-slate-500 font-medium text-xs uppercase tracking-wider">User</th>
+                <th className="text-left py-3 px-4 text-slate-500 font-medium text-xs uppercase tracking-wider hidden md:table-cell">User</th>
                 <th className="text-left py-3 px-4 text-slate-500 font-medium text-xs uppercase tracking-wider">Details</th>
-                <th className="text-left py-3 px-4 text-slate-500 font-medium text-xs uppercase tracking-wider">Date & Time</th>
+                <th className="text-left py-3 px-4 text-slate-500 font-medium text-xs uppercase tracking-wider hidden lg:table-cell">Date & Time</th>
               </tr>
             </thead>
             <tbody>
@@ -347,41 +408,32 @@ export function AuditLog() {
                           {config.icon}
                         </span>
                         <div>
-                          <div className="text-white text-xs font-medium">{config.label}</div>
-                          <div className="text-slate-500 text-[10px] hidden sm:block">{config.description}</div>
+                          <div className="text-sm font-medium text-white">{config.label}</div>
+                          <div className="text-[10px] text-slate-500 hidden lg:block">{config.description}</div>
                         </div>
                       </div>
                     </td>
                     
-                    <td className="py-3 px-4">
-                      <div className="text-white text-xs font-medium">
-                        {user.name}
-                      </div>
-                      <div className="text-slate-500 text-[10px]">
-                        {user.email}
-                      </div>
+                    <td className="hidden md:table-cell py-3 px-4">
+                      <div className="text-sm text-white truncate max-w-[120px]">{user.name}</div>
+                      <div className="text-[10px] text-slate-500 truncate max-w-[120px]">{user.email}</div>
                     </td>
                     
                     <td className="py-3 px-4">
-                      <div className="text-slate-300 text-xs">
+                      <div className="text-xs text-slate-300 max-w-[180px] lg:max-w-none truncate lg:whitespace-normal">
                         {getDetailSummary(record)}
                       </div>
                       {record.blobId && (
-                        <div className="text-slate-500 font-mono text-[10px] mt-0.5">
-                          Blob: {record.blobId}
-                        </div>
-                      )}
-                      {record.conversationId && (
-                        <div className="text-slate-500 font-mono text-[10px] mt-0.5">
-                          Conversation: {record.conversationId}
+                        <div className="text-[10px] text-slate-500 font-mono truncate max-w-[120px]">
+                          Blob: {record.blobId.slice(0, 12)}...
                         </div>
                       )}
                     </td>
                     
-                    <td className="py-3 px-4">
-                      <div className="text-slate-400 text-xs whitespace-nowrap">
+                    <td className="hidden lg:table-cell py-3 px-4">
+                      <div className="text-xs text-slate-400 whitespace-nowrap">
                         <div className="font-medium">{formatDate(record.createdAt)}</div>
-                        <div className="text-slate-500 text-[10px]">{formatTime(record.createdAt)}</div>
+                        <div className="text-[10px] text-slate-500">{formatTime(record.createdAt)}</div>
                       </div>
                     </td>
                   </tr>
@@ -392,13 +444,15 @@ export function AuditLog() {
         )}
       </div>
 
-      <div className="px-6 py-2.5 border-t border-slate-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-900/30">
+      {/* Footer */}
+      <div className="px-4 sm:px-6 py-2.5 border-t border-slate-800/50 bg-slate-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
         <span className="text-xs text-slate-500">
           Showing {filteredRecords.length} of {total} events
         </span>
-        <span className="text-[10px] text-slate-500 font-mono flex items-center gap-1.5">
-          <Shield className="w-3 h-3" />
-          Immutable • On-chain verified • Court-admissible
+        <span className="text-[8px] sm:text-[10px] text-slate-500 font-mono flex items-center gap-1.5">
+          <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+          <span className="hidden xs:inline">Immutable • On-chain verified</span>
+          <span className="xs:hidden">Immutable • Verified</span>
         </span>
       </div>
     </div>

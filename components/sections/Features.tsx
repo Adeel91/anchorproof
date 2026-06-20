@@ -1,66 +1,62 @@
 import Container from '@/components/ui/Container';
 
 export default function Features() {
-  const specs = [
+  const features = [
     {
-      cat: 'DATA PRIVACY',
-      label: 'Zero-Knowledge Encryption',
-      text: 'Plaintext conversion strings are entirely encrypted in the browser workspace before network transmission. Cloud infrastructures never process raw data text records.',
+      category: 'Visibility',
+      title: 'Complete Conversation History',
+      description: 'Enterprise dashboard shows every AI conversation with timestamps, customer IDs, agent IDs, and full message transcripts. See exactly what your AI said.',
     },
     {
-      cat: 'INTEGRATION LOGIC',
-      label: 'One-Line Execution SDK',
-      text: 'Integrate auditable memory checks into active production generative AI middleware layers in under five minutes with a single import statement configuration.',
+      category: 'Integrity',
+      title: 'Tamper Detection',
+      description: 'Cryptographic verification shows if any AI response has been altered. Know immediately if your AI conversations have been compromised.',
     },
     {
-      cat: 'DATABASE SECURITY',
-      label: 'Partitioned Tenant Schemas',
-      text: 'Enforces complete multi-tenant boundaries at the database layout layer, fully blocking data leakage across subscribing corporate organizations.',
+      category: 'Auditing',
+      title: 'Detailed Audit Logs',
+      description: 'Every action is logged with cryptographic proof. See who accessed conversations, when, and from where. Perfect for internal compliance and regulatory reviews.',
     },
     {
-      cat: 'USER MANAGEMENT',
-      label: 'Sponsored Transaction Pools',
-      text: 'All transaction gas fees on the L1 ledger are sponsored natively behind the scenes. Enterprise administrators never hold, buy, or execute crypto tokens.',
+      category: 'Reporting',
+      title: 'Cryptographically Verified Reports',
+      description: 'Generate PDF reports with blob IDs, Sui transaction hashes, QR codes, and cryptographic signatures. Tamper-proof evidence for regulatory compliance.',
     },
     {
-      cat: 'COMPLIANCE METRICS',
-      label: 'Regulatory Framework Native',
-      text: 'Produces structured, unalterable system metadata summaries mapped directly to satisfy incoming compliance checks for HIPAA, GDPR, and the EU AI Act.',
+      category: 'Integration',
+      title: 'Enterprise SDK',
+      description: 'Add AnchorProof to your AI applications with a single import. The SDK handles encryption, storage, and verification automatically.',
     },
     {
-      cat: 'LITIGATION CORE',
-      label: 'Court-Admissible Attestations',
-      text: 'Maintains clear cryptographic chain-of-custody logs that eliminate corporate liability disputes during independent regulatory reviews.',
+      category: 'Security',
+      title: 'Immutable Storage',
+      description: 'Conversations stored on Walrus decentralized storage. Sui blockchain verification provides permanent, tamper-proof proof of every interaction.',
     },
   ];
 
   return (
-    <section
-      id="capabilities"
-      className="py-32 border-t border-slate-800/50 bg-slate-900/[0.02]"
-    >
+    <section id="features" className="py-12 sm:py-16 md:py-20 bg-slate-950">
       <Container>
-        <div className="max-w-3xl mb-20">
-          <span className="text-xs font-mono font-bold uppercase tracking-widest text-cyan-400">
-            System Capabilities Index
+        <div className="max-w-3xl mx-auto text-center mb-8 sm:mb-14">
+          <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest text-cyan-400 bg-cyan-400/5 px-3 py-1.5 rounded-lg border border-cyan-400/20 inline-block mb-3 sm:mb-4">
+            Enterprise Capabilities
           </span>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mt-4 tracking-tight">
-            Institutional Technical Parameters
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">
+            Everything you need to govern enterprise AI.
           </h2>
+          <p className="mt-3 sm:mt-4 text-sm sm:text-base text-slate-400 max-w-2xl mx-auto">
+            Protect your organization from AI liability with complete visibility, tamper detection, audit logs, and cryptographically verified compliance reporting.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {specs.map((item, idx) => (
-            <div key={idx} className="neon-border-glow p-6 bg-slate-950 border border-slate-800/50 hover:border-cyan-400/30 transition-all duration-300 rounded-xl">
-              <div className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">
-                {item.cat}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {features.map((feature, idx) => (
+            <div key={idx} className="p-4 sm:p-6 bg-slate-900/30 border border-slate-800/50 rounded-xl hover:border-cyan-400/30 transition-all">
+              <div className="text-[8px] sm:text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">
+                {feature.category}
               </div>
-              <h4 className="text-base sm:text-lg font-bold text-white mt-2 font-mono tracking-tight">
-                {item.label}
-              </h4>
-              <p className="text-sm sm:text-base text-slate-400 mt-2 leading-relaxed font-light">
-                {item.text}
-              </p>
+              <h4 className="text-sm sm:text-base font-bold text-white mt-2">{feature.title}</h4>
+              <p className="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>

@@ -183,7 +183,6 @@ export function Reports() {
 
       const total = conversationsWithMessages.length;
       
-      // FIXED: Calculate verified and tampered correctly
       const verified = conversationsWithMessages.filter((c: any) => c.verifiedAt).length;
       const tampered = conversationsWithMessages.filter((c: any) => c.isTampered === true).length;
       const totalMessages = conversationsWithMessages.reduce((acc: number, c: any) => acc + (c.messageCount || 0), 0);
@@ -261,12 +260,12 @@ export function Reports() {
       failed: 'bg-red-500/10 text-red-400 border border-red-500/20',
     };
     const labels = { ready: 'Ready', generating: 'Generating', failed: 'Failed' };
-    return <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium ${styles[status]}`}>{labels[status]}</span>;
+    return <span className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-medium ${styles[status]}`}>{labels[status]}</span>;
   };
 
   if (loading) {
     return (
-      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-8 text-center">
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 sm:p-8 text-center">
         <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
         <p className="text-slate-500 text-sm">Loading reports...</p>
       </div>
@@ -277,21 +276,22 @@ export function Reports() {
   const selectedConv = getSelectedConversation();
 
   return (
-    <div className="space-y-6">
-      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Generate Report Section */}
+      <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-white flex items-center gap-2">
               <FileBarChart className="w-4 h-4 text-indigo-400" />
               Generate Report
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Generate a full compliance report or a single conversation report with cryptographic proof
+              Generate a full compliance report or a single conversation report
             </p>
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-4">
+        <div className="mt-4 flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -302,7 +302,7 @@ export function Reports() {
                 onChange={() => setReportType('full')}
                 className="w-4 h-4 text-indigo-600 bg-slate-800 border-slate-600 focus:ring-indigo-500"
               />
-              <span className="text-sm text-white">Full Report</span>
+              <span className="text-xs sm:text-sm text-white">Full Report</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -313,13 +313,13 @@ export function Reports() {
                 onChange={() => setReportType('single')}
                 className="w-4 h-4 text-indigo-600 bg-slate-800 border-slate-600 focus:ring-indigo-500"
               />
-              <span className="text-sm text-white">Single Conversation</span>
+              <span className="text-xs sm:text-sm text-white">Single Conversation</span>
             </label>
           </div>
 
           {reportType === 'single' && (
-            <div className="flex items-center gap-3 flex-1 max-w-md">
-              <div className="relative flex-1">
+            <div className="w-full sm:w-auto sm:flex-1 sm:max-w-md">
+              <div className="relative w-full">
                 <select
                   value={selectedConversationId}
                   onChange={(e) => setSelectedConversationId(e.target.value)}
@@ -328,7 +328,7 @@ export function Reports() {
                   <option value="">Select a conversation...</option>
                   {conversations.map((conv: any) => (
                     <option key={conv.id} value={conv.conversationId || conv.id}>
-                      {conv.conversationId?.slice(0, 24)}... ({conv.customerId}) - {conv.messageCount} messages
+                      {conv.conversationId?.slice(0, 20)}... ({conv.customerId}) - {conv.messageCount} msgs
                     </option>
                   ))}
                 </select>
@@ -342,7 +342,7 @@ export function Reports() {
             variant="primary"
             onClick={generateReport}
             disabled={isGenerating || !hasConversations || (reportType === 'single' && !selectedConversationId)}
-            className="px-6 py-2.5 whitespace-nowrap flex items-center gap-2 ml-auto"
+            className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm flex items-center justify-center gap-2"
           >
             {isGenerating ? (
               <>
@@ -359,18 +359,15 @@ export function Reports() {
         </div>
 
         {reportType === 'single' && selectedConv && (
-          <div className="mt-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/50 flex items-center gap-3">
-            <MessageSquare className="w-4 h-4 text-indigo-400" />
-            <div>
-              <div className="text-sm text-white font-medium">
+          <div className="mt-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/50 flex items-start sm:items-center gap-3">
+            <MessageSquare className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+            <div className="min-w-0 flex-1">
+              <div className="text-xs sm:text-sm text-white font-medium truncate">
                 {selectedConv.conversationId}
               </div>
-              <div className="text-xs text-slate-500">
+              <div className="text-[10px] sm:text-xs text-slate-500">
                 Customer: {selectedConv.customerId} • {selectedConv.messageCount} messages
                 {selectedConv.verifiedAt ? ' • Verified' : ' • Pending'}
-              </div>
-              <div className="text-[10px] text-slate-600 font-mono mt-0.5">
-                Blob: {selectedConv.blobId?.slice(0, 20)}...
               </div>
             </div>
           </div>
@@ -383,12 +380,13 @@ export function Reports() {
         )}
       </div>
 
+      {/* Reports List */}
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-800/50 flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-sm font-semibold text-white">Generated Reports</h3>
             <p className="text-[10px] text-slate-500 mt-0.5">
-              {reports.length} reports • Reports include cryptographic proof and are court-admissible
+              {reports.length} reports • Cryptographic proof included
             </p>
           </div>
           <span className="text-[10px] text-slate-500">{reports.length} reports</span>
@@ -396,16 +394,16 @@ export function Reports() {
 
         <div className="divide-y divide-slate-800/50">
           {reports.length === 0 ? (
-            <div className="px-6 py-12 text-center">
-              <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400 text-sm">No reports generated yet</p>
-              <p className="text-slate-500 text-xs mt-1">Click "Generate Report" to create your first report</p>
+            <div className="px-4 sm:px-6 py-8 sm:py-12 text-center">
+              <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-slate-600 mx-auto mb-3" />
+              <p className="text-sm text-slate-400">No reports generated yet</p>
+              <p className="text-xs text-slate-500 mt-1">Click "Generate Report" to create your first report</p>
             </div>
           ) : (
             reports.map((report) => {
               let reportConversations = conversations;
-              let reportQrCodes = qrCodes;
-              let isSingle = report.type === 'single';
+              const reportQrCodes = qrCodes;
+              const isSingle = report.type === 'single';
 
               if (report.type === 'single' && report.conversationId) {
                 reportConversations = conversations.filter(
@@ -450,81 +448,67 @@ export function Reports() {
               };
 
               return (
-                <div key={report.id} className="px-6 py-4 hover:bg-slate-800/20 transition-colors">
-                  <div className="flex items-center justify-between flex-wrap gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                <div key={report.id} className="px-4 sm:px-6 py-3 sm:py-4 hover:bg-slate-800/20 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
                         {report.type === 'single' ? (
-                          <MessageSquare className="w-5 h-5 text-blue-400" />
+                          <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
                         ) : (
-                          <Shield className="w-5 h-5 text-indigo-400" />
+                          <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" />
                         )}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-medium text-white">{report.name}</span>
-                          {getStatusBadge(report.status)}
-                          <span className="text-[10px] text-slate-500 font-mono bg-slate-800/50 px-2 py-0.5 rounded">
-                            {report.type === 'single' ? 'Single' : 'Full'} • PDF
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                          <span className="text-xs sm:text-sm font-medium text-white truncate max-w-[120px] sm:max-w-none">
+                            {report.name}
                           </span>
-                          <span className="text-[10px] text-slate-500 font-mono bg-slate-800/50 px-2 py-0.5 rounded">
+                          {getStatusBadge(report.status)}
+                          <span className="text-[8px] sm:text-[10px] text-slate-500 font-mono bg-slate-800/50 px-1.5 sm:px-2 py-0.5 rounded">
+                            {report.type === 'single' ? 'Single' : 'Full'}
+                          </span>
+                          <span className="text-[8px] sm:text-[10px] text-slate-500 font-mono bg-slate-800/50 px-1.5 sm:px-2 py-0.5 rounded">
                             {report.size}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          <span className="text-xs text-slate-500">by {report.generatedBy}</span>
-                          <span className="w-1 h-1 rounded-full bg-slate-600" />
-                          <span className="text-xs text-slate-500">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-3 mt-0.5">
+                          <span className="text-[10px] sm:text-xs text-slate-500">by {report.generatedBy}</span>
+                          <span className="w-0.5 h-2 sm:h-3 rounded-full bg-slate-600" />
+                          <span className="text-[10px] sm:text-xs text-slate-500">
                             {new Date(report.generatedAt).toLocaleDateString()}
                           </span>
                           {report.summary && (
                             <>
-                              <span className="w-1 h-1 rounded-full bg-slate-600" />
-                              <span className={`text-xs ${report.summary.integrityRate >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                              <span className="w-0.5 h-2 sm:h-3 rounded-full bg-slate-600" />
+                              <span className={`text-[10px] sm:text-xs ${report.summary.integrityRate >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
                                 {report.summary.integrityRate}% integrity
                               </span>
-                              <span className="w-1 h-1 rounded-full bg-slate-600" />
-                              <span className="text-xs text-slate-500">
+                              <span className="hidden xs:inline w-0.5 h-2 sm:h-3 rounded-full bg-slate-600" />
+                              <span className="hidden xs:inline text-[10px] sm:text-xs text-slate-500">
                                 {report.summary.verifiedCount}/{report.summary.totalConversations} verified
                               </span>
-                              {report.summary.tamperedCount > 0 && (
-                                <>
-                                  <span className="w-1 h-1 rounded-full bg-slate-600" />
-                                  <span className="text-xs text-red-400">
-                                    {report.summary.tamperedCount} tampered
-                                  </span>
-                                </>
-                              )}
-                              {report.type === 'single' && report.conversationId && (
-                                <>
-                                  <span className="w-1 h-1 rounded-full bg-slate-600" />
-                                  <span className="text-xs text-slate-500 font-mono">
-                                    {report.conversationId.slice(0, 12)}...
-                                  </span>
-                                </>
-                              )}
                             </>
                           )}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
                       <PDFDownloadLink
                         document={<ComplianceReportPDF reportData={pdfReportData} />}
                         fileName={`${report.type === 'single' ? 'conversation' : 'compliance'}-report-${new Date().toISOString().slice(0, 10)}.pdf`}
-                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium text-white transition-colors shadow-[0_0_15px_rgba(99,102,241,0.15)] flex items-center gap-1.5"
+                        className="px-2.5 sm:px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-[10px] sm:text-xs font-medium text-white transition-colors shadow-[0_0_15px_rgba(99,102,241,0.15)] flex items-center gap-1 sm:gap-1.5"
                       >
                         {({ loading }) => (
                           <>
                             {loading ? (
                               <>
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                Loading...
+                                <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" />
+                                <span className="hidden xs:inline">Loading...</span>
                               </>
                             ) : (
                               <>
-                                <Download className="w-3.5 h-3.5" />
-                                Download
+                                <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                <span className="hidden xs:inline">Download</span>
                               </>
                             )}
                           </>
@@ -535,7 +519,7 @@ export function Reports() {
                         className="p-1.5 text-slate-500 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-800/50"
                         title="Delete report"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </button>
                     </div>
                   </div>
@@ -545,22 +529,22 @@ export function Reports() {
           )}
         </div>
 
-        <div className="px-6 py-3 border-t border-slate-800/50 bg-slate-900/30 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] text-slate-500">
-              Reports are stored for 30 days
+        <div className="px-4 sm:px-6 py-2.5 sm:py-3 border-t border-slate-800/50 bg-slate-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <span className="text-[8px] sm:text-[10px] text-slate-500">
+              Reports stored for 30 days
             </span>
-            <div className="flex items-center gap-2">
-              <Database className="w-3 h-3 text-cyan-400" />
-              <span className="text-[10px] text-slate-400 font-mono">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Database className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-cyan-400" />
+              <span className="text-[8px] sm:text-[10px] text-slate-400 font-mono">
                 Walrus Storage
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Shield className="w-3 h-3 text-emerald-400" />
-            <span className="text-[10px] text-slate-400 font-mono">
-              Cryptographic verification included
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400" />
+            <span className="text-[8px] sm:text-[10px] text-slate-400 font-mono">
+              Cryptographic verification
             </span>
           </div>
         </div>

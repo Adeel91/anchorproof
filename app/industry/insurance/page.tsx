@@ -3,12 +3,13 @@ import { InsuranceChat } from '@/components/chat';
 
 export default function InsurancePage() {
   return IndustryPageWrapper({
+    design: 'shield',
     hero: {
-      badge: 'INSURANCE & RISK MANAGEMENT',
-      title: 'Verifiable',
-      highlightedText: 'claims processing',
-      description:
-        'Eliminate claims fraud with cryptographically verified AI-assisted underwriting and claims investigation transcripts.',
+      badge: 'NAIC COMPLIANT INSURANCE',
+      badgeIcon: 'Shield',
+      title: 'Protecting policyholders through',
+      highlightedText: 'verifiable claims processing.',
+      description: 'AnchorProof provides cryptographically verified claims processing, underwriting, and fraud detection. Every claim interaction becomes tamper-proof evidence that eliminates disputes, reduces fraud, and protects policyholders.',
       gradientFrom: 'blue',
       gradientTo: 'indigo',
       badgeColor: 'blue',
@@ -18,75 +19,78 @@ export default function InsurancePage() {
         value: '60%',
         label: 'Faster Processing',
         desc: 'Automated claims verification',
+        icon: 'TrendingUp',
       },
       {
         value: '100%',
         label: 'Fraud Detection',
         desc: 'Cryptographically verified',
+        icon: 'Shield',
       },
       {
         value: '$2.1B',
         label: 'Annual Savings',
         desc: 'Industry fraud reduction',
+        icon: 'Award',
       },
     ],
     features: [
       {
+        icon: 'FileCheck',
         title: 'Claims Management',
         items: [
-          'Claims Verification',
-          'Fraud Detection',
-          'Dispute Resolution',
-          'Immutable Records',
+          'Cryptographic claims verification for fraud prevention',
+          'AI-assisted fraud detection with immutable audit trails',
+          'Dispute resolution with tamper-proof evidence',
+          'Immutable claims records for regulatory compliance'
         ],
       },
       {
+        icon: 'Scale',
         title: 'Underwriting',
         items: [
-          'Risk Assessment',
-          'Premium Calculation',
-          'Policy Compliance',
-          'Regulatory Reporting',
+          'Cryptographically verified risk assessment',
+          'Immutable premium calculation records',
+          'Policy compliance tracking with full audit trails',
+          'Regulatory reporting with cryptographic proof'
         ],
       },
       {
+        icon: 'Shield',
         title: 'Technical Capabilities',
         items: [
-          'Real-time Verification',
-          'Fraud Pattern Detection',
-          'Court-admissible Proofs',
-          'Zero-trust Architecture',
+          'Real-time verification of claims interactions',
+          'Fraud pattern detection with AI assistance',
+          'Tamper-proof evidence for legal proceedings',
+          'Zero-trust security architecture for sensitive data'
         ],
       },
     ],
     useCases: [
       {
+        icon: 'FileCheck',
         name: 'Claims Processing',
-        desc: 'Verify every AI-assisted claim',
-        icon: '📋',
+        desc: 'Cryptographically verified AI-assisted claims with full audit trails',
       },
-      { name: 'Underwriting', desc: 'Immutable risk assessment', icon: '⚖️' },
       {
+        icon: 'Scale',
+        name: 'Underwriting',
+        desc: 'Immutable risk assessment and premium calculation records',
+      },
+      {
+        icon: 'Shield',
         name: 'Fraud Investigation',
-        desc: 'Tamper-proof audit trails',
-        icon: '🛡️',
+        desc: 'Tamper-proof audit trails for forensic analysis',
       },
       {
+        icon: 'TrendingUp',
         name: 'Regulatory Compliance',
-        desc: 'Automated compliance archives',
-        icon: '📜',
+        desc: 'Automated compliance archives for state insurance regulations',
       },
     ],
-    cta: {
-      title: 'Ready to transform your insurance operations?',
-      description:
-        'Join leading insurers using AnchorProof for fraud-free claims processing',
-      buttonText: 'Request Insurance Demo',
-      gradientColor: 'blue',
-    },
     chat: {
-      title: 'Try Our Insurance AI Assistant',
-      subtitle: 'Ask About Claims, Underwriting & Fraud Detection',
+      title: 'Live Enterprise Demo',
+      subtitle: 'Experience fraud-free claims processing',
       component: <InsuranceChat />,
       gradientColor: 'blue',
     },

@@ -1,4 +1,3 @@
-// app/dashboard/DashboardClientLayout.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -15,7 +14,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const tenantName = useMemo(() => tenant?.name, [tenant?.name]);
 
   useEffect(() => {
-    // Only redirect on initial load and if there's no tenant
     if (isInitialLoad && !loading && !isReady && !tenant) {
       router.push('/login');
     }
@@ -25,7 +23,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
   }, [loading, isReady, tenant, router, isInitialLoad]);
 
-  // Show loading only on initial load
   if (isInitialLoad && (loading || !isReady)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
@@ -37,7 +34,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Show error only on initial load
   if (error && isInitialLoad) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
@@ -54,7 +50,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If no tenant after loading and not on login page
   if (!loading && !tenant && !pathname.includes('/login')) {
     router.push('/login');
     return null;
@@ -63,8 +58,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       <Sidebar tenantName={tenantName} />
-      <main className="ml-64 min-h-screen">
-        <div className="p-6 pb-32 pt-16">
+      <main className="lg:ml-64 min-h-screen">
+        <div className="p-4 sm:p-6 pb-32 pt-16 lg:pt-6">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
