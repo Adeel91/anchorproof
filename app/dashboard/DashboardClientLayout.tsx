@@ -1,20 +1,19 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/dashboard/layout/Sidebar';
 import {
   DashboardDataProvider,
   useDashboardData,
 } from '@/providers/DashboardDataProvider';
+import { Loader2 } from 'lucide-react';
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { tenant, loading, isReady, error } = useDashboardData();
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const hasRedirected = useRef(false);
-  const hasSetInitialLoad = useRef(false);
 
   const tenantName = useMemo(() => tenant?.name, [tenant?.name]);
 
@@ -28,30 +27,20 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     router.push('/login');
   }, [loading, tenant, pathname, router]);
 
-  useEffect(() => {
-    if (hasSetInitialLoad.current) return;
-    if (loading) return;
-
-    if (tenant || isReady) {
-      hasSetInitialLoad.current = true;
-      requestAnimationFrame(() => {
-        setIsInitialLoad(false);
-      });
-    }
-  }, [loading, isReady, tenant]);
-
-  if (isInitialLoad && (loading || !isReady)) {
+  if (loading && !isReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-400 text-sm font-mono">Loading...</p>
+          <p className="text-gray-400 text-sm font-mono">
+            Loading Dashboard ...
+          </p>
         </div>
       </div>
     );
   }
 
-  if (error && isInitialLoad) {
+  if (error && !isReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
         <div className="text-center">
@@ -68,7 +57,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }
 
   if (!tenant && !pathname.includes('/login')) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-400 text-sm font-mono">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

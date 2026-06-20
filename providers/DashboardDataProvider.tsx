@@ -1,3 +1,5 @@
+// providers/DashboardDataProvider.tsx
+
 'use client';
 
 import {
@@ -117,109 +119,121 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      const [tenantRes, convRes, walrusRes, keysRes] = await Promise.all([
-        fetch('/api/tenant/current', { cache: 'no-store' }),
-        fetch('/api/chat/list'),
-        fetch('/api/walrus/list'),
-        fetch('/api/keys/list'),
+      // ⚡ STEP 1: Get tenant first (needed for other calls)
+      const tenantRes = await fetch('/api/tenant/current', {
+        cache: 'no-store',
+      });
+
+      if (!isMounted.current) return;
+
+      if (!tenantRes.ok) {
+        if (tenantRes.status === 401) {
+          setError('Session expired. Please login again.');
+          setLoading(false);
+          return;
+        }
+        throw new Error('Failed to fetch tenant');
+      }
+
+      const tenantData = await tenantRes.json();
+      if (tenantData.tenant) {
+        setTenant(tenantData.tenant);
+        setUser(tenantData.user);
+      }
+
+      // ⚡ STEP 2: Fetch everything else in parallel with timeouts
+      const fetchWithTimeout = (url: string, timeout = 5000) => {
+        return Promise.race([
+          fetch(url),
+          new Promise<Response>((_, reject) =>
+            setTimeout(() => reject(new Error(`Timeout: ${url}`)), timeout)
+          ),
+        ]);
+      };
+
+      const [convRes, walrusRes, keysRes] = await Promise.allSettled([
+        fetchWithTimeout('/api/chat/list', 3000),
+        fetchWithTimeout('/api/walrus/list', 3000),
+        fetchWithTimeout('/api/keys/list', 2000),
       ]);
 
       if (!isMounted.current) return;
 
-      if (tenantRes.ok) {
-        const tenantData = await tenantRes.json();
-        if (tenantData.tenant) {
-          setTenant(tenantData.tenant);
-          setUser(tenantData.user);
+      // ⚡ STEP 3: Process conversations
+      if (convRes.status === 'fulfilled' && convRes.value.ok) {
+        const convData = await convRes.value.json();
+        const conversationsData = convData.conversations || [];
+        setConversations(conversationsData);
+
+        if (convData.stats) {
+          setStats((prev) => ({ ...prev, ...convData.stats }));
         }
-      } else if (tenantRes.status === 401) {
-        console.warn('Unauthorized to fetch tenant data');
-        setError('Session expired. Please login again.');
-        setLoading(false);
-        return;
       }
 
-      const convData = await convRes.json();
-      const conversationsData = convData.conversations || [];
-
-      const walrusData = await walrusRes.json();
-
-      let finalConversations = conversationsData;
-      let finalStats = convData.stats || {
-        total: 0,
-        verified: 0,
-        pending: 0,
-        totalMessages: 0,
-      };
-
-      if (walrusRes.ok && walrusData.conversations) {
-        finalConversations = walrusData.conversations;
-        finalStats = walrusData.stats || finalStats;
+      // ⚡ STEP 4: Override with Walrus data if available
+      if (walrusRes.status === 'fulfilled' && walrusRes.value.ok) {
+        const walrusData = await walrusRes.value.json();
+        if (walrusData.conversations) {
+          setConversations(walrusData.conversations);
+        }
+        if (walrusData.stats) {
+          setStats((prev) => ({ ...prev, ...walrusData.stats }));
+        }
       }
 
-      if (!isMounted.current) return;
-
-      setConversations(finalConversations);
-
-      const verifiedCount =
-        finalStats.verified ||
-        finalConversations.filter((c: Conversation) => c.verifiedAt !== null)
-          .length;
-      const pendingCount =
-        finalStats.pending ||
-        finalConversations.filter(
-          (c: Conversation) => c.verifiedAt === null && c.status !== 'tampered'
-        ).length;
-      const tamperedCount =
-        finalStats.tampered ||
-        finalConversations.filter(
-          (c: Conversation) =>
-            c.status === 'tampered' || c.integrity?.tampered === true
-        ).length;
-      const totalMessagesCount =
-        finalStats.totalMessages ||
-        finalConversations.reduce(
-          (acc: number, c: Conversation) => acc + (c.messageCount || 0),
-          0
-        );
-      const integrityRateValue =
-        finalStats.integrityRate ||
-        (finalConversations.length > 0
-          ? Math.round(
-              (finalConversations.filter(
-                (c: Conversation) =>
-                  c.status === 'verified' || c.verifiedAt !== null
-              ).length /
-                finalConversations.length) *
-                100
-            )
-          : 100);
-
-      setStats({
-        total: finalStats.total || finalConversations.length,
-        verified: verifiedCount,
-        pending: pendingCount,
-        tampered: tamperedCount,
-        totalMessages: totalMessagesCount,
-        integrityRate: integrityRateValue,
-      });
-
-      if (keysRes.ok) {
-        const keysData = await keysRes.json();
+      // ⚡ STEP 5: Process API keys
+      if (keysRes.status === 'fulfilled' && keysRes.value.ok) {
+        const keysData = await keysRes.value.json();
         setApiKeys(keysData.keys || []);
-      } else if (keysRes.status === 401) {
-        console.warn('Unauthorized to fetch API keys');
       }
+
+      // ⚡ STEP 6: Calculate final stats
+      setStats((prev) => {
+        const finalConvs = conversations.length > 0 ? conversations : [];
+        const total = finalConvs.length || prev.total;
+        const verified =
+          finalConvs.filter((c) => c.verifiedAt !== null).length ||
+          prev.verified;
+        const pending =
+          finalConvs.filter(
+            (c) => c.verifiedAt === null && c.status !== 'tampered'
+          ).length || prev.pending;
+        const tampered =
+          finalConvs.filter(
+            (c) => c.status === 'tampered' || c.integrity?.tampered === true
+          ).length || prev.tampered;
+        const totalMessages =
+          finalConvs.reduce((acc, c) => acc + (c.messageCount || 0), 0) ||
+          prev.totalMessages;
+
+        return {
+          total: total || prev.total,
+          verified: verified || prev.verified,
+          pending: pending || prev.pending,
+          tampered: tampered || prev.tampered,
+          totalMessages: totalMessages || prev.totalMessages,
+          integrityRate: total > 0 ? Math.round((verified / total) * 100) : 100,
+        };
+      });
 
       setIsReady(true);
       setLoading(false);
     } catch (err) {
       if (!isMounted.current) return;
+
+      // ⚡ If we have tenant but other calls failed, still show dashboard
+      if (tenant) {
+        console.warn('Partial data loaded:', err);
+        setIsReady(true);
+        setLoading(false);
+        return;
+      }
+
       setError('Failed to load dashboard data');
       console.error('Error fetching dashboard data:', err);
       setLoading(false);
     }
-  }, []);
+  }, [tenant]);
 
   const refreshKeys = useCallback(async () => {
     try {
@@ -238,10 +252,6 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
       if (keysRes.ok) {
         const keysData = await keysRes.json();
         setApiKeys(keysData.keys || []);
-      } else if (keysRes.status === 401) {
-        console.warn('Unauthorized to refresh API keys');
-      } else {
-        console.error('Failed to refresh API keys:', keysRes.status);
       }
     } catch (error) {
       console.error('Failed to refresh API keys:', error);

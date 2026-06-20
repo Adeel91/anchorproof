@@ -726,103 +726,11 @@ anchorproof/
   </div>
 </div>
 
-<div>
-  <h3>Useful Commands</h3>
-  <div style="background: #0f172a; padding: 1rem; border-radius: 8px; border: 1px solid #1e293b; margin: 0.5rem 0;">
-    <pre style="color: #e2e8f0; margin: 0;">
-# Development
-yarn dev
-
-# Build for production
-
-yarn build
-yarn start
-
-# Database management
-
-npx prisma generate # Generate Prisma client
-npx prisma db push # Push schema to database
-npx prisma studio # Open Prisma Studio
-
-# Linting
-
-yarn lint
-
-# Type checking
-
-yarn type-check
-
-</pre>
-
-  </div>
-</div>
-
-<div>
-  <h3>Code Style</h3>
-  <ul>
-    <li><b>TypeScript</b> with strict mode</li>
-    <li><b>ESLint</b> for code quality</li>
-    <li><b>Prettier</b> for formatting</li>
-    <li><b>Conventional commits</b> for commit messages</li>
-  </ul>
-</div>
-
 ---
 
-<div align="center">
-  <h2>🚀 Deployment</h2>
-</div>
+## 🏗️ Architecture Diagrams
 
-<div>
-  <h3>Deploy to Vercel</h3>
-  
-  <p><b>1. Push your code to GitHub</b></p>
-  <div style="background: #0f172a; padding: 1rem; border-radius: 8px; border: 1px solid #1e293b; margin: 0.5rem 0;">
-    <code style="color: #e2e8f0;">git push origin main</code>
-  </div>
-
-  <p><b>2. Import project in Vercel</b></p>
-  <ul>
-    <li>Connect your GitHub repository</li>
-    <li>Configure environment variables</li>
-    <li>Deploy!</li>
-  </ul>
-
-  <p><b>3. Environment Variables (Vercel)</b></p>
-  <ul>
-    <li>Add all variables from <code>.env.local</code></li>
-    <li>Set <code>NEXTAUTH_URL</code> to your production URL</li>
-  </ul>
-</div>
-
-<div>
-  <h3>Database Migration</h3>
-  <div style="background: #0f172a; padding: 1rem; border-radius: 8px; border: 1px solid #1e293b; margin: 0.5rem 0;">
-    <code style="color: #e2e8f0;"># Before deployment, run migrations</code><br />
-    <code style="color: #e2e8f0;">npx prisma migrate deploy</code>
-  </div>
-</div>
-
----
-
-<div align="center">
-  <h2>🙏 Acknowledgments</h2>
-</div>
-
-<div>
-  <ul>
-    <li><a href="https://sui.io/">Sui Foundation</a> for zkLogin</li>
-    <li><a href="https://walrus.space/">Walrus Protocol</a> for decentralized storage</li>
-    <li><a href="https://mystenlabs.com/">Mysten Labs</a> for Dapp Kit</li>
-    <li><a href="https://vercel.com/">Vercel</a> for hosting</li>
-    <li><a href="https://supabase.com/">Supabase</a> for database hosting</li>
-  </ul>
-</div>
-
----
-
-🏗️ Architecture Diagrams
-System Architecture Flow
+### System Architecture Flow
 
 ```mermaid
 graph TB
@@ -872,7 +780,9 @@ graph TB
     K --> P
 ```
 
-Component Interaction Diagram
+---
+
+### Component Interaction Diagram
 
 ```mermaid
 sequenceDiagram
@@ -916,7 +826,9 @@ sequenceDiagram
     API->>Frontend: Return Success
 ```
 
-Data Flow Diagram
+---
+
+### Data Flow Diagram
 
 ```mermaid
 graph LR
@@ -943,7 +855,9 @@ graph LR
     B4 --> C1
 ```
 
-Entity Relationship Diagram
+---
+
+### Entity Relationship Diagram
 
 ```mermaid
 erDiagram
@@ -1045,5 +959,125 @@ erDiagram
         datetime updatedAt
     }
 ```
+
+---
+
+<div>
+  <h3>Useful Commands</h3>
+  <div style="background: #0f172a; padding: 1rem; border-radius: 8px; border: 1px solid #1e293b; margin: 0.5rem 0;">
+    <pre style="color: #e2e8f0; margin: 0;">
+## Development
+yarn dev
+
+## Build for production
+
+yarn build
+yarn start
+
+## Database management
+
+npx prisma generate # Generate Prisma client
+npx prisma db push # Push schema to database
+npx prisma studio # Open Prisma Studio
+
+## Linting
+
+yarn lint
+
+</pre>
+
+  </div>
+</div>
+
+<div>
+  <h3>Code Style</h3>
+  <ul>
+    <li><b>TypeScript</b> with strict mode</li>
+    <li><b>ESLint</b> for code quality</li>
+    <li><b>Prettier</b> for formatting</li>
+    <li><b>Conventional commits</b> for commit messages</li>
+  </ul>
+</div>
+
+---
+
+<div align="center">
+  <h2>🚀 Deployment</h2>
+</div>
+
+<div>
+  <h3>Deploy to Vercel</h3>
+  
+  <p><b>1. Push your code to GitHub</b></p>
+  <div style="background: #0f172a; padding: 1rem; border-radius: 8px; border: 1px solid #1e293b; margin: 0.5rem 0;">
+    <code style="color: #e2e8f0;">git push origin main</code>
+  </div>
+
+  <p><b>2. Import project in Vercel</b></p>
+  <ul>
+    <li>Connect your GitHub repository</li>
+    <li>Configure environment variables</li>
+    <li>Deploy!</li>
+  </ul>
+
+  <p><b>3. Environment Variables (Vercel)</b></p>
+  <ul>
+    <li>Add all variables from <code>.env.local</code></li>
+    <li>Set <code>NEXT_PUBLIC_APP_URL</code> to your production URL</li>
+  </ul>
+</div>
+
+<div>
+  <h3>Database Migration</h3>
+  <div style="background: #0f172a; padding: 1rem; border-radius: 8px; border: 1px solid #1e293b; margin: 0.5rem 0;">
+    <code style="color: #e2e8f0;"># Before deployment, run migrations</code><br />
+    <code style="color: #e2e8f0;">npx prisma migrate deploy</code>
+  </div>
+</div>
+
+---
+
+<div align="center">
+  <h2>🙏 Acknowledgments</h2>
+</div>
+
+<div>
+  <ul>
+    <li><a href="https://sui.io/">Sui Foundation</a> for zkLogin</li>
+    <li><a href="https://walrus.space/">Walrus Protocol</a> for decentralized storage</li>
+    <li><a href="https://mystenlabs.com/">Mysten Labs</a> for Dapp Kit</li>
+    <li><a href="https://vercel.com/">Vercel</a> for hosting</li>
+    <li><a href="https://supabase.com/">Supabase</a> for database hosting</li>
+  </ul>
+</div>
+
+---
+
+The screenshots of the application are as follows:
+
+<table>
+  <tr>
+    <td> <img src="screenshots/1.png" alt="1.png" style="width: 250px;"/> </td>
+    <td> <img src="screenshots/2.png" alt="2.png" style="width: 250px;"/> </td>
+  </tr>
+  <tr>
+    <td> <img src="screenshots/3.png" alt="3.png" style="width: 250px;"/> </td>
+    <td> <img src="screenshots/4.png" alt="4.png" style="width: 250px;"/> </td>
+  </tr>
+  <tr>
+    <td> <img src="screenshots/5.png" alt="5.png" style="width: 250px;"/> </td>
+    <td> <img src="screenshots/6.png" alt="6.png" style="width: 250px;"/> </td>
+  </tr>
+  <tr>
+    <td> <img src="screenshots/7.png" alt="7.png" style="width: 250px;"/> </td>
+    <td> <img src="screenshots/8.png" alt="8.png" style="width: 250px;"/> </td>
+  </tr>
+  <tr>
+    <td> <img src="screenshots/9.png" alt="9.png" style="width: 250px;"/> </td>
+    <td> <img src="screenshots/10.png" alt="10.png" style="width: 250px;"/> </td>
+  </tr>
+</table>
+
+---
 
 <p align="center">Built with ❤️ by the AnchorProof - Muhammad Adeel</p> <p align="center"> <sub>🔐 Secure • 📊 Transparent • 🚀 Enterprise-Grade</sub> </p>
