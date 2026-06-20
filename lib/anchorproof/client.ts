@@ -1,7 +1,8 @@
 import { AnchorProofClient } from '@/packages/sdk/src/client';
 
 AnchorProofClient.configure({
-  apiBaseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+  apiBaseUrl:
+    process.env.NEXT_PUBLIC_API_URL || 'https://anchorproof.vercel.app',
 });
 
 export const anchorProofClient = new AnchorProofClient({
