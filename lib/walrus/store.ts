@@ -36,8 +36,6 @@ export async function storeOnWalrus(
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const uploadStart = Date.now();
-
       const result = await walrusClient.walrus.writeBlob({
         blob: new TextEncoder().encode(encryptedBlob),
         deletable: false,
