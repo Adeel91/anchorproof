@@ -1,4 +1,3 @@
-// app/api/reports/save/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -80,7 +79,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Save report error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to save report' },
+      {
+        error: error instanceof Error ? error.message : 'Failed to save report',
+      },
       { status: 500 }
     );
   }

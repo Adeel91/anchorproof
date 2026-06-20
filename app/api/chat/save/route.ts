@@ -1,4 +1,3 @@
-// app/api/chat/save/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
@@ -8,7 +7,6 @@ import { Ed25519Keypair, Ed25519PublicKey } from '@mysten/sui/keypairs/ed25519';
 import { fromBase64 } from '@mysten/bcs';
 import { createAuditLogAsync } from '@/lib/audit';
 import { recordOnChain } from '@/lib/sui/contract';
-import { SUI_PACKAGE_ID, SUI_LEGAL_REGISTRY_ID, SUI_CLOCK_ID } from '@/lib/sui/contract';
 
 const MASTER_KEY_HEX =
   process.env.MASTER_KEY || crypto.randomBytes(32).toString('hex');
@@ -48,7 +46,6 @@ export async function POST(request: NextRequest) {
   console.log('🚀 Starting conversation save...');
 
   try {
-    // 1. Get API key from headers
     const apiKey = request.headers.get('X-API-Key');
     const publicKey = request.headers.get('X-Public-Key');
 
@@ -59,7 +56,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Verify API key exists
     const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
 
     const apiKeyRecord = await prisma.apiKey.findFirst({
@@ -77,7 +73,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Get request body
     const {
       conversationId,
       customerId,
@@ -93,7 +88,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Verify signature
     const messageToVerify = JSON.stringify({
       conversationId,
       customerId: customerId || 'unknown',
@@ -111,7 +105,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
-    // 5. Get messages from TempMessage
     const messages = await prisma.tempMessage.findMany({
       where: { tenantId: apiKeyRecord.tenantId, conversationId },
       orderBy: { createdAt: 'asc' },
@@ -121,7 +114,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No messages found' }, { status: 400 });
     }
 
-    // 6. Prepare conversation data
     const conversationData = {
       conversationId,
       messages: messages.map((m: TempMessage) => ({
@@ -140,13 +132,11 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    // 7. Calculate content hash
     const contentHash = crypto
       .createHash('sha256')
       .update(JSON.stringify(conversationData.messages))
       .digest('hex');
 
-    // 8. Get tenant keypair for encryption
     console.log('🔐 Getting tenant keypair...');
     const tenantApiKey = await prisma.apiKey.findFirst({
       where: { tenantId: apiKeyRecord.tenantId },
@@ -160,24 +150,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const decryptedPrivateKeyBase64 = decryptPrivateKey(tenantApiKey.encryptedPrivateKey);
+    const decryptedPrivateKeyBase64 = decryptPrivateKey(
+      tenantApiKey.encryptedPrivateKey
+    );
     const privateKeyBytes = fromBase64(decryptedPrivateKeyBase64);
     const tenantKeypair = Ed25519Keypair.fromSecretKey(privateKeyBytes);
     const actualTenantAddress = tenantKeypair.getPublicKey().toSuiAddress();
-    
+
     console.log('   Actual Keypair Address:', actualTenantAddress);
 
     const sealId = crypto
       .createHash('sha256')
       .update(conversationId + actualTenantAddress)
       .digest('hex');
-    
+
     console.log('   SEAL ID:', sealId);
 
-    // 9. SEAL ENCRYPT
     console.log('🔐 Starting SEAL encryption...');
     const plaintext = JSON.stringify(conversationData);
-    
+
     let encryptedObjectHex: string;
     let sessionKeyHex: string;
     let encryptedBlob: string;
@@ -207,15 +198,15 @@ export async function POST(request: NextRequest) {
     } catch (sealError) {
       console.error('❌ SEAL encryption failed:', sealError);
       return NextResponse.json(
-        { 
-          error: 'SEAL encryption failed', 
-          details: sealError instanceof Error ? sealError.message : String(sealError),
+        {
+          error: 'SEAL encryption failed',
+          details:
+            sealError instanceof Error ? sealError.message : String(sealError),
         },
         { status: 500 }
       );
     }
 
-    // 10. WALRUS STORAGE
     console.log('📤 Storing on Walrus...');
     let blobId: string;
     let walrusExplorerUrl: string;
@@ -231,15 +222,17 @@ export async function POST(request: NextRequest) {
     } catch (walrusError) {
       console.error('❌ Walrus storage failed:', walrusError);
       return NextResponse.json(
-        { 
-          error: 'Walrus storage failed', 
-          details: walrusError instanceof Error ? walrusError.message : String(walrusError),
+        {
+          error: 'Walrus storage failed',
+          details:
+            walrusError instanceof Error
+              ? walrusError.message
+              : String(walrusError),
         },
         { status: 500 }
       );
     }
 
-    // 11. Save to database
     console.log('💾 Saving to database...');
     let verification;
 
@@ -267,15 +260,14 @@ export async function POST(request: NextRequest) {
     } catch (dbError) {
       console.error('❌ Database save failed:', dbError);
       return NextResponse.json(
-        { 
-          error: 'Database save failed', 
+        {
+          error: 'Database save failed',
           details: dbError instanceof Error ? dbError.message : String(dbError),
         },
         { status: 500 }
       );
     }
 
-    // 12. Delete temp messages (do this before long operations)
     console.log('🗑️ Deleting temporary messages...');
     try {
       await prisma.tempMessage.deleteMany({
@@ -286,7 +278,6 @@ export async function POST(request: NextRequest) {
       console.error('⚠️ Temp message deletion failed:', deleteError);
     }
 
-    // 13. ON-CHAIN RECORD (fire and forget - don't await)
     console.log('⛓️ Recording on-chain (background)...');
     recordOnChain({
       blobId,
@@ -295,13 +286,14 @@ export async function POST(request: NextRequest) {
       suiTxHash: suiTxHash,
       signature: signature,
       tenantAddress: actualTenantAddress,
-    }).then(() => {
-      console.log('✅ On-chain record created');
-    }).catch((err) => {
-      console.error('⚠️ On-chain recording failed:', err);
-    });
+    })
+      .then(() => {
+        console.log('✅ On-chain record created');
+      })
+      .catch((err) => {
+        console.error('⚠️ On-chain recording failed:', err);
+      });
 
-    // 14. AUDIT LOG (fire and forget - uses tenant directly)
     console.log('📝 Creating audit log (background)...');
     createAuditLogAsync({
       action: 'CONVERSATION_SAVED',
@@ -325,7 +317,6 @@ export async function POST(request: NextRequest) {
     const elapsed = Date.now() - startTime;
     console.log(`🎉 === SAVE COMPLETED in ${elapsed}ms ===\n`);
 
-    // Return response immediately without waiting for on-chain or audit log
     return NextResponse.json({
       success: true,
       blobId: blobId,
@@ -343,9 +334,9 @@ export async function POST(request: NextRequest) {
     const elapsed = Date.now() - startTime;
     console.error(`💥 SAVE ROUTE ERROR after ${elapsed}ms:`, error);
     return NextResponse.json(
-      { 
+      {
         error: error instanceof Error ? error.message : 'Internal server error',
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 }
     );

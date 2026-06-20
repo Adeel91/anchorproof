@@ -1,4 +1,3 @@
-// lib/qrcode.ts
 import QRCode from 'qrcode';
 import { activeNetwork } from './walrus/client';
 

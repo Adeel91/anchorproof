@@ -1,7 +1,7 @@
-// components/industry/HeroSection.tsx
 'use client';
 
 import * as Icons from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface HeroSectionProps {
   badge: string;
@@ -14,6 +14,19 @@ interface HeroSectionProps {
   badgeColor: string;
   design: 'vault' | 'clinic' | 'capitol' | 'shield';
   cardStyle: string;
+}
+
+function IconRenderer({
+  iconName,
+  className,
+}: {
+  iconName: string;
+  className: string;
+}) {
+  const iconMap = Icons as unknown as Record<string, LucideIcon>;
+  const Icon = iconMap[iconName];
+  if (!Icon) return null;
+  return <Icon className={className} />;
 }
 
 export default function HeroSection({
@@ -50,25 +63,35 @@ export default function HeroSection({
     ),
   };
 
-  // Get icon from string name
-  const IconComponent = (Icons as any)[badgeIcon];
-
   return (
-    <section className={`relative ${layoutClasses[design]} flex items-center overflow-hidden`}>
+    <section
+      className={`relative ${layoutClasses[design]} flex items-center overflow-hidden`}
+    >
       {accentElements[design]}
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className={`max-w-4xl mx-auto text-center p-8 rounded-3xl border ${cardStyle} backdrop-blur-sm bg-slate-900/20`}>
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border border-${badgeColor}-400/30 bg-${badgeColor}-400/10 backdrop-blur-sm mb-6`}>
-            {IconComponent && <IconComponent className={`w-4 h-4 text-${badgeColor}-400`} />}
-            <span className={`text-${badgeColor}-400 font-mono text-xs font-semibold tracking-wider`}>
+        <div
+          className={`max-w-4xl mx-auto text-center p-8 rounded-3xl border ${cardStyle} backdrop-blur-sm bg-slate-900/20`}
+        >
+          <div
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border border-${badgeColor}-400/30 bg-${badgeColor}-400/10 backdrop-blur-sm mb-6`}
+          >
+            <IconRenderer
+              iconName={badgeIcon}
+              className={`w-4 h-4 text-${badgeColor}-400`}
+            />
+            <span
+              className={`text-${badgeColor}-400 font-mono text-xs font-semibold tracking-wider`}
+            >
               {badge}
             </span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter text-white leading-[1.1]">
             {title}{' '}
-            <span className={`bg-clip-text text-transparent bg-gradient-to-r from-${gradientFrom}-400 to-${gradientTo}-400`}>
+            <span
+              className={`bg-clip-text text-transparent bg-gradient-to-r from-${gradientFrom}-400 to-${gradientTo}-400`}
+            >
               {highlightedText}
             </span>
           </h1>
@@ -79,15 +102,21 @@ export default function HeroSection({
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 font-mono">
             <span className="flex items-center gap-1.5">
-              <span className={`w-1.5 h-1.5 rounded-full bg-${gradientFrom}-400 animate-pulse`} />
+              <span
+                className={`w-1.5 h-1.5 rounded-full bg-${gradientFrom}-400 animate-pulse`}
+              />
               <span>Enterprise Grade</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className={`w-1.5 h-1.5 rounded-full bg-${gradientTo}-400`} />
+              <span
+                className={`w-1.5 h-1.5 rounded-full bg-${gradientTo}-400`}
+              />
               <span>Cryptographically Verified</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className={`w-1.5 h-1.5 rounded-full bg-${badgeColor}-400`} />
+              <span
+                className={`w-1.5 h-1.5 rounded-full bg-${badgeColor}-400`}
+              />
               <span>Tamper-Proof</span>
             </span>
           </div>

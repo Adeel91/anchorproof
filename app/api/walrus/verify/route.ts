@@ -1,4 +1,3 @@
-// app/api/walrus/verify/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -71,7 +70,6 @@ export async function POST(request: NextRequest) {
 
     const isTampered = claimedContent && claimedContent !== originalContent;
 
-    // ✅ AUDIT LOG: Verification result (fire and forget)
     createAuditLogAsync({
       action: isTampered ? 'TAMPER_DETECTED' : 'CONVERSATION_VERIFIED',
       tenantId: user.tenant.id,

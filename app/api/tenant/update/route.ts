@@ -1,4 +1,3 @@
-// app/api/tenant/update/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -28,10 +27,7 @@ export async function PUT(request: NextRequest) {
     }
 
     if (!user.tenant) {
-      return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     const { name } = await request.json();

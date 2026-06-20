@@ -8,11 +8,9 @@ export async function proxy(request: NextRequest) {
   const isAuthPage = url.pathname === '/login';
   const isDashboardRoute = url.pathname.startsWith('/dashboard');
 
-  // Chat routes use API keys, not session cookies
   const chatRoutes = ['/api/chat/send', '/api/chat/save'];
   const isChatRoute = chatRoutes.some((route) => url.pathname === route);
 
-  // Tenant route should be accessible for dashboard to load
   const isTenantRoute = url.pathname === '/api/tenant/current';
 
   const protectedApiRoutes = [
@@ -30,7 +28,6 @@ export async function proxy(request: NextRequest) {
     url.pathname.startsWith(route)
   );
 
-  // Allow chat routes and tenant route without session
   if (isChatRoute || isTenantRoute) {
     return NextResponse.next();
   }

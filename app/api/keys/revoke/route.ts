@@ -1,4 +1,3 @@
-// app/api/keys/revoke/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -10,7 +9,10 @@ export async function DELETE(request: NextRequest) {
     const userId = cookieStore.get('anchorproof-session')?.value;
 
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized - No session' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized - No session' },
+        { status: 401 }
+      );
     }
 
     const user = await prisma.user.findUnique({
@@ -19,10 +21,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 401 });
     }
 
     if (!user.tenant) {
@@ -50,10 +49,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (!key) {
-      return NextResponse.json(
-        { error: 'API key not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'API key not found' }, { status: 404 });
     }
 
     createAuditLogAsync({

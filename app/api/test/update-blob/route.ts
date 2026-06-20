@@ -1,4 +1,3 @@
-// app/api/test/update-blob/route.ts
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -21,9 +20,6 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('🔄 Updating blob:', { oldBlobId, newBlobId });
-
-    // Get the user to verify they have access
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { tenant: true },
@@ -33,9 +29,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('👤 User:', user.id, 'Tenant:', user.tenant.id);
-
-    // Update the blobId
     const result = await prisma.verification.updateMany({
       where: {
         blobId: oldBlobId,
@@ -46,11 +39,9 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log('📊 Update result:', result);
-
     if (result.count === 0) {
       return NextResponse.json(
-        { 
+        {
           error: 'No record found with that blobId',
           oldBlobId,
           tenantId: user.tenant.id,
@@ -59,7 +50,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch the updated record
     const updatedRecord = await prisma.verification.findFirst({
       where: {
         blobId: newBlobId,
@@ -77,9 +67,9 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Update blob error:', error);
     return NextResponse.json(
-      { 
+      {
         error: String(error),
-        message: 'Failed to update blob ID'
+        message: 'Failed to update blob ID',
       },
       { status: 500 }
     );

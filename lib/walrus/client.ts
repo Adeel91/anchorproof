@@ -1,4 +1,3 @@
-// lib/walrus/client.ts
 import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from '@mysten/sui/jsonRpc';
 import { walrus } from '@mysten/walrus';
 
@@ -13,13 +12,15 @@ const suiClient = new SuiJsonRpcClient({
 
 const walrusClient = suiClient.$extend(walrus());
 
-const WALRUS_AGGREGATOR = activeNetwork === 'testnet'
-  ? 'https://aggregator.walrus-testnet.walrus.space'
-  : 'https://aggregator.walrus.mainnet.walrus.space';
+const WALRUS_AGGREGATOR =
+  activeNetwork === 'testnet'
+    ? 'https://aggregator.walrus-testnet.walrus.space'
+    : 'https://aggregator.walrus.mainnet.walrus.space';
 
-const WALRUS_PUBLISHER = activeNetwork === 'testnet'
-  ? 'https://publisher.walrus-testnet.walrus.space'
-  : 'https://publisher.walrus.mainnet.walrus.space';
+const WALRUS_PUBLISHER =
+  activeNetwork === 'testnet'
+    ? 'https://publisher.walrus-testnet.walrus.space'
+    : 'https://publisher.walrus.mainnet.walrus.space';
 
 export async function fetchBlobDirectly(blobId: string): Promise<Uint8Array> {
   if (!blobId) {
@@ -35,7 +36,7 @@ export async function fetchBlobDirectly(blobId: string): Promise<Uint8Array> {
     try {
       const response = await fetch(endpoint, {
         headers: {
-          'Accept': 'application/octet-stream',
+          Accept: 'application/octet-stream',
         },
         signal: AbortSignal.timeout(15000),
       });
@@ -52,7 +53,15 @@ export async function fetchBlobDirectly(blobId: string): Promise<Uint8Array> {
     }
   }
 
-  throw new Error('No valid blob metadata could be retrieved from any storage node.');
+  throw new Error(
+    'No valid blob metadata could be retrieved from any storage node.'
+  );
 }
 
-export { suiClient, walrusClient, activeNetwork, WALRUS_AGGREGATOR, WALRUS_PUBLISHER };
+export {
+  suiClient,
+  walrusClient,
+  activeNetwork,
+  WALRUS_AGGREGATOR,
+  WALRUS_PUBLISHER,
+};

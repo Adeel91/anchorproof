@@ -1,4 +1,3 @@
-// app/dashboard/reports/page.tsx
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Reports } from '@/components/dashboard/reports/Reports';

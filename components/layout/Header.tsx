@@ -24,10 +24,11 @@ const NavLink = ({
       if (targetElement) {
         const headerOffset = 80;
         const elementPosition = targetElement.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        const offsetPosition =
+          elementPosition + window.pageYOffset - headerOffset;
         window.scrollTo({
           top: offsetPosition,
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
       }
     }
@@ -35,9 +36,9 @@ const NavLink = ({
   };
 
   return (
-    <Link 
-      href={href} 
-      onClick={handleClick} 
+    <Link
+      href={href}
+      onClick={handleClick}
       className="group relative px-3 py-2"
     >
       <span className="relative z-10 text-xs font-mono font-bold uppercase tracking-widest text-slate-300 group-hover:text-cyan-400 transition-colors">
@@ -65,10 +66,11 @@ const MobileNavLink = ({
       if (targetElement) {
         const headerOffset = 80;
         const elementPosition = targetElement.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        const offsetPosition =
+          elementPosition + window.pageYOffset - headerOffset;
         window.scrollTo({
           top: offsetPosition,
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
       }
     }
@@ -98,24 +100,40 @@ export default function Header() {
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const prevPathnameRef = useRef<string | null>(null);
+  const addressRef = useRef<string | null>(null);
 
   useEffect(() => {
     const newAddress = currentAccount?.address || null;
-    setAddress(newAddress);
+    if (addressRef.current !== newAddress) {
+      addressRef.current = newAddress;
+      setTimeout(() => {
+        setAddress(newAddress);
+      }, 0);
+    }
   }, [currentAccount?.address]);
+
+  useEffect(() => {
+    const newAddress = currentAccount?.address || null;
+    if (addressRef.current !== newAddress) {
+      addressRef.current = newAddress;
+      setAddress(newAddress);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       const isMenuButton = menuButtonRef.current?.contains(target);
       const isMobileMenu = mobileMenuRef.current?.contains(target);
-      
+
       if (isMobileMenuOpen && !isMenuButton && !isMobileMenu) {
         setIsMobileMenuOpen(false);
         setIsMobileIndustriesOpen(false);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMobileMenuOpen]);
@@ -134,9 +152,12 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    setIsMobileMenuOpen(false);
-    setIsMobileIndustriesOpen(false);
-    setIsDropdownOpen(false);
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      setIsMobileMenuOpen(false);
+      setIsMobileIndustriesOpen(false);
+      setIsDropdownOpen(false);
+    }
   }, [pathname]);
 
   useEffect(() => {
@@ -336,9 +357,9 @@ export default function Header() {
                 </div>
               </div>
             )}
-            <Button 
-              variant="outline" 
-              onClick={handleLogout} 
+            <Button
+              variant="outline"
+              onClick={handleLogout}
               className="h-8 md:h-9 px-3 md:px-4 text-xs md:text-sm"
             >
               <span className="hidden sm:inline">SIGN OUT</span>
@@ -538,12 +559,12 @@ export default function Header() {
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="sm:hidden w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                
-                <Button 
-                  variant="outline" 
-                  onClick={handleLogout} 
+
+                <Button
+                  variant="outline"
+                  onClick={handleLogout}
                   className="h-8 md:h-9 px-3 md:px-4 text-xs md:text-sm"
                 >
                   <span className="hidden sm:inline">SIGN OUT</span>
@@ -553,14 +574,17 @@ export default function Header() {
             ) : (
               !isLoginPage && (
                 <Link href="/login" onClick={closeAll}>
-                  <Button variant="primary" className="h-8 md:h-9 px-3 md:px-4 text-xs md:text-sm whitespace-nowrap">
+                  <Button
+                    variant="primary"
+                    className="h-8 md:h-9 px-3 md:px-4 text-xs md:text-sm whitespace-nowrap"
+                  >
                     <span className="hidden sm:inline">LAUNCH PORTAL</span>
                     <span className="sm:hidden">PORTAL</span>
                   </Button>
                 </Link>
               )
             )}
-            
+
             {!isDashboardPage && !isLoginPage && (
               <button
                 ref={menuButtonRef}
@@ -598,7 +622,7 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && !isDashboardPage && !isLoginPage && (
-        <div 
+        <div
           ref={mobileMenuRef}
           className="lg:hidden fixed top-16 md:top-20 left-0 right-0 bottom-0 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/50 overflow-y-auto z-40 min-h-screen"
         >
@@ -622,7 +646,7 @@ export default function Header() {
                 />
               </svg>
             </button>
-            
+
             {isMobileIndustriesOpen && (
               <div className="ml-4 space-y-1 border-l border-slate-700/50 pl-3">
                 {industries.map((industry) => (
@@ -637,7 +661,9 @@ export default function Header() {
                       </span>
                       <div>
                         <div className="text-sm font-bold">{industry.name}</div>
-                        <div className="text-[10px] text-slate-500">{industry.desc}</div>
+                        <div className="text-[10px] text-slate-500">
+                          {industry.desc}
+                        </div>
                       </div>
                     </div>
                   </MobileNavLink>

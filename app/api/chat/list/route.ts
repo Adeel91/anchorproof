@@ -1,4 +1,3 @@
-// app/api/chat/list/route.ts
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -39,12 +38,14 @@ export async function GET() {
       },
     });
 
-    // Simple stats without tamper detection
     const stats = {
       total: verifications.length,
-      verified: verifications.filter(v => v.verifiedAt).length,
-      pending: verifications.filter(v => !v.verifiedAt).length,
-      totalMessages: verifications.reduce((acc, v) => acc + (v.messageCount || 0), 0),
+      verified: verifications.filter((v) => v.verifiedAt).length,
+      pending: verifications.filter((v) => !v.verifiedAt).length,
+      totalMessages: verifications.reduce(
+        (acc, v) => acc + (v.messageCount || 0),
+        0
+      ),
     };
 
     return NextResponse.json({

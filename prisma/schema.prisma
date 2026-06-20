@@ -104,15 +104,15 @@ model Report {
   id               String    @id @default(cuid())
   tenantId         String
   name             String
-  type             String    // 'full' | 'single'
+  type             String
   generatedBy      String
   generatedAt      DateTime  @default(now())
-  conversationId   String?   // For single conversation reports
-  summary          Json?     // { total, verified, tampered, integrityRate, totalMessages }
-  hash             String?   // SHA-256 hash of the report content
-  size             Int?      // Size in KB
-  status           String    // 'ready' | 'generating' | 'failed'
-  expiresAt        DateTime? // Optional: auto-delete after 30 days
+  conversationId   String?
+  summary          Json?
+  hash             String?
+  size             Int?
+  status           String
+  expiresAt        DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   

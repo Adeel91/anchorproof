@@ -9,7 +9,8 @@ export default function HealthcarePage() {
       badgeIcon: 'HeartPulse',
       title: 'Protecting patient trust through',
       highlightedText: 'verifiable AI conversations.',
-      description: 'AnchorProof provides HIPAA, HITECH, and FDA compliant AI conversation logging with cryptographic verification. Every patient interaction becomes tamper-proof evidence that protects your healthcare organization and preserves patient trust.',
+      description:
+        'AnchorProof provides HIPAA, HITECH, and FDA compliant AI conversation logging with cryptographic verification. Every patient interaction becomes tamper-proof evidence that protects your healthcare organization and preserves patient trust.',
       gradientFrom: 'emerald',
       gradientTo: 'teal',
       badgeColor: 'emerald',
@@ -42,7 +43,7 @@ export default function HealthcarePage() {
           'HIPAA Privacy Rule for patient data protection',
           'HIPAA Security Rule for electronic PHI',
           'HITECH Act for EHR meaningful use',
-          'FDA guidelines for AI in healthcare'
+          'FDA guidelines for AI in healthcare',
         ],
       },
       {
@@ -52,7 +53,7 @@ export default function HealthcarePage() {
           'End-to-end PHI encryption in transit and at rest',
           'Role-based access controls for patient data',
           'Immutable audit trails for all healthcare interactions',
-          'Business Associate Agreement support'
+          'Business Associate Agreement support',
         ],
       },
       {
@@ -62,7 +63,7 @@ export default function HealthcarePage() {
           'Immutable patient record keeping',
           'Cryptographically verified clinical documentation',
           'HIPAA-compliant telehealth interactions',
-          'Automated breach notification preparation'
+          'Automated breach notification preparation',
         ],
       },
     ],

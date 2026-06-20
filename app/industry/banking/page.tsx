@@ -1,4 +1,3 @@
-// app/industry/banking/page.tsx
 import IndustryPageWrapper from '@/components/industry/IndustryPageWrapper';
 import { BankingChat } from '@/components/chat';
 
@@ -10,7 +9,8 @@ export default function BankingPage() {
       badgeIcon: 'Crown',
       title: 'Where financial institutions',
       highlightedText: 'secure their AI conversations.',
-      description: 'AnchorProof provides SEC, FINRA, and Basel III compliant AI conversation logging with cryptographic verification. Every customer interaction becomes tamper-proof, court-admissible evidence that protects your institution from regulatory fines and legal exposure.',
+      description:
+        'AnchorProof provides SEC, FINRA, and Basel III compliant AI conversation logging with cryptographic verification. Every customer interaction becomes tamper-proof, court-admissible evidence that protects your institution from regulatory fines and legal exposure.',
       gradientFrom: 'amber',
       gradientTo: 'cyan',
       badgeColor: 'amber',
@@ -43,7 +43,7 @@ export default function BankingPage() {
           'SEC Rule 17a-4 compliant record keeping',
           'FINRA 4511 regulatory reporting',
           'Basel III capital requirements',
-          'Dodd-Frank stress testing'
+          'Dodd-Frank stress testing',
         ],
       },
       {
@@ -53,7 +53,7 @@ export default function BankingPage() {
           'Real-time fraud detection',
           'Legal liability protection',
           'Audit-ready documentation',
-          'Dispute resolution evidence'
+          'Dispute resolution evidence',
         ],
       },
       {
@@ -63,7 +63,7 @@ export default function BankingPage() {
           'Immutable conversation logs',
           'Real-time cryptographic verification',
           'Tamper-proof evidence chain',
-          'Zero-trust security architecture'
+          'Zero-trust security architecture',
         ],
       },
     ],

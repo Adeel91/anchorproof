@@ -1,11 +1,13 @@
-// app/api/walrus/list/route.ts
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { walrusClient, fetchBlobDirectly } from '@/lib/walrus/client';
 import crypto from 'crypto';
 
-async function verifyBlobIntegrity(blobId: string, expectedHash?: string | null): Promise<{
+async function verifyBlobIntegrity(
+  blobId: string,
+  expectedHash?: string | null
+): Promise<{
   verified: boolean;
   tampered: boolean;
   exists: boolean;
@@ -13,7 +15,7 @@ async function verifyBlobIntegrity(blobId: string, expectedHash?: string | null)
 }> {
   try {
     let blobData: Uint8Array;
-    
+
     try {
       blobData = await fetchBlobDirectly(blobId);
     } catch {
@@ -29,14 +31,14 @@ async function verifyBlobIntegrity(blobId: string, expectedHash?: string | null)
       };
     }
 
-    // If we have an expected hash, compare it
     if (expectedHash) {
-      const actualHash = crypto.createHash('sha256')
+      const actualHash = crypto
+        .createHash('sha256')
         .update(blobData)
         .digest('hex');
-      
+
       const matches = actualHash === expectedHash;
-      
+
       return {
         verified: matches,
         tampered: !matches,
@@ -45,22 +47,23 @@ async function verifyBlobIntegrity(blobId: string, expectedHash?: string | null)
       };
     }
 
-    // No hash to compare against, assume it's fine (legacy data)
     return {
       verified: true,
       tampered: false,
       exists: true,
     };
-  } catch (error: any) {
-    const isNotFound = error.message?.includes('404') || 
-                       error.message?.includes('not found') ||
-                       error.message?.includes('No valid blob metadata');
-    
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isNotFound =
+      errorMessage?.includes('404') ||
+      errorMessage?.includes('not found') ||
+      errorMessage?.includes('No valid blob metadata');
+
     return {
       verified: false,
       tampered: true,
       exists: false,
-      error: isNotFound ? 'Blob not found on Walrus' : error.message,
+      error: isNotFound ? 'Blob not found on Walrus' : errorMessage,
     };
   }
 }
@@ -98,15 +101,17 @@ export async function GET() {
         verifiedAt: true,
         createdAt: true,
         metadata: true,
-        contentHash: true, // ← Make sure this is selected
+        contentHash: true,
       },
     });
 
-    // Verify each conversation against Walrus with hash comparison
     const verifiedConversations = await Promise.all(
       verifications.map(async (conv) => {
-        const integrity = await verifyBlobIntegrity(conv.blobId, conv.contentHash);
-        
+        const integrity = await verifyBlobIntegrity(
+          conv.blobId,
+          conv.contentHash
+        );
+
         return {
           ...conv,
           integrity: {
@@ -115,10 +120,10 @@ export async function GET() {
             exists: integrity.exists,
             error: integrity.error || null,
           },
-          status: integrity.tampered 
-            ? 'tampered' 
-            : conv.verifiedAt 
-              ? 'verified' 
+          status: integrity.tampered
+            ? 'tampered'
+            : conv.verifiedAt
+              ? 'verified'
               : 'pending',
         };
       })
@@ -126,16 +131,25 @@ export async function GET() {
 
     const stats = {
       total: verifiedConversations.length,
-      verified: verifiedConversations.filter(c => c.status === 'verified').length,
-      tampered: verifiedConversations.filter(c => c.status === 'tampered').length,
-      pending: verifiedConversations.filter(c => c.status === 'pending').length,
-      totalMessages: verifiedConversations.reduce((acc, c) => acc + (c.messageCount || 0), 0),
-      integrityRate: verifiedConversations.length > 0
-        ? Math.round(
-            (verifiedConversations.filter(c => c.status === 'verified').length / 
-            verifiedConversations.length) * 100
-          )
-        : 100,
+      verified: verifiedConversations.filter((c) => c.status === 'verified')
+        .length,
+      tampered: verifiedConversations.filter((c) => c.status === 'tampered')
+        .length,
+      pending: verifiedConversations.filter((c) => c.status === 'pending')
+        .length,
+      totalMessages: verifiedConversations.reduce(
+        (acc, c) => acc + (c.messageCount || 0),
+        0
+      ),
+      integrityRate:
+        verifiedConversations.length > 0
+          ? Math.round(
+              (verifiedConversations.filter((c) => c.status === 'verified')
+                .length /
+                verifiedConversations.length) *
+                100
+            )
+          : 100,
     };
 
     return NextResponse.json({

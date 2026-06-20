@@ -1,7 +1,7 @@
-// lib/audit.ts
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
-export type AuditAction = 
+export type AuditAction =
   | 'CONVERSATION_SAVED'
   | 'CONVERSATION_VERIFIED'
   | 'BLOB_RETRIEVED'
@@ -20,7 +20,7 @@ export interface AuditLogData {
   blobId?: string;
   conversationId?: string;
   tenantId: string;
-  details?: Record<string, any>;
+  details?: Prisma.InputJsonValue;
   ipAddress?: string;
   userAgent?: string;
 }
@@ -69,18 +69,18 @@ export async function getAuditLogs(params: {
   endDate?: Date;
 }) {
   try {
-    const { 
-      tenantId, 
-      conversationId, 
-      blobId, 
-      action, 
-      limit = 50, 
+    const {
+      tenantId,
+      conversationId,
+      blobId,
+      action,
+      limit = 50,
       offset = 0,
       startDate,
-      endDate 
+      endDate,
     } = params;
-    
-    const where: any = { tenantId };
+
+    const where: Prisma.AuditLogWhereInput = { tenantId };
     if (conversationId) where.conversationId = conversationId;
     if (blobId) where.blobId = blobId;
     if (action) where.action = action;
@@ -89,7 +89,7 @@ export async function getAuditLogs(params: {
       if (startDate) where.createdAt.gte = startDate;
       if (endDate) where.createdAt.lte = endDate;
     }
-    
+
     const [logs, total] = await Promise.all([
       prisma.auditLog.findMany({
         where,
@@ -99,7 +99,7 @@ export async function getAuditLogs(params: {
       }),
       prisma.auditLog.count({ where }),
     ]);
-    
+
     return {
       logs,
       total,

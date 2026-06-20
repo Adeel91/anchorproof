@@ -1,4 +1,3 @@
-// app/api/reports/delete/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -40,10 +39,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (!report) {
-      return NextResponse.json(
-        { error: 'Report not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Report not found' }, { status: 404 });
     }
 
     await prisma.report.delete({

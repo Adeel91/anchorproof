@@ -1,11 +1,23 @@
-// components/dashboard/audit/ExportButton.tsx
 'use client';
 
 import { useState } from 'react';
 import { Download, ChevronDown, FileSpreadsheet, FileJson } from 'lucide-react';
 
+interface AuditRecord {
+  id: string;
+  action: string;
+  actorName: string | null;
+  actorEmail: string | null;
+  blobId: string | null;
+  conversationId: string | null;
+  details: Record<string, unknown> | null;
+  ipAddress: string | null;
+  timestamp?: string;
+  createdAt: string;
+}
+
 interface ExportButtonProps {
-  records: any[];
+  records: AuditRecord[];
   disabled?: boolean;
 }
 
@@ -30,36 +42,37 @@ export function ExportButton({ records, disabled = false }: ExportButtonProps) {
     }
   };
 
-  const getDetailText = (record: any) => {
+  const getDetailText = (record: AuditRecord): string => {
     const details = record.details;
-    if (!details || typeof details !== 'object') return details || 'No details';
+    if (!details || typeof details !== 'object')
+      return String(details || 'No details');
 
     const actionMap: Record<string, string> = {
-      CONVERSATION_SAVED: `Saved ${details.messageCount || 0} messages`,
+      CONVERSATION_SAVED: `Saved ${(details.messageCount as number) || 0} messages`,
       CONVERSATION_VERIFIED: 'Verified successfully',
       TAMPER_DETECTED: 'Tampering detected!',
-      API_KEY_CREATED: `Created "${details.keyName}"`,
-      API_KEY_REVOKED: `Revoked "${details.keyName}"`,
-      TENANT_UPDATED: `Renamed from "${details.oldName}" to "${details.newName}"`,
+      API_KEY_CREATED: `Created "${(details.keyName as string) || ''}"`,
+      API_KEY_REVOKED: `Revoked "${(details.keyName as string) || ''}"`,
+      TENANT_UPDATED: `Renamed from "${(details.oldName as string) || ''}" to "${(details.newName as string) || ''}"`,
     };
 
     return actionMap[record.action] || JSON.stringify(details).slice(0, 50);
   };
 
-  const exportToCSV = (data: any[]) => {
+  const exportToCSV = (data: AuditRecord[]) => {
     if (data.length === 0) {
       alert('No data to export');
       return;
     }
 
     const headers = ['Action', 'Actor', 'Email', 'Details', 'Timestamp'];
-    
+
     const rows = data.map((record) => [
       record.action,
       record.actorName || 'Unknown',
       record.actorEmail || '',
       getDetailText(record).replace(/,/g, ';'),
-      new Date(record.timestamp).toLocaleString(),
+      new Date(record.timestamp || record.createdAt).toLocaleString(),
     ]);
 
     let csvContent = headers.join(',') + '\n';
@@ -75,7 +88,7 @@ export function ExportButton({ records, disabled = false }: ExportButtonProps) {
     URL.revokeObjectURL(link.href);
   };
 
-  const exportToJSON = (data: any[]) => {
+  const exportToJSON = (data: AuditRecord[]) => {
     if (data.length === 0) {
       alert('No data to export');
       return;
@@ -88,7 +101,7 @@ export function ExportButton({ records, disabled = false }: ExportButtonProps) {
       details: getDetailText(record),
       blobId: record.blobId || '',
       conversationId: record.conversationId || '',
-      timestamp: new Date(record.timestamp).toISOString(),
+      timestamp: new Date(record.timestamp || record.createdAt).toISOString(),
     }));
 
     const blob = new Blob([JSON.stringify(jsonData, null, 2)], {

@@ -9,7 +9,8 @@ export default function InsurancePage() {
       badgeIcon: 'Shield',
       title: 'Protecting policyholders through',
       highlightedText: 'verifiable claims processing.',
-      description: 'AnchorProof provides cryptographically verified claims processing, underwriting, and fraud detection. Every claim interaction becomes tamper-proof evidence that eliminates disputes, reduces fraud, and protects policyholders.',
+      description:
+        'AnchorProof provides cryptographically verified claims processing, underwriting, and fraud detection. Every claim interaction becomes tamper-proof evidence that eliminates disputes, reduces fraud, and protects policyholders.',
       gradientFrom: 'blue',
       gradientTo: 'indigo',
       badgeColor: 'blue',
@@ -42,7 +43,7 @@ export default function InsurancePage() {
           'Cryptographic claims verification for fraud prevention',
           'AI-assisted fraud detection with immutable audit trails',
           'Dispute resolution with tamper-proof evidence',
-          'Immutable claims records for regulatory compliance'
+          'Immutable claims records for regulatory compliance',
         ],
       },
       {
@@ -52,7 +53,7 @@ export default function InsurancePage() {
           'Cryptographically verified risk assessment',
           'Immutable premium calculation records',
           'Policy compliance tracking with full audit trails',
-          'Regulatory reporting with cryptographic proof'
+          'Regulatory reporting with cryptographic proof',
         ],
       },
       {
@@ -62,7 +63,7 @@ export default function InsurancePage() {
           'Real-time verification of claims interactions',
           'Fraud pattern detection with AI assistance',
           'Tamper-proof evidence for legal proceedings',
-          'Zero-trust security architecture for sensitive data'
+          'Zero-trust security architecture for sensitive data',
         ],
       },
     ],

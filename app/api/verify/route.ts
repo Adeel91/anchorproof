@@ -1,4 +1,3 @@
-// app/api/verify/route.ts
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';

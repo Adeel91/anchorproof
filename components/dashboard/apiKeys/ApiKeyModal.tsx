@@ -19,7 +19,6 @@ export function ApiKeyModal({
 }: ApiKeyModalProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  // Only check isOpen, not apiKey
   if (!isOpen) return null;
 
   const copyToClipboard = async (text: string, field: string) => {
@@ -33,7 +32,6 @@ export function ApiKeyModal({
     }
   };
 
-  // Show loading state if keys are still being generated
   if (!apiKey && !publicKey && !privateKey) {
     return (
       <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">

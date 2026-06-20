@@ -1,4 +1,3 @@
-// app/api/keys/generate/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
@@ -6,6 +5,18 @@ import crypto from 'crypto';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { encryptPrivateKey } from '@/lib/anchorproof/server';
 import { createAuditLogAsync } from '@/lib/audit';
+
+interface CreateApiKeyBody {
+  name?: string;
+  expiresInDays?: number;
+}
+
+interface CreateApiKeyUser {
+  id: string;
+  tenantId: string;
+  name: string | null;
+  email: string | null;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -115,7 +126,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function createApiKey(user: any, body: any) {
+async function createApiKey(user: CreateApiKeyUser, body: CreateApiKeyBody) {
   const { name, expiresInDays = 90 } = body;
 
   const rawPrivateKey = crypto.randomBytes(32);

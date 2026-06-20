@@ -1,4 +1,3 @@
-// app/dashboard/users/page.tsx
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { UsersList } from '@/components/dashboard/users/UsersList';

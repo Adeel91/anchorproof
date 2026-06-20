@@ -1,27 +1,44 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/dashboard/layout/Sidebar';
-import { DashboardDataProvider, useDashboardData } from '@/providers/DashboardDataProvider';
+import {
+  DashboardDataProvider,
+  useDashboardData,
+} from '@/providers/DashboardDataProvider';
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { tenant, loading, isReady, error } = useDashboardData();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const hasRedirected = useRef(false);
+  const hasSetInitialLoad = useRef(false);
 
   const tenantName = useMemo(() => tenant?.name, [tenant?.name]);
 
   useEffect(() => {
-    if (isInitialLoad && !loading && !isReady && !tenant) {
-      router.push('/login');
+    if (hasRedirected.current) return;
+    if (loading) return;
+    if (pathname.includes('/login')) return;
+    if (tenant) return;
+
+    hasRedirected.current = true;
+    router.push('/login');
+  }, [loading, tenant, pathname, router]);
+
+  useEffect(() => {
+    if (hasSetInitialLoad.current) return;
+    if (loading) return;
+
+    if (tenant || isReady) {
+      hasSetInitialLoad.current = true;
+      requestAnimationFrame(() => {
+        setIsInitialLoad(false);
+      });
     }
-    
-    if (isInitialLoad && (isReady || tenant)) {
-      setIsInitialLoad(false);
-    }
-  }, [loading, isReady, tenant, router, isInitialLoad]);
+  }, [loading, isReady, tenant]);
 
   if (isInitialLoad && (loading || !isReady)) {
     return (
@@ -50,8 +67,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!loading && !tenant && !pathname.includes('/login')) {
-    router.push('/login');
+  if (!tenant && !pathname.includes('/login')) {
     return null;
   }
 
@@ -60,9 +76,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       <Sidebar tenantName={tenantName} />
       <main className="lg:ml-64 min-h-screen">
         <div className="p-4 sm:p-6 pb-32 pt-16 lg:pt-6">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+          <div className="max-w-7xl mx-auto">{children}</div>
         </div>
       </main>
     </div>

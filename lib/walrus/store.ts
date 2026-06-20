@@ -1,4 +1,3 @@
-// lib/walrus/store.ts
 import { walrusClient } from '@/lib/walrus/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromBase64 } from '@mysten/bcs';
@@ -46,8 +45,6 @@ export async function storeOnWalrus(
   const suiObjectId = result.blobObject?.id || 'unknown';
   const activeNetwork = process.env.NEXT_PUBLIC_SUI_NETWORK || 'testnet';
 
-  // ✅ THIS IS THE FIX: Use suiObjectId as the transaction hash
-  // The suiObjectId is the Sui blockchain object ID
   const suiTxHash = suiObjectId !== 'unknown' ? suiObjectId : 'walrus-stored';
 
   console.log(`✅ blobId: ${blobId}`);
@@ -56,7 +53,7 @@ export async function storeOnWalrus(
 
   return {
     blobId: blobId,
-    suiTxHash: suiTxHash,  // ✅ This is the Sui Object ID
+    suiTxHash: suiTxHash,
     walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
     suiExplorerUrl:
       suiObjectId !== 'unknown'

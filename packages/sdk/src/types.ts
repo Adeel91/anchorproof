@@ -1,5 +1,3 @@
-// packages/sdk/src/types.ts
-
 export interface AnchorProofConfig {
   apiBaseUrl: string;
   apiKey: string;

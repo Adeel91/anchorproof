@@ -9,7 +9,8 @@ export default function GovernmentPage() {
       badgeIcon: 'Landmark',
       title: 'Ensuring government transparency through',
       highlightedText: 'verifiable citizen interactions.',
-      description: 'AnchorProof provides FISMA, FedRAMP, and FOIA compliant AI conversation logging with cryptographic verification. Every citizen interaction becomes tamper-proof evidence that protects your agency from compliance failures and FOIA disputes.',
+      description:
+        'AnchorProof provides FISMA, FedRAMP, and FOIA compliant AI conversation logging with cryptographic verification. Every citizen interaction becomes tamper-proof evidence that protects your agency from compliance failures and FOIA disputes.',
       gradientFrom: 'indigo',
       gradientTo: 'purple',
       badgeColor: 'indigo',
@@ -42,7 +43,7 @@ export default function GovernmentPage() {
           'FOIA for public records management',
           'FISMA for federal information security',
           'FedRAMP for cloud service authorization',
-          'NIST 800-53 security controls'
+          'NIST 800-53 security controls',
         ],
       },
       {
@@ -52,7 +53,7 @@ export default function GovernmentPage() {
           'Role-based access control for sensitive data',
           'Audit and accountability logging',
           'Contingency planning and disaster recovery',
-          'Incident response and breach notification'
+          'Incident response and breach notification',
         ],
       },
       {
@@ -62,7 +63,7 @@ export default function GovernmentPage() {
           'Immutable public records preservation',
           'FOIA request management and tracking',
           'Complete chain of custody verification',
-          'Cryptographic proof for legal proceedings'
+          'Cryptographic proof for legal proceedings',
         ],
       },
     ],

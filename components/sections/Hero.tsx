@@ -22,7 +22,10 @@ export default function Hero() {
           </h1>
 
           <p className="mt-4 sm:mt-6 text-sm sm:text-base md:text-lg text-slate-400 max-w-3xl mx-auto leading-relaxed font-light">
-            AnchorProof is an enterprise compliance platform that cryptographically verifies every AI conversation. Detect tampering instantly. Generate tamper-proof audit logs and compliance reports. Protect your organization from regulatory fines and legal exposure.
+            AnchorProof is an enterprise compliance platform that
+            cryptographically verifies every AI conversation. Detect tampering
+            instantly. Generate tamper-proof audit logs and compliance reports.
+            Protect your organization from regulatory fines and legal exposure.
           </p>
 
           <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">

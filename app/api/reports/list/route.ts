@@ -1,4 +1,3 @@
-// app/api/reports/list/route.ts
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';

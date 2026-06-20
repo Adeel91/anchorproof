@@ -1,4 +1,3 @@
-// components/industry/IndustryPageWrapper.tsx
 import { ReactNode } from 'react';
 import HeroSection from './HeroSection';
 import StatsSection from './StatsSection';
@@ -9,7 +8,7 @@ interface IndustryConfig {
   design: 'vault' | 'clinic' | 'capitol' | 'shield';
   hero: {
     badge: string;
-    badgeIcon: string; // Changed from component to string
+    badgeIcon: string;
     title: string;
     highlightedText: string;
     description: string;
@@ -17,9 +16,9 @@ interface IndustryConfig {
     gradientTo: string;
     badgeColor: string;
   };
-  stats: Array<{ value: string; label: string; desc: string; icon: string }>; // Changed from component to string
-  features: Array<{ icon: string; title: string; items: string[] }>; // Changed from component to string
-  useCases: Array<{ icon: string; name: string; desc: string }>; // Changed from component to string
+  stats: Array<{ value: string; label: string; desc: string; icon: string }>;
+  features: Array<{ icon: string; title: string; items: string[] }>;
+  useCases: Array<{ icon: string; name: string; desc: string }>;
   chat: {
     title: string;
     subtitle: string;
@@ -28,34 +27,8 @@ interface IndustryConfig {
   };
 }
 
-const iconMap: Record<string, any> = {
-  // Banking icons
-  Shield: 'Shield',
-  DollarSign: 'DollarSign',
-  Crown: 'Crown',
-  Building2: 'Building2',
-  Lock: 'Lock',
-  FileCheck: 'FileCheck',
-  Eye: 'Eye',
-  TrendingUp: 'TrendingUp',
-  Database: 'Database',
-  Link: 'Link',
-  
-  // Healthcare icons
-  HeartPulse: 'HeartPulse',
-  Activity: 'Activity',
-  
-  // Government icons
-  Landmark: 'Landmark',
-  Scale: 'Scale',
-  
-  // Insurance icons
-  Award: 'Award',
-  Umbrella: 'Umbrella',
-};
-
 export default function IndustryPageWrapper(config: IndustryConfig) {
-  const { design, hero, stats, features, useCases, cta, chat } = config;
+  const { design, hero, stats, features, useCases, chat } = config;
 
   const designClasses = {
     vault: 'bg-slate-950/90 border-amber-500/10',
@@ -66,21 +39,19 @@ export default function IndustryPageWrapper(config: IndustryConfig) {
 
   const cardStyles = {
     vault: 'border-amber-500/20 hover:border-amber-500/40 shadow-amber-500/5',
-    clinic: 'border-emerald-500/20 hover:border-emerald-500/40 shadow-emerald-500/5',
-    capitol: 'border-indigo-500/20 hover:border-indigo-500/40 shadow-indigo-500/5',
+    clinic:
+      'border-emerald-500/20 hover:border-emerald-500/40 shadow-emerald-500/5',
+    capitol:
+      'border-indigo-500/20 hover:border-indigo-500/40 shadow-indigo-500/5',
     shield: 'border-blue-500/20 hover:border-blue-500/40 shadow-blue-500/5',
   };
 
-  // Convert string icon names to actual icons
-  const getIcon = (name: string) => {
-    // This will be resolved in the client components
-    return name;
-  };
-
   return (
-    <main className={`min-h-screen ${designClasses[design]} transition-all duration-500`}>
-      <HeroSection 
-        {...hero} 
+    <main
+      className={`min-h-screen ${designClasses[design]} transition-all duration-500`}
+    >
+      <HeroSection
+        {...hero}
         design={design}
         cardStyle={cardStyles[design]}
         badgeIcon={hero.badgeIcon}
@@ -88,8 +59,12 @@ export default function IndustryPageWrapper(config: IndustryConfig) {
 
       <section className="py-12 sm:py-16" id="chat">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`text-center max-w-3xl mx-auto mb-8 sm:mb-10 p-6 rounded-2xl border ${cardStyles[design]}`}>
-            <span className={`text-${chat.gradientColor}-400 font-mono text-[10px] sm:text-xs font-semibold tracking-wider uppercase mb-2 sm:mb-4 block`}>
+          <div
+            className={`text-center max-w-3xl mx-auto mb-8 sm:mb-10 p-6 rounded-2xl border ${cardStyles[design]}`}
+          >
+            <span
+              className={`text-${chat.gradientColor}-400 font-mono text-[10px] sm:text-xs font-semibold tracking-wider uppercase mb-2 sm:mb-4 block`}
+            >
               {chat.title}
             </span>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
@@ -101,21 +76,20 @@ export default function IndustryPageWrapper(config: IndustryConfig) {
         </div>
       </section>
 
-      <StatsSection 
-        stats={stats} 
+      <StatsSection
+        stats={stats}
         gradientColor={hero.gradientFrom}
         design={design}
       />
-      
+
       <FeaturesGrid
         features={features}
         gradientColor={hero.gradientFrom}
-        title="Built for"
         highlightedText={hero.highlightedText}
         subtitle={hero.description}
         design={design}
       />
-      
+
       <UseCasesSection
         useCases={useCases}
         gradientColor={hero.gradientFrom}

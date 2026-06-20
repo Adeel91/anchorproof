@@ -1,4 +1,3 @@
-// components/dashboard/overview/ApiKeyOverview.tsx
 'use client';
 
 import { useState } from 'react';
@@ -10,31 +9,33 @@ import { Toast } from '@/components/ui/Toast';
 
 export function ApiKeyOverview() {
   const { apiKeys, loading } = useDashboardData();
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-  
-  // Get only the most recent 2-3 keys for overview
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+  } | null>(null);
+
   const recentKeys = apiKeys.slice(0, 3);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
   const copyToClipboard = async (text: string, keyName: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setToast({ 
-        message: `✅ "${keyName}" API key copied to clipboard`, 
-        type: 'success' 
+      setToast({
+        message: `✅ "${keyName}" API key copied to clipboard`,
+        type: 'success',
       });
       setTimeout(() => setToast(null), 3000);
-    } catch (err) {
-      setToast({ 
-        message: '❌ Failed to copy API key', 
-        type: 'error' 
+    } catch {
+      setToast({
+        message: '❌ Failed to copy API key',
+        type: 'error',
       });
       setTimeout(() => setToast(null), 3000);
     }
@@ -49,7 +50,7 @@ export function ApiKeyOverview() {
             <div className="h-8 bg-slate-800 rounded w-28" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => (
+            {[1, 2, 3].map((i) => (
               <div key={i} className="h-20 bg-slate-800/50 rounded" />
             ))}
           </div>
@@ -69,11 +70,16 @@ export function ApiKeyOverview() {
               API Keys Overview
             </h3>
             <p className="text-[10px] text-slate-500 mt-0.5">
-              {apiKeys.length} active key{apiKeys.length !== 1 ? 's' : ''} for your applications
+              {apiKeys.length} active key{apiKeys.length !== 1 ? 's' : ''} for
+              your applications
             </p>
           </div>
           <Link href="/dashboard/keys">
-            <Button variant="outline" size="sm" className="text-xs flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs flex items-center gap-1.5"
+            >
               Manage Keys
               <ArrowRight className="w-3 h-3" />
             </Button>
@@ -88,9 +94,15 @@ export function ApiKeyOverview() {
                 <Key className="w-6 h-6 text-indigo-400" />
               </div>
               <p className="text-sm text-slate-400">No API keys configured</p>
-              <p className="text-xs text-slate-500 mt-1">Generate your first API key to integrate with AnchorProof</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Generate your first API key to integrate with AnchorProof
+              </p>
               <Link href="/dashboard/keys">
-                <Button variant="primary" size="sm" className="mt-4 flex items-center gap-1.5 mx-auto">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="mt-4 flex items-center gap-1.5 mx-auto"
+                >
                   <Plus className="w-3.5 h-3.5" />
                   Generate Key
                 </Button>
@@ -99,7 +111,7 @@ export function ApiKeyOverview() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {recentKeys.map((key) => {
-                const displayKey = key.publicKey 
+                const displayKey = key.publicKey
                   ? `${key.publicKey.slice(0, 8)}...${key.publicKey.slice(-8)}`
                   : `${key.id.slice(0, 8)}...${key.id.slice(-8)}`;
 
@@ -110,18 +122,22 @@ export function ApiKeyOverview() {
                   >
                     {/* Status Badge */}
                     <div className="absolute top-3 right-3">
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium ${
-                        key.lastUsedAt 
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
-                      }`}>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[9px] font-medium ${
+                          key.lastUsedAt
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+                        }`}
+                      >
                         {key.lastUsedAt ? 'Active' : 'Never Used'}
                       </span>
                     </div>
 
                     {/* Key Name */}
                     <div className="mb-3 pr-16">
-                      <h4 className="text-sm font-medium text-white truncate">{key.name}</h4>
+                      <h4 className="text-sm font-medium text-white truncate">
+                        {key.name}
+                      </h4>
                       <code className="text-xs font-mono text-slate-400 block truncate mt-1">
                         {displayKey}
                       </code>
@@ -140,22 +156,29 @@ export function ApiKeyOverview() {
                         </div>
                       )}
                       <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                        <span>Role: <span className="text-slate-300 font-medium">{key.role || 'Admin'}</span></span>
+                        <span>
+                          Role:{' '}
+                          <span className="text-slate-300 font-medium">
+                            {key.role || 'Admin'}
+                          </span>
+                        </span>
                       </div>
                     </div>
 
                     {/* Quick Actions */}
                     <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/30">
                       <button
-                        onClick={() => copyToClipboard(key.publicKey || key.id, key.name)}
+                        onClick={() =>
+                          copyToClipboard(key.publicKey || key.id, key.name)
+                        }
                         className="text-slate-500 hover:text-indigo-400 transition-colors text-xs flex items-center gap-1"
                       >
                         <Copy className="w-3 h-3" />
                         Copy
                       </button>
                       <span className="w-px h-4 bg-slate-700/50" />
-                      <Link 
-                        href="/dashboard/keys" 
+                      <Link
+                        href="/dashboard/keys"
                         className="text-slate-500 hover:text-indigo-400 transition-colors text-xs"
                       >
                         View Details
@@ -178,7 +201,9 @@ export function ApiKeyOverview() {
                     <p className="text-xs text-slate-400 group-hover:text-white transition-colors">
                       View all {apiKeys.length} keys
                     </p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Manage your API keys</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      Manage your API keys
+                    </p>
                   </div>
                 </Link>
               )}
@@ -195,7 +220,10 @@ export function ApiKeyOverview() {
                 All keys encrypted at rest with AES-256
               </span>
             </div>
-            <Link href="/dashboard/keys" className="text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors">
+            <Link
+              href="/dashboard/keys"
+              className="text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors"
+            >
               Manage API Keys →
             </Link>
           </div>

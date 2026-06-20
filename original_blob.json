@@ -1,1 +1,27 @@
-{"conversationId":"conv_1781726114649_eey7ldetc","messages":[{"id":"cmqihql8m00014v8ozaswkryp","role":"user","content":"i want 100k euro so how much interest i have to pay","signature":"mKuSbCQYMplDEM7lHBfGZ5zGYQ8vIzNU6aQF/Vwq9M6UFIZZxOTaLNLGm1ubAZNlwYX7xnnwMN18KDRX5RERDA==","publicKey":"C6b93QZrbKXA4tD2RI4kqQEXm4q/MQjezq2rWXc+u8w=","timestamp":"2026-06-17T19:55:36.070Z"},{"id":"cmqihqm1f00024v8o828zxk3i","role":"assistant","content":"To determine the interest you'd have to pay, we'll need to consider a few factors, such as the interest rate and the loan term.\n\nLet's assume you're applying for a personal loan of 100,000 euros with a variable interest rate. Our loan options have rates ranging from 8% to 25% APR, depending on your credit score.\n\nFor example, with an excellent credit score (720+), you might qualify for a rate of 12% APR. \n\nAssuming a 5-year loan term, your monthly payments would be approximately 2,144 euros.\n\nHere's a breakdown of the estimated interest paid over the loan term:\n\n- Total interest paid: 34,411 euros\n- Total amount paid: 134,411 euros (initial loan amount + interest)\n\nKeep in mind that these are just estimates and actual interest rates may vary based on your credit history and other factors.\n\nIf you'd like to explore other loan options or get a more accurate quote, I'd be happy to assist you.","signature":"EROXg9tIG7uT6yTmaCH8lmHXqDttHgIhDtBRlEpyc+mLx70+3ibSRnQf50OT95UXxzMD6p4AmWc+iGiGhkUGBQ==","publicKey":"C6b93QZrbKXA4tD2RI4kqQEXm4q/MQjezq2rWXc+u8w=","timestamp":"2026-06-17T19:55:37.107Z"}],"metadata":{"customerId":"banking-demo","agentId":"anchorproof-banking","messageCount":2,"savedAt":"2026-06-17T19:56:21.349Z"}}
+{
+  "conversationId": "conv_1781726114649_eey7ldetc",
+  "messages": [
+    {
+      "id": "cmqihql8m00014v8ozaswkryp",
+      "role": "user",
+      "content": "i want 100k euro so how much interest i have to pay",
+      "signature": "mKuSbCQYMplDEM7lHBfGZ5zGYQ8vIzNU6aQF/Vwq9M6UFIZZxOTaLNLGm1ubAZNlwYX7xnnwMN18KDRX5RERDA==",
+      "publicKey": "C6b93QZrbKXA4tD2RI4kqQEXm4q/MQjezq2rWXc+u8w=",
+      "timestamp": "2026-06-17T19:55:36.070Z"
+    },
+    {
+      "id": "cmqihqm1f00024v8o828zxk3i",
+      "role": "assistant",
+      "content": "To determine the interest you'd have to pay, we'll need to consider a few factors, such as the interest rate and the loan term.\n\nLet's assume you're applying for a personal loan of 100,000 euros with a variable interest rate. Our loan options have rates ranging from 8% to 25% APR, depending on your credit score.\n\nFor example, with an excellent credit score (720+), you might qualify for a rate of 12% APR. \n\nAssuming a 5-year loan term, your monthly payments would be approximately 2,144 euros.\n\nHere's a breakdown of the estimated interest paid over the loan term:\n\n- Total interest paid: 34,411 euros\n- Total amount paid: 134,411 euros (initial loan amount + interest)\n\nKeep in mind that these are just estimates and actual interest rates may vary based on your credit history and other factors.\n\nIf you'd like to explore other loan options or get a more accurate quote, I'd be happy to assist you.",
+      "signature": "EROXg9tIG7uT6yTmaCH8lmHXqDttHgIhDtBRlEpyc+mLx70+3ibSRnQf50OT95UXxzMD6p4AmWc+iGiGhkUGBQ==",
+      "publicKey": "C6b93QZrbKXA4tD2RI4kqQEXm4q/MQjezq2rWXc+u8w=",
+      "timestamp": "2026-06-17T19:55:37.107Z"
+    }
+  ],
+  "metadata": {
+    "customerId": "banking-demo",
+    "agentId": "anchorproof-banking",
+    "messageCount": 2,
+    "savedAt": "2026-06-17T19:56:21.349Z"
+  }
+}

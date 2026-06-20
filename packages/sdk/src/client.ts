@@ -101,7 +101,6 @@ export class AnchorProofClient {
   ): Promise<SaveConversationResponse> {
     const crypto = this.getCrypto();
 
-    // NO timestamp - matches backend verification
     const messageToSign = JSON.stringify({
       conversationId: params.conversationId,
       customerId: params.customerId || 'unknown',

@@ -1,15 +1,15 @@
 'use client';
 
 import { useDashboardData } from '@/providers/DashboardDataProvider';
-import { 
-  MessageSquare, 
-  CheckCheck, 
-  Key, 
-  Shield, 
-  Clock, 
+import {
+  MessageSquare,
+  CheckCheck,
+  Key,
+  Shield,
+  Clock,
   AlertTriangle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 type ActivityStatus = 'verified' | 'pending' | 'info' | 'warning' | 'success';
 
@@ -22,104 +22,118 @@ interface Activity {
   description: string;
   time: Date;
   status?: ActivityStatus;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number>;
 }
 
 export function ActivityTimeline() {
   const { conversations, apiKeys, loading } = useDashboardData();
   const [showAll, setShowAll] = useState(false);
 
-  // Build activity feed from real data
-  const activities: Activity[] = [
-    // Recent conversations
-    ...conversations.slice(0, 5).map(c => ({
-      id: `conv-${c.id}`,
-      type: 'conversation' as const,
-      icon: MessageSquare,
-      color: 'text-blue-400 bg-blue-500/10',
-      title: `New conversation ${c.conversationId.slice(0, 8)}...`,
-      description: `${c.messageCount} message${c.messageCount !== 1 ? 's' : ''} from ${c.customerId || 'Unknown'}`,
-      time: new Date(c.createdAt),
-      status: c.verifiedAt ? 'verified' as ActivityStatus : 'pending' as ActivityStatus,
-      metadata: { conversationId: c.conversationId, blobId: c.blobId }
-    })),
+  const activities = useMemo<Activity[]>(() => {
+    const result: Activity[] = [];
 
-    // Recent verifications
-    ...conversations
-      .filter(c => c.verifiedAt)
-      .slice(0, 3)
-      .map(c => ({
+    for (const c of conversations.slice(0, 5)) {
+      result.push({
+        id: `conv-${c.id}`,
+        type: 'conversation',
+        icon: MessageSquare,
+        color: 'text-blue-400 bg-blue-500/10',
+        title: `New conversation ${c.conversationId.slice(0, 8)}...`,
+        description: `${c.messageCount} message${c.messageCount !== 1 ? 's' : ''} from ${c.customerId || 'Unknown'}`,
+        time: new Date(c.createdAt),
+        status: c.verifiedAt ? 'verified' : 'pending',
+        metadata: { conversationId: c.conversationId, blobId: c.blobId },
+      });
+    }
+
+    for (const c of conversations.filter((c) => c.verifiedAt).slice(0, 3)) {
+      result.push({
         id: `ver-${c.id}`,
-        type: 'verification' as const,
+        type: 'verification',
         icon: CheckCheck,
         color: 'text-emerald-400 bg-emerald-500/10',
-        title: `Conversation verified on-chain`,
+        title: 'Conversation verified on-chain',
         description: `Blob ${c.blobId.slice(0, 12)}... verified`,
         time: new Date(c.verifiedAt!),
-        status: 'success' as ActivityStatus,
-        metadata: { blobId: c.blobId, conversationId: c.conversationId }
-      })),
+        status: 'success',
+        metadata: { blobId: c.blobId, conversationId: c.conversationId },
+      });
+    }
 
-    // API key activities
-    ...apiKeys.slice(0, 3).map(k => ({
-      id: `key-${k.id}`,
-      type: 'api_key' as const,
-      icon: Key,
-      color: 'text-purple-400 bg-purple-500/10',
-      title: `API key "${k.name}" ${k.lastUsedAt ? 'was used' : 'created'}`,
-      description: k.lastUsedAt 
-        ? `Last used ${new Date(k.lastUsedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-        : `Created ${new Date(k.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-      time: new Date(k.lastUsedAt || k.createdAt),
-      status: 'info' as ActivityStatus,
-      metadata: { keyName: k.name, keyId: k.id }
-    })),
+    for (const k of apiKeys.slice(0, 3)) {
+      result.push({
+        id: `key-${k.id}`,
+        type: 'api_key',
+        icon: Key,
+        color: 'text-purple-400 bg-purple-500/10',
+        title: `API key "${k.name}" ${k.lastUsedAt ? 'was used' : 'created'}`,
+        description: k.lastUsedAt
+          ? `Last used ${new Date(k.lastUsedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+          : `Created ${new Date(k.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+        time: new Date(k.lastUsedAt || k.createdAt),
+        status: 'info',
+        metadata: { keyName: k.name, keyId: k.id },
+      });
+    }
 
-    // System events
-    ...(() => {
-      const events: Activity[] = [];
-      
-      const pendingCount = conversations.filter(c => !c.verifiedAt).length;
-      if (pendingCount > 0) {
-        events.push({
-          id: `system-pending-${Date.now()}`,
-          type: 'system' as const,
-          icon: AlertTriangle,
-          color: 'text-amber-400 bg-amber-500/10',
-          title: `${pendingCount} conversation${pendingCount !== 1 ? 's' : ''} pending verification`,
-          description: `Review ${pendingCount} pending conversation${pendingCount !== 1 ? 's' : ''}`,
-          time: new Date(),
-          status: 'warning' as ActivityStatus,
-        });
-      }
+    const pendingCount = conversations.filter((c) => !c.verifiedAt).length;
+    if (pendingCount > 0) {
+      const stableId = `system-pending-${pendingCount}-${conversations.length}`;
+      result.push({
+        id: stableId,
+        type: 'system',
+        icon: AlertTriangle,
+        color: 'text-amber-400 bg-amber-500/10',
+        title: `${pendingCount} conversation${pendingCount !== 1 ? 's' : ''} pending verification`,
+        description: `Review ${pendingCount} pending conversation${pendingCount !== 1 ? 's' : ''}`,
+        time: new Date(),
+        status: 'warning',
+      });
+    }
 
-      const verificationRate = conversations.length > 0 
-        ? Math.round((conversations.filter(c => c.verifiedAt).length / conversations.length) * 100)
+    const verificationRate =
+      conversations.length > 0
+        ? Math.round(
+            (conversations.filter((c) => c.verifiedAt).length /
+              conversations.length) *
+              100
+          )
         : 0;
-      
-      if (verificationRate >= 80 && conversations.length > 0) {
-        events.push({
-          id: `system-success-${Date.now()}`,
-          type: 'system' as const,
-          icon: Shield,
-          color: 'text-emerald-400 bg-emerald-500/10',
-          title: `High verification rate maintained`,
-          description: `${verificationRate}% of all conversations are verified`,
-          time: new Date(),
-          status: 'success' as ActivityStatus,
-        });
+
+    if (verificationRate >= 80 && conversations.length > 0) {
+      const stableId = `system-success-${verificationRate}-${conversations.length}`;
+      result.push({
+        id: stableId,
+        type: 'system',
+        icon: Shield,
+        color: 'text-emerald-400 bg-emerald-500/10',
+        title: 'High verification rate maintained',
+        description: `${verificationRate}% of all conversations are verified`,
+        time: new Date(),
+        status: 'success',
+      });
+    }
+
+    return result;
+  }, [conversations, apiKeys]);
+
+  const uniqueActivities = useMemo(() => {
+    const seen = new Set<string>();
+    const unique: Activity[] = [];
+
+    for (const activity of activities) {
+      if (!seen.has(activity.id)) {
+        seen.add(activity.id);
+        unique.push(activity);
       }
+    }
 
-      return events;
-    })(),
-  ];
+    return unique.sort((a, b) => b.time.getTime() - a.time.getTime());
+  }, [activities]);
 
-  // Sort by time (newest first) and remove duplicates
-  const uniqueActivities = Array.from(
-    new Map(activities.map(a => [a.id, a])).values()
-  ).sort((a, b) => b.time.getTime() - a.time.getTime());
-
-  const displayedActivities = showAll ? uniqueActivities : uniqueActivities.slice(0, 5);
+  const displayedActivities = showAll
+    ? uniqueActivities
+    : uniqueActivities.slice(0, 5);
   const hasMore = uniqueActivities.length > 5;
 
   if (loading) {
@@ -127,7 +141,7 @@ export function ActivityTimeline() {
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 sm:p-6">
         <div className="animate-pulse space-y-3 sm:space-y-4">
           <div className="h-4 bg-slate-800 rounded w-24 sm:w-32" />
-          {[1, 2, 3].map(i => (
+          {[1, 2, 3].map((i) => (
             <div key={i} className="h-12 sm:h-16 bg-slate-800/50 rounded" />
           ))}
         </div>
@@ -140,8 +154,10 @@ export function ActivityTimeline() {
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 sm:p-8 text-center">
         <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-slate-600 mx-auto mb-2 sm:mb-3" />
         <p className="text-sm text-slate-400">No recent activity</p>
-        <p className="text-xs text-slate-500 mt-1">Activity will appear here as you use the platform</p>
-        <button 
+        <p className="text-xs text-slate-500 mt-1">
+          Activity will appear here as you use the platform
+        </p>
+        <button
           onClick={() => window.location.reload()}
           className="mt-3 sm:mt-4 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
         >
@@ -159,7 +175,7 @@ export function ActivityTimeline() {
       warning: 'bg-amber-500/10 text-amber-400',
       success: 'bg-emerald-500/10 text-emerald-400',
     };
-    
+
     const labels: Record<ActivityStatus, string> = {
       verified: 'Verified',
       pending: 'Pending',
@@ -169,9 +185,11 @@ export function ActivityTimeline() {
     };
 
     if (!status) return null;
-    
+
     return (
-      <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[9px] font-medium ${badges[status]}`}>
+      <span
+        className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[9px] font-medium ${badges[status]}`}
+      >
         {labels[status]}
       </span>
     );
@@ -205,7 +223,10 @@ export function ActivityTimeline() {
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="text-[8px] sm:text-[10px] text-slate-500 font-mono hidden xs:inline">
-            {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            {new Date().toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+            })}
           </span>
           <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-400 animate-pulse" />
         </div>
@@ -215,12 +236,14 @@ export function ActivityTimeline() {
         {displayedActivities.map((activity) => {
           const Icon = activity.icon;
           return (
-            <div 
-              key={activity.id} 
+            <div
+              key={activity.id}
               className="px-4 sm:px-6 py-2.5 sm:py-3 hover:bg-slate-800/20 transition-colors group"
             >
               <div className="flex items-start gap-2.5 sm:gap-3">
-                <div className={`p-1 sm:p-1.5 rounded-lg ${activity.color} flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200`}>
+                <div
+                  className={`p-1 sm:p-1.5 rounded-lg ${activity.color} flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200`}
+                >
                   <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -245,14 +268,15 @@ export function ActivityTimeline() {
         })}
       </div>
 
-      {/* Show More / Show Less */}
       {hasMore && (
         <div className="px-4 sm:px-6 py-2 sm:py-3 border-t border-slate-800/30 bg-slate-900/30">
           <button
             onClick={() => setShowAll(!showAll)}
             className="text-[10px] sm:text-xs text-indigo-400 hover:text-indigo-300 transition-colors w-full text-center"
           >
-            {showAll ? 'Show less' : `Show ${uniqueActivities.length - 5} more events`}
+            {showAll
+              ? 'Show less'
+              : `Show ${uniqueActivities.length - 5} more events`}
           </button>
         </div>
       )}

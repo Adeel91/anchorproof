@@ -1,7 +1,7 @@
-// app/api/audit/list/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const conversationId = url.searchParams.get('conversationId') || undefined;
     const blobId = url.searchParams.get('blobId') || undefined;
 
-    const where: any = {
+    const where: Prisma.AuditLogWhereInput = {
       tenantId: user.tenant.id,
     };
 
@@ -36,7 +36,6 @@ export async function GET(request: NextRequest) {
     if (conversationId) where.conversationId = conversationId;
     if (blobId) where.blobId = blobId;
 
-    // ✅ FIXED: Use 'createdAt' instead of 'timestamp'
     const [logs, total] = await Promise.all([
       prisma.auditLog.findMany({
         where,

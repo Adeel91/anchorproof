@@ -19,17 +19,27 @@ export default function CTA() {
           </h2>
 
           <p className="mt-3 sm:mt-4 text-sm sm:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            Get complete visibility into every AI conversation. Detect tampering instantly. Generate cryptographically verified compliance reports. Protect your organization from regulatory fines and legal exposure.
+            Get complete visibility into every AI conversation. Detect tampering
+            instantly. Generate cryptographically verified compliance reports.
+            Protect your organization from regulatory fines and legal exposure.
           </p>
 
           <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <Link href="/login" className="w-full sm:w-auto">
-              <Button variant="primary" size="lg" className="w-full sm:w-auto px-6 sm:px-8 shadow-[0_4px_30px_rgba(99,102,241,0.3)]">
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full sm:w-auto px-6 sm:px-8 shadow-[0_4px_30px_rgba(99,102,241,0.3)]"
+              >
                 Start Protecting Your Enterprise
               </Button>
             </Link>
             <a href="#demos" className="w-full sm:w-auto">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto px-6 sm:px-8">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto px-6 sm:px-8"
+              >
                 Try an Enterprise Demo
               </Button>
             </a>

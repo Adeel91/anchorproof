@@ -1,5 +1,5 @@
 import Container from '@/components/ui/Container';
-import { Shield, Database, Link, Lock, Key, Code, FileCheck } from 'lucide-react';
+import { Database, Link, Lock, Key, Code, FileCheck } from 'lucide-react';
 
 export default function Primitives() {
   const blueprints = [
@@ -55,7 +55,9 @@ export default function Primitives() {
             Complete visibility into every AI conversation.
           </h2>
           <p className="mt-3 sm:mt-4 text-sm sm:text-base text-slate-400 max-w-2xl">
-            AnchorProof gives enterprise teams immutable proof of AI conversations, detailed audit logs, and cryptographically verified compliance reports.
+            AnchorProof gives enterprise teams immutable proof of AI
+            conversations, detailed audit logs, and cryptographically verified
+            compliance reports.
           </p>
         </div>
 
@@ -85,7 +87,9 @@ export default function Primitives() {
 
         <div className="mt-6 sm:mt-8 p-3 sm:p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-lg text-center">
           <p className="text-xs sm:text-sm text-slate-400 font-mono">
-            Enterprise teams get complete visibility into AI conversations, tamper-proof audit logs, and cryptographically verified compliance reports.
+            Enterprise teams get complete visibility into AI conversations,
+            tamper-proof audit logs, and cryptographically verified compliance
+            reports.
           </p>
         </div>
       </Container>

@@ -4,22 +4,21 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Button from '@/components/ui/Button';
 import { sendMessageAction, saveConversationAction } from '@/app/actions/chat';
 import { activeNetwork } from '@/lib/walrus/client';
-import { 
-  Shield, 
-  Database, 
-  Link as LinkIcon, 
-  CheckCircle, 
+import {
+  Shield,
+  Database,
+  Link as LinkIcon,
+  CheckCircle,
   Send,
   Lock,
   FileCheck,
   Clock,
   User,
-  Bot,
   Building2,
   ShieldCheck,
   Fingerprint,
   Award,
-  Landmark
+  Landmark,
 } from 'lucide-react';
 
 interface Message {
@@ -174,7 +173,6 @@ export default function GovernmentChat() {
   return (
     <div className="relative w-full max-w-5xl mx-auto px-2 sm:px-0">
       <div className="bg-slate-900/60 border border-slate-700/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-purple-500/5">
-        
         {/* Chat Header */}
         <div className="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-700/50">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -215,7 +213,9 @@ export default function GovernmentChat() {
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 bg-purple-500/10 rounded-full border border-purple-500/20">
                 <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-purple-400 animate-pulse" />
-                <span className="text-[8px] sm:text-[10px] text-purple-400 font-mono">Active</span>
+                <span className="text-[8px] sm:text-[10px] text-purple-400 font-mono">
+                  Active
+                </span>
               </div>
               {hasSaved && (
                 <span className="flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[10px] text-purple-400">
@@ -411,7 +411,6 @@ export default function GovernmentChat() {
       {showModal && saveResult && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-xl sm:rounded-2xl p-4 sm:p-7 max-w-md w-full shadow-2xl shadow-purple-500/10 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300 mx-2 sm:mx-0">
-            
             <div className="text-center mb-4 sm:mb-5">
               <div className="w-12 h-12 sm:w-20 sm:h-20 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 border border-purple-500/30">
                 <CheckCircle className="w-6 h-6 sm:w-10 sm:h-10 text-purple-500" />
@@ -486,8 +485,12 @@ export default function GovernmentChat() {
             <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-slate-700/50">
               <p className="text-[6px] sm:text-[10px] text-slate-500 text-center font-mono flex items-center justify-center gap-1 sm:gap-2">
                 <Shield className="w-2 h-2 sm:w-3 sm:h-3" />
-                <span className="hidden xs:inline">Cryptographically verified • Tamper-proof • FOIA compliant</span>
-                <span className="xs:hidden">Verified • Tamper-proof • FOIA</span>
+                <span className="hidden xs:inline">
+                  Cryptographically verified • Tamper-proof • FOIA compliant
+                </span>
+                <span className="xs:hidden">
+                  Verified • Tamper-proof • FOIA
+                </span>
               </p>
             </div>
           </div>

@@ -1,4 +1,3 @@
-// app/api/tenant/register/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createAuditLogAsync } from '@/lib/audit';
@@ -71,7 +70,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // ✅ AUDIT LOG: Tenant created or user login (fire and forget)
     createAuditLogAsync({
       action: isNewTenant ? 'TENANT_UPDATED' : 'USER_LOGIN',
       tenantId: tenant.id,

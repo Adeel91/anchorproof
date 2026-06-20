@@ -38,14 +38,18 @@ export default function Liability() {
             </div>
 
             <p>
-              Air Canada tried to avoid responsibility when their AI chatbot incorrectly promised a refund. Their defense was that internal database records should override what the AI said.
+              Air Canada tried to avoid responsibility when their AI chatbot
+              incorrectly promised a refund. Their defense was that internal
+              database records should override what the AI said.
             </p>
 
             <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3 sm:p-4">
               <p className="text-xs sm:text-sm text-slate-300">
                 The court rejected this argument entirely. The ruling:{' '}
                 <span className="text-white font-semibold">
-                  companies cannot hide behind internal systems. What your AI says is your responsibility. C-suite leaders are personally exposed.
+                  companies cannot hide behind internal systems. What your AI
+                  says is your responsibility. C-suite leaders are personally
+                  exposed.
                 </span>
               </p>
             </div>
@@ -59,12 +63,16 @@ export default function Liability() {
               <span className="text-amber-400 font-bold font-mono text-base sm:text-lg">
                 35 million euros or 7% of global annual revenue
               </span>
-              . Without cryptographic proof, you cannot demonstrate compliance or defend your organization.
+              . Without cryptographic proof, you cannot demonstrate compliance
+              or defend your organization.
             </p>
 
             <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-slate-500 font-mono pt-2">
               <Scale className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-400" />
-              <span>AnchorProof provides the cryptographic foundation for tamper-proof evidence and regulatory compliance.</span>
+              <span>
+                AnchorProof provides the cryptographic foundation for
+                tamper-proof evidence and regulatory compliance.
+              </span>
             </div>
           </div>
         </div>
