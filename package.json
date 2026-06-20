@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "yarn build:sdk && prisma generate && next build",
+    "build:sdk": "cd packages/sdk && yarn build",
     "start": "next start",
     "lint": "eslint . --fix && prettier --write .",
     "prepare": "husky",
@@ -53,5 +54,8 @@
     "prettier": "^3.8.4",
     "tailwindcss": "^4.3.0",
     "typescript": "^5"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }
