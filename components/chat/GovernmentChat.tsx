@@ -19,6 +19,7 @@ import {
   Fingerprint,
   Award,
   Landmark,
+  Loader2,
 } from 'lucide-react';
 
 interface Message {
@@ -29,6 +30,7 @@ interface Message {
 interface SaveResult {
   blobId: string;
   suiTxHash: string;
+  walrusExplorerUrl?: string;
 }
 
 const generateConversationId = () => {
@@ -50,6 +52,9 @@ export default function GovernmentChat() {
   const [saveResult, setSaveResult] = useState<SaveResult | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
+  const [suiStatus, setSuiStatus] = useState<
+    'idle' | 'pending' | 'verified' | 'failed'
+  >('idle');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -69,6 +74,9 @@ export default function GovernmentChat() {
     if (isSaving || messages.length <= 1 || hasSaved) return;
 
     setIsSaving(true);
+    setSuiStatus('pending');
+    setShowModal(true);
+
     try {
       const result = await saveConversationAction(
         conversationId,
@@ -79,12 +87,16 @@ export default function GovernmentChat() {
       setSaveResult({
         blobId: result.blobId,
         suiTxHash: result.suiTxHash || result.blobId,
+        walrusExplorerUrl: result.walrusExplorerUrl,
       });
+      setSuiStatus('verified');
       setHasSaved(true);
-      setShowModal(true);
     } catch (error) {
       console.error('Save error:', error);
-      alert('Failed to save conversation');
+      setSuiStatus('failed');
+      alert(
+        error instanceof Error ? error.message : 'Failed to save conversation'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -173,7 +185,6 @@ export default function GovernmentChat() {
   return (
     <div className="relative w-full max-w-5xl mx-auto px-2 sm:px-0">
       <div className="bg-slate-900/60 border border-slate-700/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-purple-500/5">
-        {/* Chat Header */}
         <div className="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-700/50">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -217,7 +228,7 @@ export default function GovernmentChat() {
                   Active
                 </span>
               </div>
-              {hasSaved && (
+              {hasSaved && suiStatus === 'verified' && (
                 <span className="flex items-center gap-0.5 sm:gap-1 text-[8px] sm:text-[10px] text-purple-400">
                   <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   <span className="hidden sm:inline">Verified</span>
@@ -227,7 +238,6 @@ export default function GovernmentChat() {
           </div>
         </div>
 
-        {/* Trust Badges */}
         <div className="hidden xs:flex bg-slate-800/30 px-3 sm:px-6 py-1.5 sm:py-2 border-b border-slate-700/30 flex-wrap items-center gap-2 sm:gap-4 text-[8px] sm:text-[10px] text-slate-500">
           <span className="flex items-center gap-1 sm:gap-1.5">
             <Award className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400" />
@@ -248,7 +258,6 @@ export default function GovernmentChat() {
           </span>
         </div>
 
-        {/* Messages Container */}
         <div
           ref={chatContainerRef}
           className="h-[280px] xs:h-[320px] sm:h-[380px] md:h-[420px] overflow-y-auto p-3 sm:p-6 space-y-2 sm:space-y-4"
@@ -309,7 +318,6 @@ export default function GovernmentChat() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
         <div className="bg-slate-900/80 px-2 sm:px-4 py-2 sm:py-3 border-t border-slate-700/50">
           <div className="flex gap-1.5 sm:gap-2">
             <textarea
@@ -348,7 +356,6 @@ export default function GovernmentChat() {
         </div>
       </div>
 
-      {/* Save Button */}
       {!hasSaved && messages.length > 1 && (
         <div className="mt-3 sm:mt-4 p-2.5 sm:p-4 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 rounded-lg sm:rounded-xl border border-purple-500/20 backdrop-blur-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
@@ -374,25 +381,7 @@ export default function GovernmentChat() {
             >
               {isSaving ? (
                 <>
-                  <svg
-                    className="animate-spin w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
+                  <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 animate-spin" />
                   Securing...
                 </>
               ) : (
@@ -407,19 +396,41 @@ export default function GovernmentChat() {
         </div>
       )}
 
-      {/* Success Modal */}
-      {showModal && saveResult && (
+      {showModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-xl sm:rounded-2xl p-4 sm:p-7 max-w-md w-full shadow-2xl shadow-purple-500/10 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300 mx-2 sm:mx-0">
             <div className="text-center mb-4 sm:mb-5">
-              <div className="w-12 h-12 sm:w-20 sm:h-20 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 border border-purple-500/30">
-                <CheckCircle className="w-6 h-6 sm:w-10 sm:h-10 text-purple-500" />
+              <div
+                className={`w-12 h-12 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 border ${
+                  suiStatus === 'verified'
+                    ? 'bg-emerald-500/20 border-emerald-500/30'
+                    : suiStatus === 'pending'
+                      ? 'bg-amber-500/20 border-amber-500/30'
+                      : 'bg-red-500/20 border-red-500/30'
+                }`}
+              >
+                {suiStatus === 'verified' && (
+                  <CheckCircle className="w-6 h-6 sm:w-10 sm:h-10 text-emerald-500" />
+                )}
+                {suiStatus === 'pending' && (
+                  <Loader2 className="w-6 h-6 sm:w-10 sm:h-10 text-amber-400 animate-spin" />
+                )}
+                {suiStatus === 'failed' && (
+                  <span className="text-3xl sm:text-5xl text-red-500">❌</span>
+                )}
               </div>
               <h3 className="text-base sm:text-2xl font-bold text-white mb-0.5 sm:mb-1">
-                Conversation Secured
+                {suiStatus === 'verified' && 'Conversation Secured ✅'}
+                {suiStatus === 'pending' && 'Securing Conversation...'}
+                {suiStatus === 'failed' && 'Verification Failed'}
               </h3>
               <p className="text-[10px] sm:text-sm text-slate-400">
-                Immutable and cryptographically verified on-chain.
+                {suiStatus === 'verified' &&
+                  'Immutable and cryptographically verified on-chain.'}
+                {suiStatus === 'pending' &&
+                  'Your conversation is being securely stored and verified. This may take ~30 seconds...'}
+                {suiStatus === 'failed' &&
+                  'There was an issue saving the conversation. Please try again.'}
               </p>
             </div>
 
@@ -430,18 +441,32 @@ export default function GovernmentChat() {
                   <span className="text-[8px] sm:text-xs text-slate-500 font-mono font-semibold uppercase tracking-wider">
                     Storage Reference
                   </span>
+                  <span className="ml-auto text-[8px]">
+                    {saveResult?.blobId ? (
+                      <span className="text-emerald-400">✅ Stored</span>
+                    ) : (
+                      <span className="text-amber-400 flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Uploading...
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <code className="text-cyan-400 text-[8px] sm:text-xs break-all font-mono bg-slate-900/50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded block">
-                  {truncateHash(saveResult.blobId)}
+                  {saveResult?.blobId
+                    ? truncateHash(saveResult.blobId)
+                    : 'Waiting for upload...'}
                 </code>
-                <a
-                  href={`https://walruscan.com/${activeNetwork}/blob/${saveResult.blobId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[7px] sm:text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block transition-colors"
-                >
-                  View on Walrus →
-                </a>
+                {saveResult?.blobId && (
+                  <a
+                    href={`https://walruscan.com/${activeNetwork}/blob/${saveResult.blobId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[7px] sm:text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block transition-colors"
+                  >
+                    View on Walrus →
+                  </a>
+                )}
               </div>
 
               <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-slate-700/50 hover:border-purple-400/20 transition-all">
@@ -450,33 +475,81 @@ export default function GovernmentChat() {
                   <span className="text-[8px] sm:text-xs text-slate-500 font-mono font-semibold uppercase tracking-wider">
                     Verification Proof
                   </span>
+                  <span className="ml-auto text-[8px]">
+                    {saveResult?.suiTxHash ? (
+                      <span className="text-emerald-400">✅ Confirmed</span>
+                    ) : (
+                      <span className="text-amber-400">⏳ Pending</span>
+                    )}
+                  </span>
                 </div>
                 <code className="text-purple-400 text-[8px] sm:text-xs break-all font-mono bg-slate-900/50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded block">
-                  {truncateHash(saveResult.suiTxHash)}
+                  {saveResult?.suiTxHash
+                    ? truncateHash(saveResult.suiTxHash)
+                    : 'Waiting for confirmation...'}
                 </code>
+                {saveResult?.suiTxHash && (
+                  <a
+                    href={`https://suiscan.xyz/${activeNetwork}/object/${saveResult.suiTxHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[7px] sm:text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block transition-colors"
+                  >
+                    View on Sui →
+                  </a>
+                )}
+              </div>
+
+              {!saveResult?.blobId && (
+                <div className="mt-2">
+                  <div className="flex justify-between text-[8px] sm:text-[10px] text-slate-500 mb-1">
+                    <span>Uploading to Walrus...</span>
+                    <span>~30s</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full animate-progress" />
+                  </div>
+                </div>
+              )}
+
+              {saveResult?.blobId && saveResult?.suiTxHash && (
+                <div className="mt-2 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-center">
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 mx-auto mb-1" />
+                  <p className="text-xs sm:text-sm text-emerald-400 font-semibold">
+                    Conversation Secured ✅
+                  </p>
+                  <p className="text-[8px] sm:text-xs text-slate-500">
+                    Walrus stored • On-chain verified
+                  </p>
+                </div>
+              )}
+
+              {suiStatus === 'failed' && (
+                <div className="mt-2 p-3 bg-red-500/10 rounded-xl border border-red-500/20 text-center">
+                  <p className="text-xs sm:text-sm text-red-400 font-semibold">
+                    Verification Failed ❌
+                  </p>
+                  <p className="text-[8px] sm:text-xs text-slate-500">
+                    Please try saving again or contact support.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-3 mt-4 sm:mt-5">
+              {saveResult?.suiTxHash && (
                 <a
                   href={`https://suiscan.xyz/${activeNetwork}/object/${saveResult.suiTxHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[7px] sm:text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block transition-colors"
+                  className="text-center bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20 px-3 sm:px-4"
                 >
-                  View on Sui →
+                  Verify on Sui
                 </a>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-3 mt-4 sm:mt-5">
-              <a
-                href={`https://walruscan.com/${activeNetwork}/blob/${saveResult.blobId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-center bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20 px-3 sm:px-4"
-              >
-                Verify on Walrus
-              </a>
+              )}
               <button
                 onClick={() => setShowModal(false)}
-                className="text-center bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all px-3 sm:px-4"
+                className="text-center bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all px-3 sm:px-4 flex-1"
               >
                 Close
               </button>

@@ -12,15 +12,6 @@ const MASTER_KEY_HEX =
   process.env.MASTER_KEY || crypto.randomBytes(32).toString('hex');
 const MASTER_KEY = Buffer.from(MASTER_KEY_HEX, 'hex');
 
-interface TempMessage {
-  id: string;
-  role: string;
-  content: string;
-  signature: string;
-  publicKey: string;
-  timestamp: Date;
-}
-
 function decryptPrivateKey(encryptedJson: string): string {
   try {
     const { iv, encrypted, authTag } = JSON.parse(encryptedJson);
@@ -107,6 +98,10 @@ export async function POST(request: NextRequest) {
     const messages = await prisma.tempMessage.findMany({
       where: { tenantId: apiKeyRecord.tenantId, conversationId },
       orderBy: { createdAt: 'asc' },
+      select: {
+        role: true,
+        content: true,
+      },
     });
 
     if (messages.length === 0) {
@@ -115,13 +110,9 @@ export async function POST(request: NextRequest) {
 
     const conversationData = {
       conversationId,
-      messages: messages.map((m: TempMessage) => ({
-        id: m.id,
+      messages: messages.map((m) => ({
         role: m.role,
         content: m.content,
-        signature: m.signature,
-        publicKey: m.publicKey,
-        timestamp: m.timestamp,
       })),
       metadata: {
         customerId: customerId || 'unknown',
@@ -209,13 +200,30 @@ export async function POST(request: NextRequest) {
       suiTxHash = result.suiTxHash;
     } catch (walrusError) {
       console.error('Walrus storage failed:', walrusError);
+
+      const errorMessage =
+        walrusError instanceof Error ? walrusError.message : 'Unknown error';
+
+      if (
+        errorMessage.includes('Too many failures') ||
+        errorMessage.includes('upload failed')
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              'Walrus storage is currently unavailable. Please try again in a few moments.',
+            details:
+              'The Walrus testnet is experiencing high load. Retry your request.',
+            code: 'WALRUS_UNAVAILABLE',
+          },
+          { status: 503 }
+        );
+      }
+
       return NextResponse.json(
         {
           error: 'Walrus storage failed',
-          details:
-            walrusError instanceof Error
-              ? walrusError.message
-              : String(walrusError),
+          details: errorMessage,
         },
         { status: 500 }
       );

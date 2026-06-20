@@ -12,7 +12,8 @@ export interface StoreOnWalrusResult {
 }
 
 export async function storeOnWalrus(
-  encryptedBlob: string
+  encryptedBlob: string,
+  retries: number = 3
 ): Promise<StoreOnWalrusResult> {
   const serverKeyBase64 = process.env.DEDICATED_WALLET_PRIVATE_KEY;
   if (!serverKeyBase64) {
@@ -31,27 +32,47 @@ export async function storeOnWalrus(
 
   const serverKeypair = Ed25519Keypair.fromSecretKey(privateKeyBytes);
 
-  const result = await walrusClient.walrus.writeBlob({
-    blob: new TextEncoder().encode(encryptedBlob),
-    deletable: false,
-    epochs: 10,
-    signer: serverKeypair,
-  });
+  let lastError: Error | null = null;
 
-  const blobId = result.blobId;
-  const suiObjectId = result.blobObject?.id || 'unknown';
-  const activeNetwork = process.env.NEXT_PUBLIC_SUI_NETWORK || 'testnet';
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const uploadStart = Date.now();
 
-  const suiTxHash = suiObjectId !== 'unknown' ? suiObjectId : 'walrus-stored';
+      const result = await walrusClient.walrus.writeBlob({
+        blob: new TextEncoder().encode(encryptedBlob),
+        deletable: false,
+        epochs: 5,
+        signer: serverKeypair,
+      });
 
-  return {
-    blobId: blobId,
-    suiTxHash: suiTxHash,
-    walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
-    suiExplorerUrl:
-      suiObjectId !== 'unknown'
-        ? `https://suiscan.xyz/${activeNetwork}/object/${suiObjectId}`
-        : '',
-    suiObjectId: suiObjectId,
-  };
+      const blobId = result.blobId;
+      const suiObjectId = result.blobObject?.id || 'unknown';
+      const activeNetwork = process.env.NEXT_PUBLIC_SUI_NETWORK || 'testnet';
+
+      const suiTxHash =
+        suiObjectId !== 'unknown' ? suiObjectId : 'walrus-stored';
+
+      return {
+        blobId: blobId,
+        suiTxHash: suiTxHash,
+        walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
+        suiExplorerUrl:
+          suiObjectId !== 'unknown'
+            ? `https://suiscan.xyz/${activeNetwork}/object/${suiObjectId}`
+            : '',
+        suiObjectId: suiObjectId,
+      };
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`⏱️ [WALRUS] Attempt ${attempt} failed:`, error);
+
+      if (attempt < retries) {
+        const waitTime = attempt * 2000;
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
+    }
+  }
+
+  console.error('⏱️ [WALRUS] ❌ All attempts failed');
+  throw lastError || new Error('Walrus upload failed after all retries');
 }
