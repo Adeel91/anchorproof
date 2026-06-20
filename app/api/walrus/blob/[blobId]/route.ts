@@ -217,17 +217,12 @@ export async function GET(
         const sealId = storageData.sealId;
         const tenantAddressFromBlob = storageData.tenantAddress;
 
-        console.log('🔐 Found encrypted data');
-        console.log('   Tenant Address from blob:', tenantAddressFromBlob);
-        console.log('   Seal ID:', sealId);
-        console.log('   Package ID:', SUI_PACKAGE_ID);
-
         const apiKeyRecord = await prisma.apiKey.findFirst({
           where: { tenantId: user.tenant.id },
         });
 
         if (!apiKeyRecord || !apiKeyRecord.encryptedPrivateKey) {
-          console.error('❌ No API key found for tenant');
+          console.error('No API key found for tenant');
           return NextResponse.json({
             success: true,
             blobId: blobId,
@@ -263,12 +258,11 @@ export async function GET(
         const actualKeypairAddress = tenantKeypair
           .getPublicKey()
           .toSuiAddress();
-        console.log('   Actual Keypair Address:', actualKeypairAddress);
 
         if (actualKeypairAddress !== tenantAddressFromBlob) {
-          console.error('❌ Address mismatch!');
-          console.error('   Keypair address:', actualKeypairAddress);
-          console.error('   Address from blob:', tenantAddressFromBlob);
+          console.error('Address mismatch!');
+          console.error('Keypair address:', actualKeypairAddress);
+          console.error('Address from blob:', tenantAddressFromBlob);
 
           return NextResponse.json({
             success: true,
@@ -296,8 +290,6 @@ export async function GET(
           });
         }
 
-        console.log('✅ Keypair address matches tenant address from blob');
-
         const sessionKey = await SessionKey.create({
           address: actualKeypairAddress,
           packageId: SUI_PACKAGE_ID,
@@ -306,22 +298,16 @@ export async function GET(
           suiClient,
         });
 
-        console.log('✅ Session key created');
-
         const tx = new Transaction();
 
         const sealIdBytes = Buffer.from(sealId, 'hex');
 
         const target = `${SUI_PACKAGE_ID}::anchorproof::seal_approve`;
-        console.log('   Target:', target);
-        console.log('   Registry ID:', SUI_LEGAL_REGISTRY_ID);
-        console.log('   Clock ID:', SUI_CLOCK_ID);
-
         const registryObjectId = SUI_LEGAL_REGISTRY_ID;
         const clockObjectId = SUI_CLOCK_ID;
 
         if (!registryObjectId) {
-          console.error('❌ SUI_LEGAL_REGISTRY_ID not set');
+          console.error('SUI_LEGAL_REGISTRY_ID not set');
           return NextResponse.json({
             success: true,
             blobId: blobId,
@@ -363,16 +349,12 @@ export async function GET(
           onlyTransactionKind: true,
         });
 
-        console.log('✅ Transaction built for seal_approve');
-
-        console.log('🔓 Attempting decryption...');
         const decryptedData = await sealClient.decrypt({
           data: encryptedObjectData,
           sessionKey: sessionKey,
           txBytes: txBytes,
         });
 
-        console.log('✅ Decryption successful');
         const conversation = JSON.parse(
           new TextDecoder().decode(decryptedData)
         );
@@ -397,8 +379,8 @@ export async function GET(
       } catch (sealError) {
         const errorMessage =
           sealError instanceof Error ? sealError.message : String(sealError);
-        console.error('❌ SEAL decryption error:', sealError);
-        console.error('   Error details:', errorMessage);
+        console.error('SEAL decryption error:', sealError);
+        console.error('Error details:', errorMessage);
 
         return NextResponse.json({
           success: true,

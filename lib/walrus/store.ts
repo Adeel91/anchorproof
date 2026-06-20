@@ -30,9 +30,6 @@ export async function storeOnWalrus(
   }
 
   const serverKeypair = Ed25519Keypair.fromSecretKey(privateKeyBytes);
-  console.log(
-    `📡 Sending payload to Walrus via dedicated server identity: ${serverKeypair.getPublicKey().toSuiAddress()}`
-  );
 
   const result = await walrusClient.walrus.writeBlob({
     blob: new TextEncoder().encode(encryptedBlob),
@@ -46,10 +43,6 @@ export async function storeOnWalrus(
   const activeNetwork = process.env.NEXT_PUBLIC_SUI_NETWORK || 'testnet';
 
   const suiTxHash = suiObjectId !== 'unknown' ? suiObjectId : 'walrus-stored';
-
-  console.log(`✅ blobId: ${blobId}`);
-  console.log(`✅ suiObjectId: ${suiObjectId}`);
-  console.log(`✅ suiTxHash: ${suiTxHash}`);
 
   return {
     blobId: blobId,

@@ -28,7 +28,7 @@ export interface AuditLogData {
 export async function createAuditLog(data: AuditLogData) {
   try {
     if (!data.tenantId) {
-      console.warn('⚠️ No tenantId provided, cannot create audit log');
+      console.warn('No tenantId provided, cannot create audit log');
       return null;
     }
 
@@ -44,17 +44,16 @@ export async function createAuditLog(data: AuditLogData) {
       },
     });
 
-    console.log(`✅ Audit log created: ${data.action}`);
     return auditLog;
   } catch (error) {
-    console.error('❌ Failed to create audit log:', error);
+    console.error('Failed to create audit log:', error);
     return null;
   }
 }
 
 export function createAuditLogAsync(data: AuditLogData): void {
   createAuditLog(data).catch((error) => {
-    console.error('❌ Background audit log failed:', error);
+    console.error('Background audit log failed:', error);
   });
 }
 
@@ -107,7 +106,7 @@ export async function getAuditLogs(params: {
       offset,
     };
   } catch (error) {
-    console.error('❌ Failed to get audit logs:', error);
+    console.error('Failed to get audit logs:', error);
     return { logs: [], total: 0, limit: 50, offset: 0 };
   }
 }

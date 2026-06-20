@@ -43,7 +43,6 @@ function decryptPrivateKey(encryptedJson: string): string {
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
-  console.log('🚀 Starting conversation save...');
 
   try {
     const apiKey = request.headers.get('X-API-Key');
@@ -137,13 +136,12 @@ export async function POST(request: NextRequest) {
       .update(JSON.stringify(conversationData.messages))
       .digest('hex');
 
-    console.log('🔐 Getting tenant keypair...');
     const tenantApiKey = await prisma.apiKey.findFirst({
       where: { tenantId: apiKeyRecord.tenantId },
     });
 
     if (!tenantApiKey || !tenantApiKey.encryptedPrivateKey) {
-      console.error('❌ No API key found for encryption');
+      console.error('No API key found for encryption');
       return NextResponse.json(
         { error: 'No API key available for encryption' },
         { status: 500 }
@@ -157,16 +155,11 @@ export async function POST(request: NextRequest) {
     const tenantKeypair = Ed25519Keypair.fromSecretKey(privateKeyBytes);
     const actualTenantAddress = tenantKeypair.getPublicKey().toSuiAddress();
 
-    console.log('   Actual Keypair Address:', actualTenantAddress);
-
     const sealId = crypto
       .createHash('sha256')
       .update(conversationId + actualTenantAddress)
       .digest('hex');
 
-    console.log('   SEAL ID:', sealId);
-
-    console.log('🔐 Starting SEAL encryption...');
     const plaintext = JSON.stringify(conversationData);
 
     let encryptedObjectHex: string;
@@ -193,10 +186,8 @@ export async function POST(request: NextRequest) {
         sealId: sealId,
         conversationId: conversationId,
       });
-
-      console.log('✅ SEAL encryption successful');
     } catch (sealError) {
-      console.error('❌ SEAL encryption failed:', sealError);
+      console.error('SEAL encryption failed:', sealError);
       return NextResponse.json(
         {
           error: 'SEAL encryption failed',
@@ -207,7 +198,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('📤 Storing on Walrus...');
     let blobId: string;
     let walrusExplorerUrl: string;
     let suiTxHash: string;
@@ -217,10 +207,8 @@ export async function POST(request: NextRequest) {
       blobId = result.blobId;
       walrusExplorerUrl = result.walrusExplorerUrl;
       suiTxHash = result.suiTxHash;
-      console.log('✅ Walrus storage successful');
-      console.log('   Blob ID:', blobId);
     } catch (walrusError) {
-      console.error('❌ Walrus storage failed:', walrusError);
+      console.error('Walrus storage failed:', walrusError);
       return NextResponse.json(
         {
           error: 'Walrus storage failed',
@@ -233,7 +221,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('💾 Saving to database...');
     let verification;
 
     try {
@@ -255,10 +242,8 @@ export async function POST(request: NextRequest) {
           },
         },
       });
-      console.log('✅ Database save successful');
-      console.log('   Verification ID:', verification.id);
     } catch (dbError) {
-      console.error('❌ Database save failed:', dbError);
+      console.error('Database save failed:', dbError);
       return NextResponse.json(
         {
           error: 'Database save failed',
@@ -268,17 +253,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🗑️ Deleting temporary messages...');
     try {
       await prisma.tempMessage.deleteMany({
         where: { tenantId: apiKeyRecord.tenantId, conversationId },
       });
-      console.log('✅ Temp messages deleted');
     } catch (deleteError) {
-      console.error('⚠️ Temp message deletion failed:', deleteError);
+      console.error('Temp message deletion failed:', deleteError);
     }
 
-    console.log('⛓️ Recording on-chain (background)...');
     recordOnChain({
       blobId,
       conversationId,
@@ -287,14 +269,11 @@ export async function POST(request: NextRequest) {
       signature: signature,
       tenantAddress: actualTenantAddress,
     })
-      .then(() => {
-        console.log('✅ On-chain record created');
-      })
+      .then(() => {})
       .catch((err) => {
-        console.error('⚠️ On-chain recording failed:', err);
+        console.error('On-chain recording failed:', err);
       });
 
-    console.log('📝 Creating audit log (background)...');
     createAuditLogAsync({
       action: 'CONVERSATION_SAVED',
       blobId: blobId,
@@ -315,7 +294,6 @@ export async function POST(request: NextRequest) {
     });
 
     const elapsed = Date.now() - startTime;
-    console.log(`🎉 === SAVE COMPLETED in ${elapsed}ms ===\n`);
 
     return NextResponse.json({
       success: true,
@@ -332,7 +310,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const elapsed = Date.now() - startTime;
-    console.error(`💥 SAVE ROUTE ERROR after ${elapsed}ms:`, error);
+    console.error(`SAVE ROUTE ERROR after ${elapsed}ms:`, error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Internal server error',
