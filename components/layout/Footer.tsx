@@ -17,7 +17,7 @@ export default function Footer() {
       <Container className="flex flex-col md:flex-row items-center justify-between gap-6 text-[10px] text-slate-500 font-mono">
         <div className="flex flex-col items-center md:items-start gap-1">
           <span className="font-bold tracking-widest text-slate-300 text-xs">
-            © {new Date().getFullYear()} ANCHORPROOF
+            © {new Date().getFullYear()} AnchorProof
           </span>
           <span className="text-[10px] text-slate-600 text-center md:text-left">
             Verifiable AI Memory Infrastructure

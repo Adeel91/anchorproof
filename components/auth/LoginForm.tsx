@@ -54,6 +54,8 @@ export function LoginForm() {
         }
 
         const emailDomain = email.split('@')[1];
+        const isGmail =
+          emailDomain === 'gmail.com' || emailDomain === 'googlemail.com';
 
         const syncResponse = await fetch('/api/tenant', {
           method: 'POST',
@@ -63,11 +65,16 @@ export function LoginForm() {
             email,
             name: name || email.split('@')[0],
             emailDomain,
+            isPersonal: isGmail,
           }),
         });
 
-        if (!syncResponse.ok)
-          throw new Error('Database tenant allocation failed.');
+        if (!syncResponse.ok) {
+          const errorData = await syncResponse.json();
+          throw new Error(
+            errorData.error || 'Database tenant allocation failed.'
+          );
+        }
 
         const data = await syncResponse.json();
 
@@ -77,7 +84,7 @@ export function LoginForm() {
       } catch (error) {
         const err = error as Error;
         console.error('Sync error:', err);
-        setError('Failed to create tenant profile.');
+        setError(err.message || 'Failed to create tenant profile.');
         setLoading(false);
         syncAttempted.current = false;
       }

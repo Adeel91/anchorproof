@@ -7,6 +7,7 @@ export type AuditAction =
   | 'BLOB_RETRIEVED'
   | 'API_KEY_CREATED'
   | 'API_KEY_REVOKED'
+  | 'TENANT_CREATED'
   | 'TENANT_UPDATED'
   | 'USER_LOGIN'
   | 'USER_LOGOUT'

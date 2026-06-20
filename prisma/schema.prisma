@@ -8,9 +8,9 @@ datasource db {
 
 model Tenant {
   id               String         @id @default(cuid())
-  name             String         @unique
+  name             String         
   slug             String         @unique
-  emailDomain      String         @unique
+  emailDomain      String         
   suiAddress       String         @unique
   walrusNamespace  String
   subscriptionTier String         @default("free")

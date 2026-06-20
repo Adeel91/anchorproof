@@ -64,6 +64,12 @@ const ACTION_CONFIG: Record<
     color: 'bg-red-500/10 text-red-400 border border-red-500/20',
     description: 'API key permanently revoked',
   },
+  TENANT_CREATED: {
+    label: 'Tenant Created',
+    icon: <RefreshCw className="w-3 h-3" />,
+    color: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+    description: 'New tenant workspace created',
+  },
   TENANT_UPDATED: {
     label: 'Tenant Updated',
     icon: <RefreshCw className="w-3 h-3" />,

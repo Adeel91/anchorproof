@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useCurrentAccount, useDisconnectWallet } from '@mysten/dapp-kit';
 import Container from '@/components/ui/Container';
 import Button from '@/components/ui/Button';
+import { Logo } from '@/components/ui/Logo';
 
 const NavLink = ({
   href,
@@ -331,18 +332,7 @@ export default function Header() {
             onClick={closeAll}
             className="group flex items-center gap-2 md:gap-3 flex-shrink-0"
           >
-            <div className="relative">
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 blur-xl opacity-0 group-hover:opacity-50 transition-opacity" />
-              <div className="relative w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 group-hover:rotate-180 transition-all duration-500" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-mono font-black tracking-[0.15em] md:tracking-[0.2em] text-xs md:text-sm text-white">
-                ANCHORPROOF
-              </span>
-              <span className="text-[6px] md:text-[8px] font-mono tracking-[0.2em] md:tracking-[0.3em] text-slate-500 hidden sm:block">
-                VERIFIABLE MEMORY
-              </span>
-            </div>
+            <Logo />
           </Link>
 
           <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
@@ -375,18 +365,7 @@ export default function Header() {
             onClick={closeAll}
             className="group flex items-center gap-2 md:gap-3 flex-shrink-0"
           >
-            <div className="relative">
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-400 to-indigo-500 blur-xl opacity-0 group-hover:opacity-50 transition-opacity" />
-              <div className="relative w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 group-hover:rotate-180 transition-all duration-500" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-mono font-black tracking-[0.15em] md:tracking-[0.2em] text-xs md:text-sm text-white">
-                ANCHORPROOF
-              </span>
-              <span className="text-[6px] md:text-[8px] font-mono tracking-[0.2em] md:tracking-[0.3em] text-slate-500 hidden xs:block">
-                VERIFIABLE MEMORY
-              </span>
-            </div>
+            <Logo />
           </Link>
 
           {/* Navigation - Center */}

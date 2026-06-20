@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createAuditLogAsync } from '@/lib/audit';
 
+const PUBLIC_DOMAINS = ['gmail.com', 'googlemail.com'];
+
 export async function POST(request: NextRequest) {
   try {
     const { suiAddress, email, name, emailDomain } = await request.json();
@@ -16,43 +18,79 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const domainPrefix = emailDomain.split('.')[0];
-    const generatedSlug = emailDomain.replace(/\./g, '-');
-    const capitalizedName =
-      domainPrefix.charAt(0).toUpperCase() + domainPrefix.slice(1);
+    const isPublicDomain = PUBLIC_DOMAINS.includes(emailDomain.toLowerCase());
 
-    let tenant = await prisma.tenant.findFirst({
-      where: {
-        OR: [
-          { emailDomain: emailDomain },
-          { slug: generatedSlug },
-          { suiAddress: suiAddress },
-        ],
-      },
-    });
-
+    let tenant;
     let isNewTenant = false;
 
-    if (!tenant) {
-      isNewTenant = true;
-      let uniqueSlug = generatedSlug;
-      let counter = 1;
+    if (isPublicDomain) {
+      const emailPrefix = email.split('@')[0];
+      const personalSlug = `personal-${emailPrefix}-${Date.now()}`;
 
-      while (await prisma.tenant.findUnique({ where: { slug: uniqueSlug } })) {
-        uniqueSlug = `${generatedSlug}-${counter}`;
-        counter++;
-      }
-
-      tenant = await prisma.tenant.create({
-        data: {
-          name: `${capitalizedName} Corp`,
-          slug: uniqueSlug,
-          emailDomain: emailDomain,
+      tenant = await prisma.tenant.findFirst({
+        where: {
           suiAddress: suiAddress,
-          walrusNamespace: `ns-${domainPrefix.toLowerCase()}-${Date.now()}`,
-          subscriptionTier: 'free',
         },
       });
+
+      if (!tenant) {
+        isNewTenant = true;
+        let uniqueSlug = personalSlug;
+        let counter = 1;
+
+        while (
+          await prisma.tenant.findUnique({ where: { slug: uniqueSlug } })
+        ) {
+          uniqueSlug = `${personalSlug}-${counter}`;
+          counter++;
+        }
+
+        tenant = await prisma.tenant.create({
+          data: {
+            name: `${name || emailPrefix}'s Enterprise`,
+            slug: uniqueSlug,
+            emailDomain: emailDomain,
+            suiAddress: suiAddress,
+            walrusNamespace: `ns-personal-${Date.now()}`,
+            subscriptionTier: 'free',
+          },
+        });
+      }
+    } else {
+      const domainPrefix = emailDomain.split('.')[0];
+      const generatedSlug = emailDomain.replace(/\./g, '-');
+      const capitalizedName =
+        domainPrefix.charAt(0).toUpperCase() + domainPrefix.slice(1);
+
+      tenant = await prisma.tenant.findFirst({
+        where: {
+          emailDomain: emailDomain,
+        },
+      });
+
+      if (!tenant) {
+        isNewTenant = true;
+        let uniqueSlug = generatedSlug;
+        let counter = 1;
+
+        while (
+          await prisma.tenant.findUnique({ where: { slug: uniqueSlug } })
+        ) {
+          uniqueSlug = `${generatedSlug}-${counter}`;
+          counter++;
+        }
+
+        tenant = await prisma.tenant.create({
+          data: {
+            name: `${capitalizedName} Corp`,
+            slug: uniqueSlug,
+            emailDomain: emailDomain,
+            suiAddress: suiAddress,
+            walrusNamespace: `ns-${domainPrefix.toLowerCase()}-${Date.now()}`,
+            subscriptionTier: 'free',
+          },
+        });
+      }
     }
 
     const corporateUser = await prisma.user.upsert({
@@ -71,16 +109,22 @@ export async function POST(request: NextRequest) {
     });
 
     createAuditLogAsync({
-      action: isNewTenant ? 'TENANT_UPDATED' : 'USER_LOGIN',
+      action: isNewTenant ? 'TENANT_CREATED' : 'USER_LOGIN',
       tenantId: tenant.id,
       details: {
         email: email,
         name: name || email.split('@')[0],
         tenantName: tenant.name,
         tenantSlug: tenant.slug,
-        suiAddress: suiAddress,
+        requestSuiAddress: suiAddress,
+        tenantSuiAddress: tenant.suiAddress,
         isNewTenant: isNewTenant,
-        action: isNewTenant ? 'Tenant created' : 'User login',
+        isPublicDomain: isPublicDomain,
+        action: isNewTenant
+          ? isPublicDomain
+            ? 'Personal tenant created'
+            : 'Enterprise tenant created'
+          : 'User login',
       },
     });
 
@@ -88,6 +132,9 @@ export async function POST(request: NextRequest) {
       success: true,
       tenant,
       user: corporateUser,
+      isPublicDomain,
+      isNewTenant,
+      tenantSuiAddress: tenant.suiAddress,
     });
   } catch (error) {
     console.error('Tenant registration error:', error);
