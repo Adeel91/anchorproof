@@ -183,7 +183,7 @@ export default function GovernmentChat() {
   };
 
   return (
-    <div className="relative w-full max-w-5xl mx-auto px-2 sm:px-0">
+    <div className="relative w-full mx-auto px-2 sm:px-0">
       <div className="bg-slate-900/60 border border-slate-700/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-purple-500/5">
         <div className="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-700/50">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">

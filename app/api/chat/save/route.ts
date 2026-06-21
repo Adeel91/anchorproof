@@ -8,6 +8,9 @@ import { fromBase64 } from '@mysten/bcs';
 import { createAuditLogAsync } from '@/lib/audit';
 import { recordOnChain } from '@/lib/sui/contract';
 
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
 const MASTER_KEY_HEX =
   process.env.MASTER_KEY || crypto.randomBytes(32).toString('hex');
 const MASTER_KEY = Buffer.from(MASTER_KEY_HEX, 'hex');

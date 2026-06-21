@@ -183,9 +183,8 @@ export default function InsuranceChat() {
   };
 
   return (
-    <div className="relative w-full max-w-5xl mx-auto px-2 sm:px-0">
+    <div className="relative w-full mx-auto px-2 sm:px-0">
       <div className="bg-slate-900/60 border border-slate-700/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl shadow-blue-500/5">
-        {/* Chat Header */}
         <div className="bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900 px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-700/50">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -239,7 +238,6 @@ export default function InsuranceChat() {
           </div>
         </div>
 
-        {/* Trust Badges */}
         <div className="hidden xs:flex bg-slate-800/30 px-3 sm:px-6 py-1.5 sm:py-2 border-b border-slate-700/30 flex-wrap items-center gap-2 sm:gap-4 text-[8px] sm:text-[10px] text-slate-500">
           <span className="flex items-center gap-1 sm:gap-1.5">
             <Award className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400" />
@@ -260,7 +258,6 @@ export default function InsuranceChat() {
           </span>
         </div>
 
-        {/* Messages Container */}
         <div
           ref={chatContainerRef}
           className="h-[280px] xs:h-[320px] sm:h-[380px] md:h-[420px] overflow-y-auto p-3 sm:p-6 space-y-2 sm:space-y-4"
@@ -321,7 +318,6 @@ export default function InsuranceChat() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
         <div className="bg-slate-900/80 px-2 sm:px-4 py-2 sm:py-3 border-t border-slate-700/50">
           <div className="flex gap-1.5 sm:gap-2">
             <textarea
@@ -360,7 +356,6 @@ export default function InsuranceChat() {
         </div>
       </div>
 
-      {/* Save Button */}
       {!hasSaved && messages.length > 1 && (
         <div className="mt-3 sm:mt-4 p-2.5 sm:p-4 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-blue-500/10 rounded-lg sm:rounded-xl border border-blue-500/20 backdrop-blur-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
@@ -401,7 +396,6 @@ export default function InsuranceChat() {
         </div>
       )}
 
-      {/* Success Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-xl sm:rounded-2xl p-4 sm:p-7 max-w-md w-full shadow-2xl shadow-blue-500/10 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300 mx-2 sm:mx-0">
@@ -441,7 +435,6 @@ export default function InsuranceChat() {
             </div>
 
             <div className="space-y-2.5 sm:space-y-3">
-              {/* Walrus Blob ID */}
               <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-slate-700/50 hover:border-blue-400/20 transition-all">
                 <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-1.5">
                   <Database className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400" />
@@ -476,7 +469,6 @@ export default function InsuranceChat() {
                 )}
               </div>
 
-              {/* Walrus Tx Hash */}
               <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-slate-700/50 hover:border-purple-400/20 transition-all">
                 <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-1.5">
                   <LinkIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400" />
@@ -508,7 +500,6 @@ export default function InsuranceChat() {
                 )}
               </div>
 
-              {/* Progress Bar */}
               {!saveResult?.blobId && (
                 <div className="mt-2">
                   <div className="flex justify-between text-[8px] sm:text-[10px] text-slate-500 mb-1">
@@ -521,7 +512,6 @@ export default function InsuranceChat() {
                 </div>
               )}
 
-              {/* Success State */}
               {saveResult?.blobId && saveResult?.suiTxHash && (
                 <div className="mt-2 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-center">
                   <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 mx-auto mb-1" />
@@ -534,7 +524,6 @@ export default function InsuranceChat() {
                 </div>
               )}
 
-              {/* Failed State */}
               {suiStatus === 'failed' && (
                 <div className="mt-2 p-3 bg-red-500/10 rounded-xl border border-red-500/20 text-center">
                   <p className="text-xs sm:text-sm text-red-400 font-semibold">
