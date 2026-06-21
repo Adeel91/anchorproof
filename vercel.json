@@ -2,5 +2,11 @@
   "buildCommand": "yarn build:sdk && prisma generate && next build",
   "framework": "nextjs",
   "installCommand": "yarn install",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
 }
