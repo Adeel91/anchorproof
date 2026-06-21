@@ -13,6 +13,8 @@ export async function proxy(request: NextRequest) {
 
   const isTenantRoute = url.pathname === '/api/tenant/current';
 
+  const isTestRoute = url.pathname === '/api/test/db';
+
   const protectedApiRoutes = [
     '/api/audit',
     '/api/keys',
@@ -28,7 +30,7 @@ export async function proxy(request: NextRequest) {
     url.pathname.startsWith(route)
   );
 
-  if (isChatRoute || isTenantRoute) {
+  if (isChatRoute || isTenantRoute || isTestRoute) {
     return NextResponse.next();
   }
 
