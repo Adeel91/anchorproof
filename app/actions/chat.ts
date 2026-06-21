@@ -1,6 +1,6 @@
 'use server';
 
-import { anchorProofClient } from '@/lib/anchorproof/client';
+import { getAnchorProofClient } from '@/lib/anchorproof/client';
 
 export async function sendMessageAction(
   content: string,
@@ -9,7 +9,8 @@ export async function sendMessageAction(
   customerId?: string,
   agentId?: string
 ) {
-  return await anchorProofClient.sendMessage({
+  const client = getAnchorProofClient();
+  return await client.sendMessage({
     content,
     role,
     conversationId,
@@ -24,7 +25,8 @@ export async function saveConversationAction(
   agentId?: string
 ) {
   try {
-    const result = await anchorProofClient.saveConversation({
+    const client = getAnchorProofClient();
+    const result = await client.saveConversation({
       conversationId,
       customerId: customerId || 'banking-demo',
       agentId: agentId || 'anchorproof-banking',

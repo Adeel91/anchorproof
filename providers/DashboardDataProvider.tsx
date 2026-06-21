@@ -1,5 +1,3 @@
-// providers/DashboardDataProvider.tsx
-
 'use client';
 
 import {
@@ -112,6 +110,32 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
   const fetchedRef = useRef(false);
   const isMounted = useRef(true);
 
+  const updateStats = useCallback((newConversations: Conversation[]) => {
+    const total = newConversations.length;
+    const verified = newConversations.filter(
+      (c) => c.verifiedAt !== null
+    ).length;
+    const pending = newConversations.filter(
+      (c) => c.verifiedAt === null && c.status !== 'tampered'
+    ).length;
+    const tampered = newConversations.filter(
+      (c) => c.status === 'tampered' || c.integrity?.tampered === true
+    ).length;
+    const totalMessages = newConversations.reduce(
+      (acc, c) => acc + (c.messageCount || 0),
+      0
+    );
+
+    setStats({
+      total,
+      verified,
+      pending,
+      tampered,
+      totalMessages,
+      integrityRate: total > 0 ? Math.round((verified / total) * 100) : 100,
+    });
+  }, []);
+
   const fetchAllData = useCallback(async () => {
     if (fetchedRef.current || !isMounted.current) return;
     fetchedRef.current = true;
@@ -119,7 +143,6 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      // ⚡ STEP 1: Get tenant first (needed for other calls)
       const tenantRes = await fetch('/api/tenant/current', {
         cache: 'no-store',
       });
@@ -141,7 +164,6 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
         setUser(tenantData.user);
       }
 
-      // ⚡ STEP 2: Fetch everything else in parallel with timeouts
       const fetchWithTimeout = (url: string, timeout = 5000) => {
         return Promise.race([
           fetch(url),
@@ -159,69 +181,39 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
 
       if (!isMounted.current) return;
 
-      // ⚡ STEP 3: Process conversations
+      let finalConversations: Conversation[] = [];
+
       if (convRes.status === 'fulfilled' && convRes.value.ok) {
         const convData = await convRes.value.json();
-        const conversationsData = convData.conversations || [];
-        setConversations(conversationsData);
-
+        finalConversations = convData.conversations || [];
         if (convData.stats) {
           setStats((prev) => ({ ...prev, ...convData.stats }));
         }
       }
 
-      // ⚡ STEP 4: Override with Walrus data if available
       if (walrusRes.status === 'fulfilled' && walrusRes.value.ok) {
         const walrusData = await walrusRes.value.json();
         if (walrusData.conversations) {
-          setConversations(walrusData.conversations);
+          finalConversations = walrusData.conversations;
         }
         if (walrusData.stats) {
           setStats((prev) => ({ ...prev, ...walrusData.stats }));
         }
       }
 
-      // ⚡ STEP 5: Process API keys
+      setConversations(finalConversations);
+      updateStats(finalConversations);
+
       if (keysRes.status === 'fulfilled' && keysRes.value.ok) {
         const keysData = await keysRes.value.json();
         setApiKeys(keysData.keys || []);
       }
-
-      // ⚡ STEP 6: Calculate final stats
-      setStats((prev) => {
-        const finalConvs = conversations.length > 0 ? conversations : [];
-        const total = finalConvs.length || prev.total;
-        const verified =
-          finalConvs.filter((c) => c.verifiedAt !== null).length ||
-          prev.verified;
-        const pending =
-          finalConvs.filter(
-            (c) => c.verifiedAt === null && c.status !== 'tampered'
-          ).length || prev.pending;
-        const tampered =
-          finalConvs.filter(
-            (c) => c.status === 'tampered' || c.integrity?.tampered === true
-          ).length || prev.tampered;
-        const totalMessages =
-          finalConvs.reduce((acc, c) => acc + (c.messageCount || 0), 0) ||
-          prev.totalMessages;
-
-        return {
-          total: total || prev.total,
-          verified: verified || prev.verified,
-          pending: pending || prev.pending,
-          tampered: tampered || prev.tampered,
-          totalMessages: totalMessages || prev.totalMessages,
-          integrityRate: total > 0 ? Math.round((verified / total) * 100) : 100,
-        };
-      });
 
       setIsReady(true);
       setLoading(false);
     } catch (err) {
       if (!isMounted.current) return;
 
-      // ⚡ If we have tenant but other calls failed, still show dashboard
       if (tenant) {
         console.warn('Partial data loaded:', err);
         setIsReady(true);
@@ -233,7 +225,7 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
       console.error('Error fetching dashboard data:', err);
       setLoading(false);
     }
-  }, [tenant]);
+  }, [tenant, updateStats]);
 
   const refreshKeys = useCallback(async () => {
     try {
