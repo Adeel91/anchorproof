@@ -11,8 +11,6 @@ export interface StoreOnWalrusResult {
   suiObjectId: string;
 }
 
-const IS_VERCEL = process.env.VERCEL === '1';
-
 export async function storeOnWalrus(
   encryptedBlob: string,
   retries: number = 3
@@ -33,63 +31,6 @@ export async function storeOnWalrus(
   }
 
   const serverKeypair = Ed25519Keypair.fromSecretKey(privateKeyBytes);
-
-  if (IS_VERCEL) {
-    try {
-      const blobBytes = new TextEncoder().encode(encryptedBlob);
-      const blobBase64 = Buffer.from(blobBytes).toString('base64');
-
-      const response = await fetch('/api/walrus/proxy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ blob: blobBase64 }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Proxy upload failed: ${response.status} - ${errorText}`
-        );
-      }
-
-      const result = await response.json();
-
-      const blobId =
-        result.blobId ||
-        result.newlyCreatedBlob?.blobObject?.blobId ||
-        result.alreadyCertified?.blobObject?.blobId ||
-        result.blobObject?.blobId;
-
-      const suiObjectId =
-        result.blobObject?.id ||
-        result.newlyCreatedBlob?.blobObject?.id ||
-        result.alreadyCertified?.blobObject?.id ||
-        'unknown';
-
-      const activeNetwork = process.env.NEXT_PUBLIC_SUI_NETWORK || 'testnet';
-
-      if (!blobId) {
-        console.error('Proxy response:', result);
-        throw new Error('No blobId returned from proxy');
-      }
-
-      return {
-        blobId: blobId,
-        suiTxHash: suiObjectId !== 'unknown' ? suiObjectId : 'walrus-stored',
-        walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
-        suiExplorerUrl:
-          suiObjectId !== 'unknown'
-            ? `https://suiscan.xyz/${activeNetwork}/object/${suiObjectId}`
-            : '',
-        suiObjectId: suiObjectId,
-      };
-    } catch (error) {
-      console.error('Proxy Walrus upload failed:', error);
-      throw error;
-    }
-  }
 
   let lastError: Error | null = null;
 
