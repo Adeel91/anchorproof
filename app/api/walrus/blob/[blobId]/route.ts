@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import {
-  walrusClient,
-  suiClient,
-  fetchBlobDirectly,
-  activeNetwork,
-} from '@/lib/walrus/client';
+import { walrusClient, suiClient, activeNetwork } from '@/lib/walrus/client';
 import { sealClient } from '@/lib/seal/client';
 import { SessionKey } from '@mysten/seal';
 import { Transaction } from '@mysten/sui/transactions';
@@ -19,6 +14,7 @@ import {
   SUI_LEGAL_REGISTRY_ID,
   SUI_CLOCK_ID,
 } from '@/lib/sui/contract';
+import { fetchBlobFromWalrus } from '@/lib/walrus/server';
 
 const MASTER_KEY_HEX =
   process.env.MASTER_KEY || crypto.randomBytes(32).toString('hex');
@@ -114,7 +110,7 @@ export async function GET(
     let encryptedBlob: Uint8Array;
 
     try {
-      encryptedBlob = await fetchBlobDirectly(blobId);
+      encryptedBlob = await fetchBlobFromWalrus(blobId);
     } catch {
       try {
         const blobData = await walrusClient.walrus.readBlob({

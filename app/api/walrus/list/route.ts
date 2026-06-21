@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { walrusClient, fetchBlobDirectly } from '@/lib/walrus/client';
+import { walrusClient } from '@/lib/walrus/client';
 import crypto from 'crypto';
+import { fetchBlobFromWalrus } from '@/lib/walrus/server';
 
 async function verifyBlobIntegrity(
   blobId: string,
@@ -17,7 +18,7 @@ async function verifyBlobIntegrity(
     let blobData: Uint8Array;
 
     try {
-      blobData = await fetchBlobDirectly(blobId);
+      blobData = await fetchBlobFromWalrus(blobId);
     } catch {
       blobData = await walrusClient.walrus.readBlob({ blobId });
     }

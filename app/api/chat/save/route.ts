@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
-import { storeOnWalrus } from '@/lib/walrus/store';
+import { storeBlobOnWalrus } from '@/lib/walrus/server';
 import { sealClient, SEAL_SYSTEM_PACKAGE_ID } from '@/lib/seal/client';
 import { Ed25519Keypair, Ed25519PublicKey } from '@mysten/sui/keypairs/ed25519';
 import { fromBase64 } from '@mysten/bcs';
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
     let suiTxHash: string;
 
     try {
-      const result = await storeOnWalrus(encryptedBlob);
+      const result = await storeBlobOnWalrus(encryptedBlob);
       blobId = result.blobId;
       walrusExplorerUrl = result.walrusExplorerUrl;
       suiTxHash = result.suiTxHash;
