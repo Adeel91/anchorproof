@@ -1,5 +1,3 @@
-// lib/walrus/store.ts
-
 import { walrusClient } from '@/lib/walrus/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromBase64 } from '@mysten/bcs';
@@ -13,7 +11,6 @@ export interface StoreOnWalrusResult {
   suiObjectId: string;
 }
 
-// ⚡ Check if running on Vercel
 const IS_VERCEL = process.env.VERCEL === '1';
 
 export async function storeOnWalrus(
@@ -37,10 +34,7 @@ export async function storeOnWalrus(
 
   const serverKeypair = Ed25519Keypair.fromSecretKey(privateKeyBytes);
 
-  // ⚡ If on Vercel, use the proxy route
   if (IS_VERCEL) {
-    console.log('⚡ Vercel: Using Walrus proxy for upload');
-
     try {
       const blobBytes = new TextEncoder().encode(encryptedBlob);
       const blobBase64 = Buffer.from(blobBytes).toString('base64');
@@ -62,7 +56,6 @@ export async function storeOnWalrus(
 
       const result = await response.json();
 
-      // Extract blobId from various response formats
       const blobId =
         result.blobId ||
         result.newlyCreatedBlob?.blobObject?.blobId ||
@@ -82,8 +75,6 @@ export async function storeOnWalrus(
         throw new Error('No blobId returned from proxy');
       }
 
-      console.log(`✅ Vercel proxy upload successful: ${blobId}`);
-
       return {
         blobId: blobId,
         suiTxHash: suiObjectId !== 'unknown' ? suiObjectId : 'walrus-stored',
@@ -100,13 +91,10 @@ export async function storeOnWalrus(
     }
   }
 
-  // ⚡ Localhost: Use direct Walrus SDK
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      console.log(`⏱️ [WALRUS] Attempt ${attempt}/${retries}...`);
-
       const result = await walrusClient.walrus.writeBlob({
         blob: new TextEncoder().encode(encryptedBlob),
         deletable: false,
@@ -120,8 +108,6 @@ export async function storeOnWalrus(
 
       const suiTxHash =
         suiObjectId !== 'unknown' ? suiObjectId : 'walrus-stored';
-
-      console.log(`✅ Local Walrus upload successful: ${blobId}`);
 
       return {
         blobId: blobId,
@@ -139,7 +125,6 @@ export async function storeOnWalrus(
 
       if (attempt < retries) {
         const waitTime = attempt * 2000;
-        console.log(`⏱️ [WALRUS] Retrying in ${waitTime}ms...`);
         await new Promise((resolve) => setTimeout(resolve, waitTime));
       }
     }
