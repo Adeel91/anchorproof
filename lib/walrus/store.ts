@@ -39,7 +39,7 @@ export async function storeOnWalrus(
       const result = await walrusClient.walrus.writeBlob({
         blob: new TextEncoder().encode(encryptedBlob),
         deletable: false,
-        epochs: 5,
+        epochs: 10,
         signer: serverKeypair,
       });
 
