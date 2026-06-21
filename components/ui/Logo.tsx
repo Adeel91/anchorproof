@@ -54,12 +54,10 @@ export function Logo({
 
   return (
     <div className={`flex items-center ${gap} ${className}`}>
-      {/* Icon */}
       <div
         className="relative flex-shrink-0"
         style={{ width: icon, height: icon }}
       >
-        {/* Subtle glow */}
         <div
           className="absolute inset-0 rounded-full blur-xl opacity-40"
           style={{
@@ -76,7 +74,6 @@ export function Logo({
         />
       </div>
 
-      {/* Text */}
       {showText && (
         <div
           className={`flex flex-col ${hideTextOnMobile ? 'hidden sm:flex' : ''}`}

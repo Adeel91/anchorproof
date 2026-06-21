@@ -13,6 +13,9 @@ export async function proxy(request: NextRequest) {
 
   const isTenantRoute = url.pathname === '/api/tenant/current';
 
+  const isVerifyRoute = url.pathname.startsWith('/verify/');
+  const isVerifyApi = url.pathname.startsWith('/api/verify/');
+
   const protectedApiRoutes = [
     '/api/audit',
     '/api/keys',
@@ -28,7 +31,7 @@ export async function proxy(request: NextRequest) {
     url.pathname.startsWith(route)
   );
 
-  if (isChatRoute || isTenantRoute) {
+  if (isChatRoute || isTenantRoute || isVerifyRoute || isVerifyApi) {
     return NextResponse.next();
   }
 

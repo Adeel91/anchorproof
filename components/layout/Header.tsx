@@ -359,7 +359,6 @@ export default function Header() {
         </div>
       ) : (
         <Container className="h-full flex items-center justify-between px-3 sm:px-4">
-          {/* Logo - Left */}
           <Link
             href="/"
             onClick={closeAll}
@@ -368,7 +367,6 @@ export default function Header() {
             <Logo />
           </Link>
 
-          {/* Navigation - Center */}
           {showNavigation && (
             <nav className="hidden lg:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
               <div
@@ -525,7 +523,6 @@ export default function Header() {
             </nav>
           )}
 
-          {/* Right side - CTA/Login/Address */}
           <div className="flex items-center gap-2 md:gap-4 flex-shrink-0 ml-auto">
             {isLoggedIn ? (
               <>
@@ -599,7 +596,6 @@ export default function Header() {
         </Container>
       )}
 
-      {/* Mobile Menu */}
       {isMobileMenuOpen && !isDashboardPage && !isLoginPage && (
         <div
           ref={mobileMenuRef}

@@ -173,6 +173,7 @@ export async function GET(
         walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
         isPlaintext: true,
         suiTxHash: verification.suiTxHash || blobId,
+        anchorProofTxHash: verification.anchorProofTxHash || null,
       });
     }
 
@@ -196,6 +197,7 @@ export async function GET(
         createdAt: verification.createdAt,
         walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
         suiTxHash: verification.suiTxHash || blobId,
+        anchorProofTxHash: verification.anchorProofTxHash || null,
         isPlaintext: true,
       });
     }
@@ -242,6 +244,7 @@ export async function GET(
             walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
             isEncrypted: true,
             suiTxHash: verification.suiTxHash || blobId,
+            anchorProofTxHash: verification.anchorProofTxHash || null,
           });
         }
 
@@ -283,6 +286,7 @@ export async function GET(
             walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
             isEncrypted: true,
             suiTxHash: verification.suiTxHash || blobId,
+            anchorProofTxHash: verification.anchorProofTxHash || null,
           });
         }
 
@@ -327,6 +331,7 @@ export async function GET(
             walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
             isEncrypted: true,
             suiTxHash: verification.suiTxHash || blobId,
+            anchorProofTxHash: verification.anchorProofTxHash || null,
           });
         }
 
@@ -370,6 +375,7 @@ export async function GET(
           createdAt: verification.createdAt,
           walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
           suiTxHash: verification.suiTxHash || blobId,
+          anchorProofTxHash: verification.anchorProofTxHash || null,
           isDecrypted: true,
         });
       } catch (sealError) {
@@ -400,6 +406,7 @@ export async function GET(
           walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
           isEncrypted: true,
           suiTxHash: verification.suiTxHash || blobId,
+          anchorProofTxHash: verification.anchorProofTxHash || null,
         });
       }
     }
@@ -425,6 +432,7 @@ export async function GET(
       createdAt: verification.createdAt,
       walrusExplorerUrl: `https://walruscan.com/${activeNetwork}/blob/${blobId}`,
       suiTxHash: verification.suiTxHash || blobId,
+      anchorProofTxHash: verification.anchorProofTxHash || null,
       isPlaintext: true,
     });
   } catch (error) {

@@ -53,9 +53,15 @@ export interface SaveConversationResponse {
   conversationId: string;
   messageCount: number;
   contentHash: string;
+  contentFingerprint?: string;
+  anchorProofTxHash?: string;
   walrusExplorerUrl: string;
   onChainRecorded: boolean;
   verificationId: string;
+  sealId?: string;
+  tenantAddress?: string;
+  elapsedMs?: number;
+  error?: string;
 }
 
 export interface StoredKeyPair {

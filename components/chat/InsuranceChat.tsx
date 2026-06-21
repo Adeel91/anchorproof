@@ -20,6 +20,10 @@ import {
   Award,
   Scale,
   Loader2,
+  ExternalLink,
+  Check,
+  X,
+  Copy,
 } from 'lucide-react';
 
 interface Message {
@@ -31,6 +35,8 @@ interface SaveResult {
   blobId: string;
   suiTxHash: string;
   walrusExplorerUrl?: string;
+  contentHash?: string;
+  anchorProofTxHash?: string;
 }
 
 const generateConversationId = () => {
@@ -55,6 +61,7 @@ export default function InsuranceChat() {
   const [suiStatus, setSuiStatus] = useState<
     'idle' | 'pending' | 'verified' | 'failed'
   >('idle');
+  const [copied, setCopied] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -69,6 +76,12 @@ export default function InsuranceChat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(id);
+    setTimeout(() => setCopied(null), 2000);
+  };
 
   const saveToBlockchain = useCallback(async () => {
     if (isSaving || messages.length <= 1 || hasSaved) return;
@@ -86,8 +99,10 @@ export default function InsuranceChat() {
 
       setSaveResult({
         blobId: result.blobId,
-        suiTxHash: result.suiTxHash || result.blobId,
+        suiTxHash: result.suiTxHash,
         walrusExplorerUrl: result.walrusExplorerUrl,
+        contentHash: result.contentHash,
+        anchorProofTxHash: result.anchorProofTxHash,
       });
       setSuiStatus('verified');
       setHasSaved(true);
@@ -177,9 +192,9 @@ export default function InsuranceChat() {
     }
   };
 
-  const truncateHash = (hash: string) => {
+  const fullHash = (hash: string) => {
     if (!hash) return '';
-    return `${hash.slice(0, 16)}...${hash.slice(-8)}`;
+    return hash;
   };
 
   return (
@@ -398,35 +413,35 @@ export default function InsuranceChat() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-3 sm:p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-xl sm:rounded-2xl p-4 sm:p-7 max-w-md w-full shadow-2xl shadow-blue-500/10 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300 mx-2 sm:mx-0">
-            <div className="text-center mb-4 sm:mb-5">
+          <div className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-700 rounded-2xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl shadow-blue-500/10 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300 mx-2 sm:mx-0">
+            <div className="text-center mb-6">
               <div
-                className={`w-12 h-12 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 border ${
+                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 ${
                   suiStatus === 'verified'
-                    ? 'bg-emerald-500/20 border-emerald-500/30'
+                    ? 'bg-emerald-500/20 border-emerald-500/40 shadow-lg shadow-emerald-500/20'
                     : suiStatus === 'pending'
-                      ? 'bg-amber-500/20 border-amber-500/30'
-                      : 'bg-red-500/20 border-red-500/30'
+                      ? 'bg-amber-500/20 border-amber-500/40 shadow-lg shadow-amber-500/20'
+                      : 'bg-red-500/20 border-red-500/40 shadow-lg shadow-red-500/20'
                 }`}
               >
                 {suiStatus === 'verified' && (
-                  <CheckCircle className="w-6 h-6 sm:w-10 sm:h-10 text-emerald-500" />
+                  <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400" />
                 )}
                 {suiStatus === 'pending' && (
-                  <Loader2 className="w-6 h-6 sm:w-10 sm:h-10 text-amber-400 animate-spin" />
+                  <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 text-amber-400 animate-spin" />
                 )}
                 {suiStatus === 'failed' && (
-                  <span className="text-3xl sm:text-5xl text-red-500">❌</span>
+                  <X className="w-8 h-8 sm:w-10 sm:h-10 text-red-400" />
                 )}
               </div>
-              <h3 className="text-base sm:text-2xl font-bold text-white mb-0.5 sm:mb-1">
-                {suiStatus === 'verified' && 'Conversation Secured ✅'}
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">
+                {suiStatus === 'verified' && 'Conversation Secured'}
                 {suiStatus === 'pending' && 'Securing Conversation...'}
                 {suiStatus === 'failed' && 'Verification Failed'}
               </h3>
-              <p className="text-[10px] sm:text-sm text-slate-400">
+              <p className="text-sm text-slate-400">
                 {suiStatus === 'verified' &&
-                  'Immutable and cryptographically verified on-chain.'}
+                  'Your conversation is now immutable and cryptographically verified on-chain.'}
                 {suiStatus === 'pending' &&
                   'Your conversation is being securely stored and verified. This may take ~30 seconds...'}
                 {suiStatus === 'failed' &&
@@ -434,75 +449,199 @@ export default function InsuranceChat() {
               </p>
             </div>
 
-            <div className="space-y-2.5 sm:space-y-3">
-              <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-slate-700/50 hover:border-blue-400/20 transition-all">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-1.5">
-                  <Database className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400" />
-                  <span className="text-[8px] sm:text-xs text-slate-500 font-mono font-semibold uppercase tracking-wider">
-                    Storage Reference
+            <div className="space-y-4">
+              <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50 hover:border-cyan-500/30 transition-all duration-300">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 bg-cyan-500/10 rounded-lg">
+                    <Database className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <span className="text-xs font-mono font-semibold text-slate-300 uppercase tracking-wider">
+                    Walrus Storage
                   </span>
-                  <span className="ml-auto text-[8px]">
+                  <span className="ml-auto text-[10px]">
                     {saveResult?.blobId ? (
-                      <span className="text-emerald-400">✅ Stored</span>
+                      <span className="flex items-center gap-1 text-emerald-400">
+                        <Check className="w-3 h-3" />
+                        Stored
+                      </span>
                     ) : (
-                      <span className="text-amber-400 flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-amber-400">
                         <Loader2 className="w-3 h-3 animate-spin" />
                         Uploading...
                       </span>
                     )}
                   </span>
                 </div>
-                <code className="text-cyan-400 text-[8px] sm:text-xs break-all font-mono bg-slate-900/50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded block">
-                  {saveResult?.blobId
-                    ? truncateHash(saveResult.blobId)
-                    : 'Waiting for upload...'}
-                </code>
-                {saveResult?.blobId && (
-                  <a
-                    href={`https://walruscan.com/${activeNetwork}/blob/${saveResult.blobId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[7px] sm:text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block transition-colors"
-                  >
-                    View on Walrus →
-                  </a>
-                )}
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-cyan-300 text-xs break-all font-mono bg-slate-900/70 px-3 py-2 rounded-lg">
+                    {saveResult?.blobId
+                      ? fullHash(saveResult.blobId)
+                      : 'Waiting for upload...'}
+                  </code>
+                  {saveResult?.blobId && (
+                    <button
+                      onClick={() =>
+                        copyToClipboard(saveResult.blobId!, 'walrus')
+                      }
+                      className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+                      title="Copy to clipboard"
+                    >
+                      {copied === 'walrus' ? (
+                        <Check className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-slate-400 hover:text-slate-300" />
+                      )}
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-[10px] text-slate-500">
+                    <Database className="w-3 h-3 inline mr-1 text-cyan-400/70" />
+                    Encrypted data blob identifier
+                  </span>
+                  {saveResult?.blobId && (
+                    <a
+                      href={`https://walruscan.com/${activeNetwork}/blob/${saveResult.blobId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                    >
+                      View on Walrus
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
               </div>
 
-              <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 border border-slate-700/50 hover:border-purple-400/20 transition-all">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-1.5">
-                  <LinkIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400" />
-                  <span className="text-[8px] sm:text-xs text-slate-500 font-mono font-semibold uppercase tracking-wider">
-                    Verification Proof
+              <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50 hover:border-blue-500/30 transition-all duration-300">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 bg-blue-500/10 rounded-lg">
+                    <LinkIcon className="w-4 h-4 text-blue-400" />
+                  </div>
+                  <span className="text-xs font-mono font-semibold text-slate-300 uppercase tracking-wider">
+                    Walrus Transaction
                   </span>
-                  <span className="ml-auto text-[8px]">
+                  <span className="ml-auto text-[10px]">
                     {saveResult?.suiTxHash ? (
-                      <span className="text-emerald-400">✅ Confirmed</span>
+                      <span className="flex items-center gap-1 text-emerald-400">
+                        <Check className="w-3 h-3" />
+                        Confirmed
+                      </span>
                     ) : (
-                      <span className="text-amber-400">⏳ Pending</span>
+                      <span className="flex items-center gap-1 text-amber-400">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Pending
+                      </span>
                     )}
                   </span>
                 </div>
-                <code className="text-purple-400 text-[8px] sm:text-xs break-all font-mono bg-slate-900/50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded block">
-                  {saveResult?.suiTxHash
-                    ? truncateHash(saveResult.suiTxHash)
-                    : 'Waiting for confirmation...'}
-                </code>
-                {saveResult?.suiTxHash && (
-                  <a
-                    href={`https://suiscan.xyz/${activeNetwork}/object/${saveResult.suiTxHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[7px] sm:text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block transition-colors"
-                  >
-                    View on Sui →
-                  </a>
-                )}
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-blue-300 text-xs break-all font-mono bg-slate-900/70 px-3 py-2 rounded-lg">
+                    {saveResult?.suiTxHash
+                      ? fullHash(saveResult.suiTxHash)
+                      : 'Waiting for confirmation...'}
+                  </code>
+                  {saveResult?.suiTxHash && (
+                    <button
+                      onClick={() =>
+                        copyToClipboard(saveResult.suiTxHash!, 'sui')
+                      }
+                      className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+                      title="Copy to clipboard"
+                    >
+                      {copied === 'sui' ? (
+                        <Check className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-slate-400 hover:text-slate-300" />
+                      )}
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-[10px] text-slate-500">
+                    <LinkIcon className="w-3 h-3 inline mr-1 text-blue-400/70" />
+                    Sui transaction for Walrus storage
+                  </span>
+                  {saveResult?.suiTxHash && (
+                    <a
+                      href={`https://suiscan.xyz/${activeNetwork}/object/${saveResult.suiTxHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                    >
+                      View on Sui
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50 hover:border-amber-500/30 transition-all duration-300">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 bg-amber-500/10 rounded-lg">
+                    <Fingerprint className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <span className="text-xs font-mono font-semibold text-slate-300 uppercase tracking-wider">
+                    AnchorProof Verification
+                  </span>
+                  <span className="ml-auto text-[10px]">
+                    {saveResult?.anchorProofTxHash ? (
+                      <span className="flex items-center gap-1 text-emerald-400">
+                        <Check className="w-3 h-3" />
+                        Verified
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-amber-400">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Recording...
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-amber-300 text-xs break-all font-mono bg-slate-900/70 px-3 py-2 rounded-lg">
+                    {saveResult?.anchorProofTxHash
+                      ? fullHash(saveResult.anchorProofTxHash)
+                      : 'Recording on-chain verification...'}
+                  </code>
+                  {saveResult?.anchorProofTxHash && (
+                    <button
+                      onClick={() =>
+                        copyToClipboard(saveResult.anchorProofTxHash!, 'anchor')
+                      }
+                      className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+                      title="Copy to clipboard"
+                    >
+                      {copied === 'anchor' ? (
+                        <Check className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-slate-400 hover:text-slate-300" />
+                      )}
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-[10px] text-slate-500">
+                    <Fingerprint className="w-3 h-3 inline mr-1 text-amber-400/70" />
+                    On-chain verification via verify_conversation
+                  </span>
+                  {saveResult?.anchorProofTxHash && (
+                    <a
+                      href={`https://suiscan.xyz/${activeNetwork}/tx/${saveResult.anchorProofTxHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                    >
+                      View on Sui
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
               </div>
 
               {!saveResult?.blobId && (
                 <div className="mt-2">
-                  <div className="flex justify-between text-[8px] sm:text-[10px] text-slate-500 mb-1">
+                  <div className="flex justify-between text-[10px] text-slate-500 mb-1">
                     <span>Uploading to Walrus...</span>
                     <span>~30s</span>
                   </div>
@@ -512,59 +651,80 @@ export default function InsuranceChat() {
                 </div>
               )}
 
-              {saveResult?.blobId && saveResult?.suiTxHash && (
-                <div className="mt-2 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-center">
-                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400 mx-auto mb-1" />
-                  <p className="text-xs sm:text-sm text-emerald-400 font-semibold">
-                    Conversation Secured ✅
-                  </p>
-                  <p className="text-[8px] sm:text-xs text-slate-500">
-                    Walrus stored • On-chain verified
-                  </p>
-                </div>
-              )}
+              {saveResult?.blobId &&
+                saveResult?.suiTxHash &&
+                saveResult?.anchorProofTxHash && (
+                  <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 rounded-xl border border-emerald-500/20 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <CheckCircle className="w-5 h-5 text-emerald-400" />
+                      <p className="text-sm font-semibold text-emerald-400">
+                        Conversation Fully Secured
+                      </p>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      <span className="text-cyan-400">Walrus stored</span>
+                      <span className="mx-1 text-slate-600">•</span>
+                      <span className="text-blue-400">
+                        Sui transaction confirmed
+                      </span>
+                      <span className="mx-1 text-slate-600">•</span>
+                      <span className="text-amber-400">
+                        AnchorProof verified on-chain
+                      </span>
+                    </p>
+                  </div>
+                )}
 
               {suiStatus === 'failed' && (
-                <div className="mt-2 p-3 bg-red-500/10 rounded-xl border border-red-500/20 text-center">
-                  <p className="text-xs sm:text-sm text-red-400 font-semibold">
-                    Verification Failed ❌
+                <div className="p-4 bg-gradient-to-r from-red-500/10 to-red-600/10 rounded-xl border border-red-500/20 text-center">
+                  <p className="text-sm font-semibold text-red-400">
+                    Verification Failed
                   </p>
-                  <p className="text-[8px] sm:text-xs text-slate-500">
+                  <p className="text-xs text-slate-400">
                     Please try saving again or contact support.
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-3 mt-4 sm:mt-5">
-              {saveResult?.suiTxHash && (
+            <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t border-slate-700/50">
+              {saveResult?.anchorProofTxHash && (
                 <a
-                  href={`https://suiscan.xyz/${activeNetwork}/object/${saveResult.suiTxHash}`}
+                  href={`https://suiscan.xyz/${activeNetwork}/tx/${saveResult.anchorProofTxHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-center bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20 px-3 sm:px-4"
+                  className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 px-4 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20 flex-1"
                 >
-                  Verify on Sui
+                  <ShieldCheck className="w-4 h-4" />
+                  Verify AnchorProof
+                  <ExternalLink className="w-4 h-4" />
                 </a>
               )}
               <button
                 onClick={() => setShowModal(false)}
-                className="text-center bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all px-3 sm:px-4 flex-1"
+                className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white py-2.5 px-4 rounded-lg text-sm font-semibold transition-all flex-1"
               >
                 Close
               </button>
             </div>
 
-            <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-slate-700/50">
-              <p className="text-[6px] sm:text-[10px] text-slate-500 text-center font-mono flex items-center justify-center gap-1 sm:gap-2">
-                <Shield className="w-2 h-2 sm:w-3 sm:h-3" />
-                <span className="hidden xs:inline">
-                  Cryptographically verified • Tamper-proof • NAIC compliant
+            <div className="mt-4 pt-4 border-t border-slate-700/30">
+              <div className="flex items-center justify-center gap-3 text-[10px] text-slate-500">
+                <span className="flex items-center gap-1">
+                  <Database className="w-3 h-3 text-cyan-400" />
+                  Walrus
                 </span>
-                <span className="xs:hidden">
-                  Verified • Tamper-proof • NAIC
+                <span className="text-slate-700">•</span>
+                <span className="flex items-center gap-1">
+                  <LinkIcon className="w-3 h-3 text-blue-400" />
+                  Sui
                 </span>
-              </p>
+                <span className="text-slate-700">•</span>
+                <span className="flex items-center gap-1">
+                  <Fingerprint className="w-3 h-3 text-amber-400" />
+                  AnchorProof
+                </span>
+              </div>
             </div>
           </div>
         </div>

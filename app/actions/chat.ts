@@ -32,10 +32,12 @@ export async function saveConversationAction(
 
     return {
       blobId: result.blobId,
-      suiTxHash: result.suiTxHash || result.blobId,
+      suiTxHash: result.suiTxHash,
       conversationId: result.conversationId,
       messageCount: result.messageCount || 0,
       contentHash: result.contentHash,
+      contentFingerprint: result.contentFingerprint,
+      anchorProofTxHash: result.anchorProofTxHash,
       walrusExplorerUrl: result.walrusExplorerUrl,
       onChainRecorded: result.onChainRecorded || false,
       verificationId: result.verificationId,

@@ -28,6 +28,7 @@ export async function GET() {
         conversationId: true,
         blobId: true,
         suiTxHash: true,
+        anchorProofTxHash: true,
         customerId: true,
         agentId: true,
         modelUsed: true,

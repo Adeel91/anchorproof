@@ -371,7 +371,6 @@ export function Reports() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Generate Report Section */}
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -485,7 +484,6 @@ export function Reports() {
         )}
       </div>
 
-      {/* Reports List */}
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>

@@ -20,6 +20,7 @@ export interface Conversation {
   verifiedAt: string | null;
   createdAt: string;
   suiTxHash?: string | null;
+  anchorProofTxHash?: string | null;
   modelUsed?: string | null;
   metadata?: Record<string, unknown>;
   status?: 'verified' | 'pending' | 'tampered';

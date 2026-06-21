@@ -62,7 +62,6 @@ export function ApiKeyOverview() {
   return (
     <>
       <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl overflow-hidden">
-        {/* Header */}
         <div className="px-6 py-4 border-b border-slate-800/50 flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -86,7 +85,6 @@ export function ApiKeyOverview() {
           </Link>
         </div>
 
-        {/* Key Cards Grid */}
         <div className="p-6">
           {apiKeys.length === 0 ? (
             <div className="text-center py-8">
@@ -120,7 +118,6 @@ export function ApiKeyOverview() {
                     key={key.id}
                     className="group relative bg-slate-800/30 border border-slate-700/50 rounded-xl p-4 hover:border-indigo-500/30 hover:bg-slate-800/50 transition-all duration-300"
                   >
-                    {/* Status Badge */}
                     <div className="absolute top-3 right-3">
                       <span
                         className={`px-2 py-0.5 rounded-full text-[9px] font-medium ${
@@ -133,7 +130,6 @@ export function ApiKeyOverview() {
                       </span>
                     </div>
 
-                    {/* Key Name */}
                     <div className="mb-3 pr-16">
                       <h4 className="text-sm font-medium text-white truncate">
                         {key.name}
@@ -143,7 +139,6 @@ export function ApiKeyOverview() {
                       </code>
                     </div>
 
-                    {/* Metadata */}
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
                         <Clock className="w-3 h-3" />
@@ -165,7 +160,6 @@ export function ApiKeyOverview() {
                       </div>
                     </div>
 
-                    {/* Quick Actions */}
                     <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/30">
                       <button
                         onClick={() =>
@@ -188,7 +182,6 @@ export function ApiKeyOverview() {
                 );
               })}
 
-              {/* "View All" Card */}
               {apiKeys.length > 3 && (
                 <Link
                   href="/dashboard/keys"
@@ -211,7 +204,6 @@ export function ApiKeyOverview() {
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-3 border-t border-slate-800/50 bg-slate-900/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -230,7 +222,6 @@ export function ApiKeyOverview() {
         </div>
       </div>
 
-      {/* Toast */}
       {toast && (
         <Toast
           message={toast.message}

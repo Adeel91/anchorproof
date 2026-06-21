@@ -12,6 +12,7 @@ interface RecordOnChainParams {
   blobId: string;
   conversationId: string;
   contentHash: string;
+  anchorProofHash?: string;
   suiTxHash: string;
   signature: string;
   tenantAddress?: string;

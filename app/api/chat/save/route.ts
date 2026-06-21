@@ -125,9 +125,23 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    const contentHash = crypto
+    const contentFingerprint = crypto
       .createHash('sha256')
       .update(JSON.stringify(conversationData.messages))
+      .digest('hex');
+
+    const fingerprintData = {
+      contentHash: contentFingerprint,
+      conversationId: conversationId,
+      messageCount: messages.length,
+      customerId: customerId || 'unknown',
+      agentId: agentId || 'unknown',
+      timestamp: new Date().toISOString(),
+    };
+
+    const contentHash = crypto
+      .createHash('sha256')
+      .update(JSON.stringify(fingerprintData))
       .digest('hex');
 
     const tenantApiKey = await prisma.apiKey.findFirst({
@@ -179,6 +193,7 @@ export async function POST(request: NextRequest) {
         tenantAddress: actualTenantAddress,
         sealId: sealId,
         conversationId: conversationId,
+        contentHash: contentHash,
       });
     } catch (sealError) {
       console.error('SEAL encryption failed:', sealError);
@@ -232,6 +247,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let anchorProofTxHash: string | undefined;
+    try {
+      const result = await recordOnChain({
+        blobId,
+        conversationId,
+        contentHash,
+        suiTxHash: suiTxHash,
+        signature: signature,
+        tenantAddress: actualTenantAddress,
+      });
+
+      if (result && result.digest) {
+        anchorProofTxHash = result.digest;
+        console.log('AnchorProof transaction hash:', anchorProofTxHash);
+      }
+    } catch (err) {
+      console.error('On-chain recording failed:', err);
+    }
+
     let verification;
 
     try {
@@ -241,6 +275,7 @@ export async function POST(request: NextRequest) {
           conversationId,
           blobId: blobId,
           suiTxHash: suiTxHash,
+          anchorProofTxHash: anchorProofTxHash,
           customerId: customerId || 'unknown',
           agentId: agentId || 'unknown',
           modelUsed: 'seal-encrypted',
@@ -250,6 +285,7 @@ export async function POST(request: NextRequest) {
             savedAt: new Date().toISOString(),
             sealId: sealId,
             tenantAddress: actualTenantAddress,
+            contentFingerprint: contentFingerprint,
           },
         },
       });
@@ -272,19 +308,6 @@ export async function POST(request: NextRequest) {
       console.error('Temp message deletion failed:', deleteError);
     }
 
-    recordOnChain({
-      blobId,
-      conversationId,
-      contentHash,
-      suiTxHash: suiTxHash,
-      signature: signature,
-      tenantAddress: actualTenantAddress,
-    })
-      .then(() => {})
-      .catch((err) => {
-        console.error('On-chain recording failed:', err);
-      });
-
     createAuditLogAsync({
       action: 'CONVERSATION_SAVED',
       blobId: blobId,
@@ -301,6 +324,8 @@ export async function POST(request: NextRequest) {
         apiKeyId: apiKeyRecord.id,
         apiKeyName: apiKeyRecord.name || 'API Key',
         tenantName: apiKeyRecord.tenant?.name || undefined,
+        contentHash: contentHash,
+        anchorProofTxHash: anchorProofTxHash,
       },
     });
 
@@ -312,11 +337,14 @@ export async function POST(request: NextRequest) {
       conversationId,
       messageCount: messages.length,
       contentHash: contentHash,
+      contentFingerprint: contentFingerprint,
+      anchorProofTxHash: anchorProofTxHash,
       suiTxHash: suiTxHash,
       walrusExplorerUrl: walrusExplorerUrl,
       verificationId: verification.id,
       sealId: sealId,
       tenantAddress: actualTenantAddress,
+      onChainRecorded: !!anchorProofTxHash,
       elapsedMs: elapsed,
     });
   } catch (error) {

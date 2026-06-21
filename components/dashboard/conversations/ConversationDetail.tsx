@@ -7,12 +7,17 @@ import {
   AlertCircle,
   Database,
   ExternalLink,
-  Shield,
+  Clock,
   FileCheck,
   Link as LinkIcon,
   Copy,
   Calendar,
   Lock,
+  Fingerprint,
+  CheckCircle,
+  User,
+  Bot,
+  Shield,
 } from 'lucide-react';
 import { activeNetwork } from '@/lib/walrus/client';
 
@@ -32,6 +37,7 @@ interface ConversationData {
   };
   blobId: string;
   suiTxHash?: string;
+  anchorProofTxHash?: string;
   verifiedAt?: string;
   createdAt?: string;
   isFallback?: boolean;
@@ -156,6 +162,12 @@ export function ConversationDetail({
     });
   };
 
+  const isVerified =
+    conversation?.verifiedAt !== null && conversation?.verifiedAt !== undefined;
+  const isAnchorProofVerified =
+    conversation?.anchorProofTxHash !== null &&
+    conversation?.anchorProofTxHash !== undefined;
+
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
@@ -230,171 +242,244 @@ export function ConversationDetail({
   }
 
   const suiTxHash = conversation.suiTxHash || conversation.blobId;
+  const anchorProofTxHash = conversation.anchorProofTxHash || null;
   const messages = conversation.messages || [];
   const messageCount = messages.length;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
-          <div>
-            <h3 className="text-lg font-semibold text-white">
-              Conversation Details
-            </h3>
-            <div className="flex items-center gap-3 mt-1 flex-wrap">
-              <span className="text-xs text-slate-500 font-mono">
-                {conversation.conversationId || 'N/A'}
-              </span>
-              <span
-                className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
-                  conversation.verifiedAt
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                }`}
-              >
-                {conversation.verifiedAt ? 'Verified' : 'Pending'}
-              </span>
-              {conversation.verifiedAt && (
-                <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {formatDate(conversation.verifiedAt)}
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-700/50 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl shadow-indigo-500/10 animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/50 bg-slate-800/20">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <Shield className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-white">
+                Conversation Details
+              </h3>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <span className="text-[10px] text-slate-500 font-mono">
+                  {conversation.conversationId || 'N/A'}
                 </span>
-              )}
-              {isEncrypted && (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center gap-1">
-                  <Lock className="w-3 h-3" />
-                  Encrypted
+                <span className="w-px h-3 bg-slate-700" />
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                    isVerified || isAnchorProofVerified
+                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
+                  }`}
+                >
+                  {isVerified || isAnchorProofVerified ? (
+                    <>
+                      <CheckCircle className="w-3 h-3" />
+                      Verified
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="w-3 h-3" />
+                      Pending
+                    </>
+                  )}
                 </span>
-              )}
-              {isPlaintext && (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1">
-                  <Database className="w-3 h-3" />
-                  Plaintext
-                </span>
-              )}
-              {isFallback && (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
-                  <Database className="w-3 h-3" />
-                  Stored Metadata
-                </span>
-              )}
+                {conversation.verifiedAt && (
+                  <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {formatDate(conversation.verifiedAt)}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-slate-800"
+            className="text-slate-500 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-800/50"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="p-3 rounded-lg bg-slate-800/30">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">
                 Conversation ID
               </p>
               <p className="text-sm text-white font-mono truncate">
-                {conversation.conversationId || 'N/A'}
+                {conversation.conversationId?.slice(0, 20) || 'N/A'}
               </p>
             </div>
-            <div className="p-3 rounded-lg bg-slate-800/30">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+            <div className="p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">
                 Customer
               </p>
               <p className="text-sm text-white">
                 {conversation.metadata?.customerId || 'N/A'}
               </p>
             </div>
-            <div className="p-3 rounded-lg bg-slate-800/30">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+            <div className="p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">
                 Agent
               </p>
               <p className="text-sm text-white">
                 {conversation.metadata?.agentId || 'N/A'}
               </p>
             </div>
-            <div className="p-3 rounded-lg bg-slate-800/30">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+            <div className="p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">
                 Messages
               </p>
-              <p className="text-sm text-white">{messageCount}</p>
+              <p className="text-sm text-white font-semibold">{messageCount}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/50">
-              <div className="flex items-center justify-between mb-1">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="group p-3 rounded-xl bg-slate-800/30 border border-slate-700/30 hover:border-cyan-500/30 transition-all duration-300">
+              <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
-                  <Database className="w-4 h-4 text-cyan-400" />
-                  <span className="text-xs text-slate-500 font-mono">
-                    Storage Reference
+                  <div className="p-1 rounded-lg bg-cyan-500/10">
+                    <Database className="w-3.5 h-3.5 text-cyan-400" />
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono font-semibold uppercase tracking-wider">
+                    Walrus Storage
                   </span>
                 </div>
                 <button
                   onClick={() => copyToClipboard(conversation.blobId, 'blob')}
-                  className="text-slate-500 hover:text-white transition-colors"
+                  className="text-slate-500 hover:text-white transition-colors p-1 rounded hover:bg-slate-700/30"
                 >
                   <Copy className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <code className="text-cyan-400 text-xs break-all font-mono block mb-1">
+              <code className="text-cyan-400 text-xs break-all font-mono bg-slate-900/50 px-2 py-1.5 rounded-lg block mb-1.5">
                 {conversation.blobId}
               </code>
-              {copied === 'blob' && (
-                <span className="text-[10px] text-emerald-400">Copied!</span>
-              )}
-              <a
-                href={`https://walruscan.com/${activeNetwork}/blob/${conversation.blobId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block flex items-center gap-1"
-              >
-                <ExternalLink className="w-3 h-3" />
-                View Storage Record
-              </a>
+              <div className="flex items-center justify-between">
+                {copied === 'blob' && (
+                  <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" />
+                    Copied!
+                  </span>
+                )}
+                <a
+                  href={`https://walruscan.com/${activeNetwork}/blob/${conversation.blobId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 transition-colors ml-auto"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  View
+                </a>
+              </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/50">
-              <div className="flex items-center justify-between mb-1">
+            <div className="group p-3 rounded-xl bg-slate-800/30 border border-slate-700/30 hover:border-blue-500/30 transition-all duration-300">
+              <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-purple-400" />
-                  <span className="text-xs text-slate-500 font-mono">
-                    Verification Proof
+                  <div className="p-1 rounded-lg bg-blue-500/10">
+                    <LinkIcon className="w-3.5 h-3.5 text-blue-400" />
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono font-semibold uppercase tracking-wider">
+                    Walrus Tx
                   </span>
                 </div>
                 <button
                   onClick={() => copyToClipboard(suiTxHash, 'sui')}
-                  className="text-slate-500 hover:text-white transition-colors"
+                  className="text-slate-500 hover:text-white transition-colors p-1 rounded hover:bg-slate-700/30"
                 >
                   <Copy className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <code className="text-purple-400 text-xs break-all font-mono block mb-1">
+              <code className="text-blue-400 text-xs break-all font-mono bg-slate-900/50 px-2 py-1.5 rounded-lg block mb-1.5">
                 {suiTxHash}
               </code>
-              {copied === 'sui' && (
-                <span className="text-[10px] text-emerald-400">Copied!</span>
+              <div className="flex items-center justify-between">
+                {copied === 'sui' && (
+                  <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" />
+                    Copied!
+                  </span>
+                )}
+                <a
+                  href={`https://suiscan.xyz/${activeNetwork}/object/${suiTxHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 transition-colors ml-auto"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  View
+                </a>
+              </div>
+            </div>
+
+            <div className="group p-3 rounded-xl bg-slate-800/30 border border-slate-700/30 hover:border-amber-500/30 transition-all duration-300">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-1 rounded-lg bg-amber-500/10">
+                    <Fingerprint className="w-3.5 h-3.5 text-amber-400" />
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono font-semibold uppercase tracking-wider">
+                    AnchorProof
+                  </span>
+                </div>
+                {anchorProofTxHash ? (
+                  <button
+                    onClick={() => copyToClipboard(anchorProofTxHash, 'anchor')}
+                    className="text-slate-500 hover:text-white transition-colors p-1 rounded hover:bg-slate-700/30"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                ) : (
+                  <span className="text-[10px] text-slate-600">N/A</span>
+                )}
+              </div>
+              {anchorProofTxHash ? (
+                <>
+                  <code className="text-amber-400 text-xs break-all font-mono bg-slate-900/50 px-2 py-1.5 rounded-lg block mb-1.5">
+                    {anchorProofTxHash}
+                  </code>
+                  <div className="flex items-center justify-between">
+                    {copied === 'anchor' && (
+                      <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Copied!
+                      </span>
+                    )}
+                    <div className="flex items-center gap-2 ml-auto">
+                      <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Verified
+                      </span>
+                      <a
+                        href={`https://suiscan.xyz/${activeNetwork}/tx/${anchorProofTxHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 transition-colors"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-1">
+                  <Clock className="w-3 h-3 text-amber-400/70" />
+                  <span>Pending verification</span>
+                </div>
               )}
-              <a
-                href={`https://suiscan.xyz/${activeNetwork}/object/${suiTxHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] text-indigo-400 hover:text-indigo-300 mt-1 inline-block flex items-center gap-1"
-              >
-                <LinkIcon className="w-3 h-3" />
-                View Verification Proof
-              </a>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
               <FileCheck className="w-4 h-4 text-indigo-400" />
-              Transcript ({messageCount} messages)
+              <h4 className="text-sm font-medium text-white">Transcript</h4>
+              <span className="text-xs text-slate-500">
+                ({messageCount} messages)
+              </span>
               {isEncrypted && messageCount === 0 && (
                 <span className="text-xs text-purple-400 font-normal ml-2">
-                  (Encrypted - verify on-chain to decrypt)
+                  (Encrypted)
                 </span>
               )}
               {isPlaintext && (
@@ -402,32 +487,32 @@ export function ConversationDetail({
                   (Unencrypted)
                 </span>
               )}
-            </h4>
+            </div>
 
             {isEncrypted && messageCount === 0 && (
-              <div className="text-center py-8 bg-purple-500/5 rounded-xl border border-purple-500/20">
-                <Lock className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-                <p className="text-sm text-slate-400">
+              <div className="text-center py-10 bg-purple-500/5 rounded-xl border border-purple-500/20">
+                <Lock className="w-12 h-12 text-purple-400 mx-auto mb-3" />
+                <p className="text-sm text-slate-400 font-medium">
                   This conversation is encrypted
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  The content is protected with SEAL encryption.
-                  <br />
-                  Verify the blob on-chain to view the messages.
+                  Protected with SEAL encryption
                 </p>
                 <a
                   href={`https://suiscan.xyz/${activeNetwork}/object/${suiTxHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 inline-block text-indigo-400 hover:text-indigo-300 text-sm"
+                  className="mt-3 inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300 text-sm transition-colors"
                 >
-                  Verify on SuiScan →
+                  Verify on SuiScan
+                  <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
             )}
 
-            {messageCount > 0 && !isEncrypted
-              ? messages.map((msg, idx: number) => (
+            {messageCount > 0 && !isEncrypted && (
+              <div className="space-y-2.5">
+                {messages.map((msg, idx: number) => (
                   <div
                     key={idx}
                     className={`p-4 rounded-xl ${
@@ -436,7 +521,20 @@ export function ConversationDetail({
                         : 'bg-slate-800/30 border border-slate-700/30'
                     }`}
                   >
-                    <div className="flex items-center gap-3 mb-1.5">
+                    <div className="flex items-center gap-2.5 mb-1.5">
+                      <div
+                        className={`p-1 rounded-lg ${
+                          msg.role === 'user'
+                            ? 'bg-indigo-500/20 text-indigo-400'
+                            : 'bg-cyan-500/20 text-cyan-400'
+                        }`}
+                      >
+                        {msg.role === 'user' ? (
+                          <User className="w-3.5 h-3.5" />
+                        ) : (
+                          <Bot className="w-3.5 h-3.5" />
+                        )}
+                      </div>
                       <span
                         className={`text-xs font-semibold ${
                           msg.role === 'user'
@@ -446,73 +544,111 @@ export function ConversationDetail({
                       >
                         {msg.role === 'user' ? 'Customer' : 'AI Assistant'}
                       </span>
-                      <span className="text-[10px] text-slate-500">
-                        {msg.timestamp
-                          ? new Date(msg.timestamp).toLocaleTimeString()
-                          : ''}
-                      </span>
+                      {msg.timestamp && (
+                        <span className="text-[10px] text-slate-500">
+                          {new Date(msg.timestamp).toLocaleTimeString()}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
+                    <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed pl-0.5">
                       {msg.content}
                     </p>
                   </div>
-                ))
-              : !isEncrypted && (
-                  <div className="text-center py-8">
-                    {isFallback ? (
-                      <>
-                        <Database className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-                        <p className="text-sm text-slate-400">
-                          Conversation data is temporarily unavailable
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          The blob exists on Walrus but could not be retrieved.
-                          Showing stored metadata instead.
-                        </p>
-                      </>
-                    ) : messageCount === 0 && !isEncrypted ? (
-                      <p className="text-slate-500 text-sm">
-                        No messages in this conversation
-                      </p>
-                    ) : null}
-                  </div>
-                )}
+                ))}
+              </div>
+            )}
+
+            {isFallback && messageCount === 0 && !isEncrypted && (
+              <div className="text-center py-10 bg-amber-500/5 rounded-xl border border-amber-500/20">
+                <Database className="w-12 h-12 text-amber-400 mx-auto mb-3" />
+                <p className="text-sm text-slate-400 font-medium">
+                  Conversation data temporarily unavailable
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  The blob exists on Walrus but could not be retrieved
+                </p>
+              </div>
+            )}
+
+            {!isFallback &&
+              messageCount === 0 &&
+              !isEncrypted &&
+              !isPlaintext && (
+                <div className="text-center py-10 text-slate-500 text-sm">
+                  No messages in this conversation
+                </div>
+              )}
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-800 flex flex-col sm:flex-row gap-3">
-          <a
-            href={`https://walruscan.com/${activeNetwork}/blob/${conversation.blobId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 text-center bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-          >
-            <Database className="w-4 h-4" />
-            View Storage
-          </a>
+        <div className="px-6 py-4 border-t border-slate-800/50 bg-slate-800/10">
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={`https://walruscan.com/${activeNetwork}/blob/${conversation.blobId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 min-w-[120px] text-center bg-cyan-600/80 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <Database className="w-4 h-4" />
+              Storage
+            </a>
 
-          <a
-            href={`https://suiscan.xyz/${activeNetwork}/object/${suiTxHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 text-center bg-purple-600 hover:bg-purple-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-          >
-            <Shield className="w-4 h-4" />
-            Verify On-Chain
-          </a>
+            <a
+              href={`https://suiscan.xyz/${activeNetwork}/object/${suiTxHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 min-w-[120px] text-center bg-blue-600/80 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <LinkIcon className="w-4 h-4" />
+              Walrus Tx
+            </a>
 
-          <button
-            onClick={onClose}
-            className="flex-1 text-center bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
-          >
-            Close
-          </button>
+            {anchorProofTxHash && (
+              <a
+                href={`https://suiscan.xyz/${activeNetwork}/tx/${anchorProofTxHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 min-w-[120px] text-center bg-amber-600/80 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <Fingerprint className="w-4 h-4" />
+                AnchorProof
+              </a>
+            )}
+
+            <button
+              onClick={onClose}
+              className="flex-1 min-w-[80px] text-center bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
-        {/* Footer note */}
-        <div className="px-6 py-2 border-t border-slate-800/50 bg-slate-900/30">
-          <p className="text-[10px] text-slate-500 text-center font-mono">
-            🔒 Court-admissible evidence • Immutable • Verifiable on-chain
+        <div className="px-6 py-2 border-t border-slate-800/30 bg-slate-900/30">
+          <p className="text-[10px] text-slate-500 text-center font-mono flex items-center justify-center gap-3 flex-wrap">
+            <span className="flex items-center gap-1">
+              <CheckCircle className="w-3 h-3 text-emerald-400/70" />
+              Court-admissible
+            </span>
+            <span className="text-slate-700">•</span>
+            <span className="flex items-center gap-1">
+              <Database className="w-3 h-3 text-cyan-400/70" />
+              Walrus
+            </span>
+            <span className="text-slate-700">•</span>
+            <span className="flex items-center gap-1">
+              <LinkIcon className="w-3 h-3 text-blue-400/70" />
+              Sui
+            </span>
+            {anchorProofTxHash && (
+              <>
+                <span className="text-slate-700">•</span>
+                <span className="flex items-center gap-1 text-amber-400/70">
+                  <Fingerprint className="w-3 h-3" />
+                  AnchorProof
+                </span>
+              </>
+            )}
           </p>
         </div>
       </div>
