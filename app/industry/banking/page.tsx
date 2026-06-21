@@ -1,5 +1,18 @@
 import IndustryPageWrapper from '@/components/industry/IndustryPageWrapper';
 import { BankingChat } from '@/components/chat';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Banking & Financial Services Compliance',
+  description:
+    'SEC, FINRA, and Basel III compliant AI conversation logging. Secure your institution with immutable, court-admissible audit trails on the blockchain.',
+  openGraph: {
+    title: 'AnchorProof | Banking & Financial Services Compliance',
+    description:
+      'Cryptographically secure, tamper-proof corporate AI conversation trails for tier-1 financial institutions.',
+    type: 'website',
+  },
+};
 
 export default function BankingPage() {
   return IndustryPageWrapper({

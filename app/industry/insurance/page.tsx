@@ -1,5 +1,18 @@
+import type { Metadata } from 'next';
 import IndustryPageWrapper from '@/components/industry/IndustryPageWrapper';
 import { InsuranceChat } from '@/components/chat';
+
+export const metadata: Metadata = {
+  title: 'Insurance & Claims Compliance',
+  description:
+    'NAIC compliant AI claims processing and underwriting. Mitigate fraud and eliminate legal disputes with cryptographically verified, tamper-proof audit trails.',
+  openGraph: {
+    title: 'AnchorProof | Insurance & Claims Compliance',
+    description:
+      'Protect policyholders and streamline risk assessments with secure, blockchain-anchored AI conversation records built for insurance frameworks.',
+    type: 'website',
+  },
+};
 
 export default function InsurancePage() {
   return IndustryPageWrapper({

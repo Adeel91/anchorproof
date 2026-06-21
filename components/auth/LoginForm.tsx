@@ -9,6 +9,7 @@ import { isEnokiWallet } from '@mysten/enoki';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getEnokiProfile } from '@/lib/enoki/auth';
+import Button from '@/components/ui/Button';
 
 interface EnokiWalletWithProvider {
   provider?: string;
@@ -42,7 +43,6 @@ export function LoginForm() {
 
       try {
         const suiAddress = currentAccount.address;
-
         const profile = await getEnokiProfile(googleWallet);
 
         let email = profile?.email || null;
@@ -77,9 +77,7 @@ export function LoginForm() {
         }
 
         const data = await syncResponse.json();
-
         document.cookie = `anchorproof-session=${data.user.id}; path=/; max-age=604800; SameSite=Lax`;
-
         router.push('/dashboard');
       } catch (error) {
         const err = error as Error;
@@ -129,25 +127,27 @@ export function LoginForm() {
               <div className="w-5 h-5 rounded bg-gradient-to-tr from-indigo-400 to-cyan-400 animate-spin [animation-duration:12s]" />
             </div>
           </div>
-          <h1 className="text-2xl font-mono font-black tracking-widest bg-clip-text text-transparent bg-gradient-to-b from-white via-gray-200 to-gray-500 uppercase">
-            Launch Portal
+          <h1 className="text-2xl font-sans font-black tracking-widest bg-clip-text text-transparent bg-gradient-to-b from-white via-gray-200 to-gray-500 uppercase">
+            Access Gateway
           </h1>
-          <p className="text-[10px] font-mono font-bold text-gray-500 mt-2.5 uppercase tracking-[0.25em]">
-            Enterprise Cryptographic Auditing
+          <p className="text-[10px] font-sans font-bold text-gray-500 mt-2.5 tracking-[0.25em] uppercase">
+            Cryptographic Memory Audit Trail
           </p>
         </div>
 
         <div className="flex-1 flex flex-col justify-center">
-          <button
+          <Button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full h-12 flex items-center justify-center gap-3.5 rounded-xl font-mono font-bold text-xs uppercase tracking-widest transition-all duration-200 bg-gray-50 text-gray-950 hover:bg-white active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none shadow-[0_4px_25px_rgba(255,255,255,0.06)] cursor-pointer"
+            variant="primary"
+            size="lg"
+            className="w-full h-12 gap-3.5 font-sans font-bold text-xs tracking-widest shadow-[0_4px_25px_rgba(255,255,255,0.06)] cursor-pointer"
           >
             {loading ? (
               <div className="flex items-center gap-3">
-                <div className="w-4 h-4 border-2 border-gray-950 border-t-transparent rounded-full animate-spin" />
-                <span className="text-gray-700">
-                  Finalizing Tenant Profile...
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                <span className="tracking-widest uppercase">
+                  Initializing...
                 </span>
               </div>
             ) : (
@@ -170,22 +170,22 @@ export function LoginForm() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1C7.7 1 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                   />
                 </svg>
-                <span>Sign In with Google Workspace</span>
+                <span className="uppercase">Sign In With Google Identity</span>
               </>
             )}
-          </button>
+          </Button>
 
           {error && (
             <div className="mt-5 flex items-start gap-3 p-3.5 rounded-xl bg-red-950/20 border border-red-900/30">
               <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 shrink-0" />
-              <p className="text-[10px] font-mono font-medium text-red-400/90 tracking-wide leading-relaxed text-left">
+              <p className="text-[10px] font-sans font-medium text-red-400/90 tracking-wide leading-relaxed text-left">
                 {error}
               </p>
             </div>
           )}
         </div>
 
-        <div className="mt-12 pt-6 border-t border-gray-800/50 flex items-center justify-between text-[9px] font-mono text-gray-600 uppercase tracking-widest">
+        <div className="mt-12 pt-6 border-t border-gray-800/50 flex items-center justify-between text-[9px] font-sans text-gray-600 uppercase tracking-widest">
           <span className="flex items-center gap-1.5">
             <span className="w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_6px_#22d3ee]" />
             ZK-SUI Ledger Active

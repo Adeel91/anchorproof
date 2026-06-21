@@ -19,10 +19,29 @@ const poppins = Poppins({
   display: 'swap',
 });
 
+const basePath = process.env.NEXT_PUBLIC_APP_URL || '';
+
 export const metadata: Metadata = {
-  title: 'AnchorProof — Verifiable Cryptographic AI Memory for Enterprises',
+  metadataBase: new URL(basePath),
+  title: {
+    default: 'AnchorProof | Verifiable Cryptographic AI Memory',
+    template: '%s | AnchorProof',
+  },
   description:
     'Secure, tamper-proof, court-admissible audit trails for corporate AI conversations backed by Walrus Decentralized Storage and Sui Blockchain ledger anchoring.',
+  icons: {
+    icon: [
+      { url: '/static/favicons/favicon.ico', sizes: 'any' },
+      {
+        url: '/static/favicons/favicon-192x192.png',
+        sizes: '192x192',
+        type: 'image/png',
+      },
+    ],
+    apple: '/static/favicons/apple-touch-icon.png',
+    shortcut: '/static/favicons/favicon.ico',
+  },
+  manifest: '/static/favicons/site.webmanifest',
 };
 
 export default function RootLayout({

@@ -1,5 +1,18 @@
+import type { Metadata } from 'next';
 import IndustryPageWrapper from '@/components/industry/IndustryPageWrapper';
 import { HealthcareChat } from '@/components/chat';
+
+export const metadata: Metadata = {
+  title: 'Healthcare & Medical AI Compliance',
+  description:
+    'HIPAA, HITECH, and FDA compliant AI conversation logging. Secure patient data and ePHI with immutable, cryptographically verified audit trails.',
+  openGraph: {
+    title: 'AnchorProof | Healthcare & Medical AI Compliance',
+    description:
+      'Protect patient trust and electronic PHI with secure, blockchain-anchored AI conversation records meeting rigid clinical frameworks.',
+    type: 'website',
+  },
+};
 
 export default function HealthcarePage() {
   return IndustryPageWrapper({

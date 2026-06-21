@@ -1,5 +1,18 @@
+import type { Metadata } from 'next';
 import IndustryPageWrapper from '@/components/industry/IndustryPageWrapper';
 import { GovernmentChat } from '@/components/chat';
+
+export const metadata: Metadata = {
+  title: 'Government & Public Sector Compliance',
+  description:
+    'FISMA, FedRAMP, and FOIA compliant AI conversation logging. Secure public sector transparency with cryptographic, tamper-proof audit trails.',
+  openGraph: {
+    title: 'AnchorProof | Government & Public Sector Compliance',
+    description:
+      'Cryptographically verified AI logs meeting federal frameworks, NIST controls, and public records integrity regulations.',
+    type: 'website',
+  },
+};
 
 export default function GovernmentPage() {
   return IndustryPageWrapper({
