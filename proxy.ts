@@ -18,6 +18,7 @@ export async function proxy(request: NextRequest) {
 
   const protectedApiRoutes = [
     '/api/audit',
+    '/api/agentic',
     '/api/keys',
     '/api/chat/list',
     '/api/walrus/list',

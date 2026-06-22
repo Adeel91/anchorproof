@@ -47,6 +47,13 @@ const navItems = [
     description: 'Compliance & conversation reports',
   },
   {
+    id: 'agent',
+    label: 'Agent',
+    icon: FileBarChart,
+    href: '/dashboard/agentic',
+    description: 'Agent',
+  },
+  {
     id: 'users',
     label: 'Users',
     icon: Users,

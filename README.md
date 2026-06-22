@@ -144,6 +144,51 @@
 ---
 
 <div align="center">
+  <h2>🤖 Agentic Web Dashboard</h2>
+</div>
+
+<div>
+  <p>
+    AnchorProof features a powerful <strong>Agentic Web Dashboard</strong> that enables autonomous AI-powered verification of conversations. The agent analyzes unverified conversations and makes intelligent decisions about whether to verify, delete, or hold them for review.
+  </p>
+</div>
+
+<div stlye="display: flex; margin-bottom: 10px;"><img src="screenshots/agenticStats.png" alt="Agentic Stats"/></div>
+<div stlye="display: flex; margin-bottom: 10px;"><img src="screenshots/agenticResult.png" alt="Agentic Results"/></div>
+
+---
+
+<div align="center">
+  <h2>🔍 Public Verify Page</h2>
+</div>
+
+<div>
+  <p>
+    AnchorProof provides a <strong>Public Verification Page</strong> that allows anyone to verify the authenticity and integrity of any verified conversation. This page enables transparent, trustless verification without requiring authentication.
+  </p>
+</div>
+
+<div style="display: flex; gap: 20px; justify-content: center; margin: 20px 0; flex-wrap: wrap;">
+  <img src="screenshots/verifyPage.png" alt="Verify Page" style="max-width: 48%; height: auto; border-radius: 8px;"/>
+  <img src="screenshots/verifyResult.png" alt="Verify Result" style="max-width: 48%; height: auto; border-radius: 8px;"/>
+</div>
+
+### 🔍 How Public Verification Works
+
+```mermaid
+graph LR
+    subgraph "Verification Flow"
+        A[User Enters Transaction Hash] --> B[Fetch Verification Record]
+        B --> C[Check On-Chain Proof]
+        C --> D[Fetch Blob from Walrus]
+        D --> E[Verify Content Hash]
+        E --> F[Display Verification Result]
+    end
+```
+
+---
+
+<div align="center">
   <h2>🛠️ Tech Stack</h2>
 </div>
 
@@ -1055,28 +1100,30 @@ yarn lint
 
 The screenshots of the application are as follows:
 
-<table>
-  <tr>
-    <td> <img src="screenshots/1.png" alt="1.png" style="width: 250px;"/> </td>
-    <td> <img src="screenshots/2.png" alt="2.png" style="width: 250px;"/> </td>
-  </tr>
-  <tr>
-    <td> <img src="screenshots/3.png" alt="3.png" style="width: 250px;"/> </td>
-    <td> <img src="screenshots/4.png" alt="4.png" style="width: 250px;"/> </td>
-  </tr>
-  <tr>
-    <td> <img src="screenshots/5.png" alt="5.png" style="width: 250px;"/> </td>
-    <td> <img src="screenshots/6.png" alt="6.png" style="width: 250px;"/> </td>
-  </tr>
-  <tr>
-    <td> <img src="screenshots/7.png" alt="7.png" style="width: 250px;"/> </td>
-    <td> <img src="screenshots/8.png" alt="8.png" style="width: 250px;"/> </td>
-  </tr>
-  <tr>
-    <td> <img src="screenshots/9.png" alt="9.png" style="width: 250px;"/> </td>
-    <td> <img src="screenshots/10.png" alt="10.png" style="width: 250px;"/> </td>
-  </tr>
-</table>
+<div style="display: flex; gap: 10px; margin-bottom: 10px;">
+  <img src="screenshots/1.png" alt="1.png" style="width: 50%;"/>
+  <img src="screenshots/2.png" alt="2.png" style="width: 50%;"/>
+</div>
+
+<div style="display: flex; gap: 10px; margin-bottom: 10px;">
+  <img src="screenshots/3.png" alt="3.png" style="width: 50%;"/>
+  <img src="screenshots/4.png" alt="4.png" style="width: 50%;"/>
+</div>
+
+<div style="display: flex; gap: 10px; margin-bottom: 10px;">
+  <img src="screenshots/5.png" alt="5.png" style="width: 50%;"/>
+  <img src="screenshots/6.png" alt="6.png" style="width: 50%;"/>
+</div>
+
+<div style="display: flex; gap: 10px; margin-bottom: 10px;">
+  <img src="screenshots/7.png" alt="7.png" style="width: 50%;"/>
+  <img src="screenshots/8.png" alt="8.png" style="width: 50%;"/>
+</div>
+
+<div style="display: flex; gap: 10px; margin-bottom: 10px;">
+  <img src="screenshots/9.png" alt="9.png" style="width: 50%;"/>
+  <img src="screenshots/10.png" alt="10.png" style="width: 50%;"/>
+</div>
 
 ---
 
