@@ -44,7 +44,7 @@ export default function Primitives() {
   return (
     <section
       id="primitives"
-      className="py-12 sm:py-16 md:py-20 bg-slate-950 border-t border-slate-800/50"
+      className="py-16 sm:py-20 md:py-36 bg-slate-950 border-t border-slate-800/50"
     >
       <Container>
         <div className="max-w-3xl mb-8 sm:mb-14">

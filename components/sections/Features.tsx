@@ -41,7 +41,7 @@ export default function Features() {
   ];
 
   return (
-    <section id="features" className="py-12 sm:py-16 md:py-20 bg-slate-950">
+    <section id="features" className="py-16 sm:py-20 md:py-36 bg-slate-950">
       <Container>
         <div className="max-w-3xl mx-auto text-center mb-8 sm:mb-14">
           <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest text-cyan-400 bg-cyan-400/5 px-3 py-1.5 rounded-lg border border-cyan-400/20 inline-block mb-3 sm:mb-4">

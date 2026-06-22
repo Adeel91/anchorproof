@@ -5,7 +5,7 @@ export default function Problem() {
   return (
     <section
       id="problem"
-      className="py-12 sm:py-16 md:py-20 border-y border-slate-800/50 bg-slate-900/20"
+      className="py-16 sm:py-20 md:py-36 border-y border-slate-800/50 bg-slate-900/20"
     >
       <Container>
         <div className="max-w-3xl mx-auto text-center mb-10 sm:mb-14">

@@ -17,6 +17,7 @@ import {
   Shield,
   Lock,
   Clock,
+  Brain,
 } from 'lucide-react';
 
 export default function Hero() {
@@ -44,7 +45,7 @@ export default function Hero() {
 
       <Container className="relative z-10">
         <div className="max-w-5xl mx-auto">
-          <div className="flex justify-center mb-6">
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
             <span className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-indigo-400/20 bg-indigo-400/5 text-indigo-400 font-mono text-[10px] sm:text-xs font-semibold tracking-wider backdrop-blur-sm">
               <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span className="hidden xs:inline">
@@ -52,6 +53,11 @@ export default function Hero() {
               </span>
               <span className="xs:hidden">Enterprise AI</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5 sm:ml-1" />
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-purple-400/20 bg-purple-400/5 text-purple-400 font-mono text-[9px] sm:text-[10px] font-semibold tracking-wider backdrop-blur-sm">
+              <Brain className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span className="hidden xs:inline">Agentic AI</span>
+              <span className="xs:hidden">AI</span>
             </span>
           </div>
 
@@ -195,6 +201,11 @@ export default function Hero() {
             <span className="flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400/70" />
               Real-Time Audit
+            </span>
+            <span className="text-slate-700">|</span>
+            <span className="flex items-center gap-1.5">
+              <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400/70" />
+              Agentic AI
             </span>
           </div>
         </div>

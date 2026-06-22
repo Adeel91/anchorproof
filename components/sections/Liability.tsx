@@ -5,7 +5,7 @@ export default function Liability() {
   return (
     <section
       id="liability"
-      className="py-12 sm:py-16 md:py-20 border-y border-slate-800/50 bg-slate-950 relative"
+      className="py-16 sm:py-20 md:py-36 border-y border-slate-800/50 bg-slate-950 relative"
     >
       <Container>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
